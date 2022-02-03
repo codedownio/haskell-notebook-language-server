@@ -1,0 +1,9 @@
+
+resolver: nightly-2022-02-01
+
+packages:
+- .
+
+extra-deps:
+- git: https://github.com/codedownio/lsp-transformer.git
+  commit: 1f1ebf974c28fb7ca21166d5e15081073e9170fe

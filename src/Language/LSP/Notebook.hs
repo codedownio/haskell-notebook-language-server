@@ -7,6 +7,8 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE OverloadedLists #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Redundant bracket" #-}
 
 module Language.LSP.Notebook where
 
@@ -68,8 +70,9 @@ instance Transformer FrontSifter where
     (i, False) -> Just (Position (l + fromIntegral (V.length indices - i)) c)
 
   untransformPosition :: Params FrontSifter -> FrontSifter -> Position -> Position
-  untransformPosition = undefined
-
+  untransformPosition () (FrontSifter indices) (Position l c)
+    | l < fromIntegral (V.length indices) = Position (fromIntegral (indices ! (fromIntegral l))) c
+    | otherwise = Position (l + 0) c
 
 binarySearchVec = binarySearchVec' @Int
 

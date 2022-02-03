@@ -12,8 +12,9 @@ import Test.Sandwich
 
 
 spec :: TopSpec
-spec = do
+spec = describe "binary search in vector" $ do
   it "zero element list" $ do
+    binarySearchVec [] (-5) `shouldBe` (0, False)
     binarySearchVec [] 5 `shouldBe` (0, False)
 
   it "one element list" $ do
@@ -26,7 +27,21 @@ spec = do
     binarySearchVec [10, 20] 10 `shouldBe` (0, True)
 
     binarySearchVec [10, 20] 15 `shouldBe` (1, False)
+    binarySearchVec [10, 20] 20 `shouldBe` (1, True)
 
+    binarySearchVec [10, 20] 25 `shouldBe` (2, False)
+
+  it "three element list" $ do
+    binarySearchVec [10, 20, 30] 0 `shouldBe` (0, False)
+    binarySearchVec [10, 20, 30] 10 `shouldBe` (0, True)
+
+    binarySearchVec [10, 20, 30] 15 `shouldBe` (1, False)
+    binarySearchVec [10, 20, 30] 20 `shouldBe` (1, True)
+
+    binarySearchVec [10, 20, 30] 25 `shouldBe` (2, False)
+    binarySearchVec [10, 20, 30] 30 `shouldBe` (2, True)
+
+    binarySearchVec [10, 20, 30] 35 `shouldBe` (3, False)
 
 
 main :: IO ()

@@ -34,6 +34,7 @@ library
     , lsp-types
     , string-interpolate
     , text
+    , vector
   default-language: Haskell2010
 
 executable haskell-notebook-language-server
@@ -56,11 +57,13 @@ executable haskell-notebook-language-server
     , lsp-types
     , string-interpolate
     , text
+    , vector
   default-language: Haskell2010
 
 executable haskell-notebook-language-server-test
   main-is: Main.hs
   other-modules:
+      Test.BinarySearchVec
       Paths_haskell_notebook_language_server
   hs-source-dirs:
       test
@@ -79,4 +82,5 @@ executable haskell-notebook-language-server-test
     , sandwich
     , string-interpolate
     , text
+    , vector
   default-language: Haskell2010

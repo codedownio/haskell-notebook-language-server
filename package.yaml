@@ -17,6 +17,7 @@ dependencies:
 - lsp-types
 - string-interpolate
 - text
+- vector
 
 library:
   source-dirs: src

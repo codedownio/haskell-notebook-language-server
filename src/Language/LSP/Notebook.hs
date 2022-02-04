@@ -1,3 +1,4 @@
+{-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -13,6 +14,7 @@
 module Language.LSP.Notebook where
 
 import Data.Bits
+import Data.Function
 import Data.Functor.Identity (Identity(runIdentity))
 import Data.String.Interpolate
 import Data.Text (Text)
@@ -72,7 +74,13 @@ instance Transformer FrontSifter where
   untransformPosition :: Params FrontSifter -> FrontSifter -> Position -> Position
   untransformPosition () (FrontSifter indices) (Position l c)
     | l < fromIntegral (V.length indices) = Position (fromIntegral (indices ! (fromIntegral l))) c
-    | otherwise = Position (l + 0) c
+    | otherwise = Position finalL c
+        where
+          finalL = flip fix (V.length indices - 1, l) $ \loop -> \case
+            (-1, currentL) -> fromIntegral currentL
+            (chosenLineIndex, currentL) -> let chosenOrig = indices ! chosenLineIndex in
+              if | chosenOrig >= fromIntegral currentL -> loop (chosenLineIndex - 1, currentL - 1)
+                 | otherwise -> (fromIntegral currentL)
 
 binarySearchVec = binarySearchVec' @Int
 

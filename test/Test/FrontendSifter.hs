@@ -3,7 +3,7 @@
 
 module Test.FrontendSifter where
 
-import Language.LSP.Notebook
+import Language.LSP.Notebook.FrontSifter
 import Language.LSP.Transformer
 import Language.LSP.Types hiding (line)
 import Test.Sandwich

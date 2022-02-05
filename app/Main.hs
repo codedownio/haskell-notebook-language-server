@@ -22,16 +22,13 @@ import System.IO.Unsafe (unsafePerformIO)
 
 main :: IO ()
 main = do
-  let text = reorder
+  let text = many
 
   locatedCodeBlocks <- runGhc (Just GHC.Paths.libdir) $ parseString $ T.unpack text
-  putStrLn [i|Got parsed: #{locatedCodeBlocks}|]
-
-  let projected@(ls, FrontSifter indices) = project () (T.splitOn "\n" text)
-  putStrLn [i|Got projected: #{T.intercalate "\n" ls}|]
+  putStrLn [i|Got parsed: #{fmap unloc locatedCodeBlocks}|]
 
 
-many :: String
+many :: Text
 many =
   [__i|putStrLn $ "HI"
                 <> "THERE"
@@ -40,6 +37,7 @@ many =
        import Foo.Bar
        z
        putStrLn "THERE"
+       foo = putStrLn "foo"
       |]
 
 reorder :: Text

@@ -6,4 +6,4 @@ packages:
 
 extra-deps:
 - git: https://github.com/codedownio/lsp-transformer.git
-  commit: 1f1ebf974c28fb7ca21166d5e15081073e9170fe
+  commit: 520bd819461f2b47d631e551badf1e05bdaa1cbf

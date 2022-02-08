@@ -6,6 +6,7 @@
 {-# LANGUAGE ViewPatterns #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE OverloadedLists #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 
 module Language.LSP.Notebook.ExpressionToDeclaration where
 
@@ -23,7 +24,7 @@ import Language.LSP.Types
 import System.IO.Unsafe (unsafePerformIO)
 
 
-newtype ExpressionToDeclaration = ExpressionToDeclaration (Set Int)
+newtype ExpressionToDeclaration = ExpressionToDeclaration (Set UInt)
   deriving Show
 
 data EDParams = EDParams { numberPadding :: Int }
@@ -32,7 +33,7 @@ instance Transformer ExpressionToDeclaration where
   type Params ExpressionToDeclaration = EDParams
 
   project :: Params ExpressionToDeclaration -> [Text] -> ([Text], ExpressionToDeclaration)
-  project (EDParams {..}) ls = (go 0 (zip ls [0..]) exprIndices, ExpressionToDeclaration (Set.fromList $ mconcat exprIndices))
+  project (EDParams {..}) ls = (go 0 (zip ls [0 ..]) exprIndices, ExpressionToDeclaration (Set.fromList $ fromIntegral <$> mconcat exprIndices))
     where
       locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
 
@@ -65,11 +66,16 @@ instance Transformer ExpressionToDeclaration where
       countNewLines (_:xs) = countNewLines xs
       countNewLines [] = 0
 
-  handleDiff :: Params ExpressionToDeclaration -> [Text] -> [Text] -> [TextDocumentContentChangeEvent] -> ExpressionToDeclaration -> ([Text], [Text], [TextDocumentContentChangeEvent], ExpressionToDeclaration)
-  handleDiff (EDParams {..}) before after changes x@(ExpressionToDeclaration indices) = undefined
+  -- TODO: efficient implementation
+  -- handleDiff :: Params ExpressionToDeclaration -> [Text] -> [Text] -> [TextDocumentContentChangeEvent] -> ExpressionToDeclaration -> ([Text], [Text], [TextDocumentContentChangeEvent], ExpressionToDeclaration)
+  -- handleDiff (EDParams {..}) before after changes x@(ExpressionToDeclaration indices) = undefined
 
   transformPosition :: Params ExpressionToDeclaration -> ExpressionToDeclaration -> Position -> Maybe Position
-  transformPosition (EDParams {..}) (ExpressionToDeclaration indices) (Position l c) = undefined
+  transformPosition (EDParams {..}) (ExpressionToDeclaration affectedLines) (Position l c)
+    | l `Set.member` affectedLines = Just $ Position l (fromIntegral (fromIntegral c + numberPadding + 7))
+    | otherwise = Just $ Position l c
 
   untransformPosition :: Params ExpressionToDeclaration -> ExpressionToDeclaration -> Position -> Position
-  untransformPosition (EDParams {..}) (ExpressionToDeclaration indices) (Position l c) = undefined
+  untransformPosition (EDParams {..}) (ExpressionToDeclaration affectedLines) (Position l c)
+    | l `Set.member` affectedLines = Position l (fromIntegral (fromIntegral c - numberPadding - 7))
+    | otherwise = Position l c

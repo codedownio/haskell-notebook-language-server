@@ -19,7 +19,6 @@ library
       Language.LSP.Notebook.ExpressionToDeclaration
       Language.LSP.Notebook.FrontSifter
       Language.LSP.Notebook.Util
-      Lib
   other-modules:
       Paths_haskell_notebook_language_server
   hs-source-dirs:
@@ -66,6 +65,7 @@ executable haskell-notebook-language-server-test
   main-is: Main.hs
   other-modules:
       Test.BinarySearchVec
+      Test.ExpressionToDeclaration
       Test.FrontendSifter
       Paths_haskell_notebook_language_server
   hs-source-dirs:

@@ -6,6 +6,7 @@ module Test.FrontendSifter where
 import Language.LSP.Notebook.FrontSifter
 import Language.LSP.Transformer
 import Language.LSP.Types hiding (line)
+import Test.Common
 import Test.Sandwich
 
 
@@ -16,29 +17,20 @@ spec = do
     ls `shouldBe` ["import Bar", "putStrLn 42"]
     indices `shouldBe` [1]
 
-    transformPosition () sifter (Position 0 0) `shouldBe` (Just (Position 1 0))
-    transformPosition () sifter (Position 1 0) `shouldBe` (Just (Position 0 0))
-
-    untransformPosition () sifter (Position 0 0) `shouldBe` (Position 1 0)
-    untransformPosition () sifter (Position 1 0) `shouldBe` (Position 0 0)
+    transformAndUntransform () (Position 0 0) (Position 1 0) sifter
+    transformAndUntransform () (Position 1 0) (Position 0 0) sifter
 
   it "projects and transforms a two imports" $ do
     let (ls, sifter@(FrontSifter indices)) = project () ["putStrLn 42", "import Bar", "foo = 42", "import Foo", "bar = 24"]
     ls `shouldBe` ["import Bar", "import Foo", "putStrLn 42", "foo = 42", "bar = 24"]
     indices `shouldBe` [1, 3]
 
-    -- TODO: write as cycle [0, 2, 3, 1]
-    transformPosition () sifter (Position 0 0) `shouldBe` (Just (Position 2 0))
-    transformPosition () sifter (Position 1 0) `shouldBe` (Just (Position 0 0))
-    transformPosition () sifter (Position 2 0) `shouldBe` (Just (Position 3 0))
-    transformPosition () sifter (Position 3 0) `shouldBe` (Just (Position 1 0))
-    transformPosition () sifter (Position 4 0) `shouldBe` (Just (Position 4 0))
-
-    untransformPosition () sifter (Position 0 0) `shouldBe` (Position 1 0)
-    untransformPosition () sifter (Position 1 0) `shouldBe` (Position 3 0)
-    untransformPosition () sifter (Position 2 0) `shouldBe` (Position 0 0)
-    untransformPosition () sifter (Position 3 0) `shouldBe` (Position 2 0)
-    untransformPosition () sifter (Position 4 0) `shouldBe` (Position 4 0)
+    -- TODO: write as cycle [0, 2, 3, 1]?
+    transformAndUntransform () (Position 0 0) (Position 2 0) sifter
+    transformAndUntransform () (Position 1 0) (Position 0 0) sifter
+    transformAndUntransform () (Position 2 0) (Position 3 0) sifter
+    transformAndUntransform () (Position 3 0) (Position 1 0) sifter
+    transformAndUntransform () (Position 4 0) (Position 4 0) sifter
 
 
 main :: IO ()

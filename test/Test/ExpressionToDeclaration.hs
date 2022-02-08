@@ -6,6 +6,7 @@ module Test.ExpressionToDeclaration where
 import Language.LSP.Notebook.ExpressionToDeclaration
 import Language.LSP.Transformer
 import Language.LSP.Types hiding (line)
+import Test.Common
 import Test.Sandwich
 
 
@@ -40,10 +41,6 @@ spec = do
                  , "foo = 42"]
     affectedLines `shouldBe` [0, 1]
 
-
-transformAndUntransform params from to x = do
-  transformPosition params x from `shouldBe` (Just to)
-  untransformPosition params x to `shouldBe` from
 
 
 main :: IO ()

@@ -29,10 +29,10 @@ let
 
 in
 
-haskell-nix.stackProject {
+haskell-nix.project {
   inherit src;
 
-  stack-sha256 = "sha256-lYQ4LIqzMerEFuryhBr20sysUF+5iWJqKN+zApXrny8=";
+  stack-sha256 = "sha256-+QNLXWpBgiljfqiVe9zsq8s2yQT7oX/E+ym2s6gVN5E=";
   materialized = ./materialized;
   inherit checkMaterialization;
 }

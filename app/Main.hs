@@ -1,52 +1,71 @@
-{-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ViewPatterns #-}
+{-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
+{-# HLINT ignore "Redundant <$>" #-}
 
 module Main where
 
+import Control.Monad
+import Data.Aeson as A hiding (Options)
+import Data.Maybe
 import Data.Sequence hiding (zip)
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
-import GHC
-import qualified GHC.Paths
-import IHaskell.Eval.Parser
-import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook
 import Language.LSP.Transformer
-import Lib
-import System.IO.Unsafe (unsafePerformIO)
+import Options.Applicative
+import Streams
+import System.IO
+import UnliftIO.Async
+import UnliftIO.Directory
+import UnliftIO.Exception
+import UnliftIO.Process
 
+
+data Options = Options {
+  optWrappedLanguageServer :: Maybe FilePath
+  , optHlsArgs :: Maybe Text
+  }
+
+options :: Parser Options
+options = Options
+  <$> optional (strOption (long "--wrapped-hls" <> help "Wrapped haskell-language-server binary"))
+  <*> optional (strOption (long "--hls-args" <> help "Extra arguments to haskell-language-server"))
+
+fullOpts :: ParserInfo Options
+fullOpts = info (options <**> helper) (
+  fullDesc <> progDesc "Run a wrapped haskell-language-server with notebook support"
+  )
 
 main :: IO ()
 main = do
-  let text = many
+  Options {..} <- execParser fullOpts
 
-  locatedCodeBlocks <- runGhc (Just GHC.Paths.libdir) $ parseString $ T.unpack text
-  putStrLn [i|Got parsed: #{fmap unloc locatedCodeBlocks}|]
+  wrappedLanguageServerPath <- (pure optWrappedLanguageServer <|> findExecutable "haskell-language-server-wrapper") >>= \case
+    Nothing -> throwIO $ userError [i|Couldn't find haskell-language-server binary.|]
+    Just x -> return x
 
+  (p, hlsIn, Just hlsOut, hlsErr) <- createProcess (
+    (proc wrappedLanguageServerPath (maybe [] (fmap T.unpack . T.words) optHlsArgs)) {
+        close_fds = True
+        , create_group = True
+        , std_out = CreatePipe
+        , std_err = Inherit
+        })
 
-many :: Text
-many =
-  [__i|putStrLn $ "HI"
-                <> "THERE"
+  inputReader <- async $ forever $ do
+    (A.eitherDecode <$> parseStream stdin) >>= \case
+      Left err -> undefined
+      Right (x :: ()) -> undefined
 
+  hlsReader <- async $ forever $ do
+    (A.eitherDecode <$> parseStream hlsOut) >>= \case
+      Left err -> undefined
+      Right (x :: ()) -> undefined
 
-       import Foo.Bar
-       z
-       putStrLn "THERE"
-       foo = putStrLn "foo"
-      |]
+  (asyncWhichStopped, result :: Either SomeException ()) <- waitAnyCatchCancel [inputReader, hlsReader]
 
-reorder :: Text
-reorder =
-  [__i|foo = putStrLn $ "HI" <> "THERE"
-       {-\# LANGUAGE RankNTypes \#-}
-       import Foo.Bar
-       import Foo.Baz (
-         FooBar
-         )
-       bar = 42
-      |]
+  putStrLn [i|Final result: #{result}|]
+
+readSingle h = undefined

@@ -19,6 +19,20 @@ dependencies:
 - text
 - vector
 
+default-extensions:
+  - OverloadedStrings
+  - QuasiQuotes
+  - NamedFieldPuns
+  - RecordWildCards
+  - ScopedTypeVariables
+  - FlexibleContexts
+  - FlexibleInstances
+  - LambdaCase
+  - ViewPatterns
+  - MultiWayIf
+  - TupleSections
+  - NumericUnderscores
+
 library:
   source-dirs: src
 
@@ -32,6 +46,13 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - haskell-notebook-language-server
+
+    - aeson
+    - attoparsec
+    - bytestring
+    - optparse-applicative
+    - safe
+    - unliftio
 
   haskell-notebook-language-server-test:
     main:                Main.hs

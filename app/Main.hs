@@ -54,6 +54,12 @@ main = do
         , std_err = Inherit
         })
 
+  hSetBuffering stdin NoBuffering
+  hSetEncoding  stdin utf8
+
+  hSetBuffering hlsOut NoBuffering
+  hSetEncoding  hlsOut utf8
+
   inputReader <- async $ forever $ do
     (A.eitherDecode <$> parseStream stdin) >>= \case
       Left err -> undefined
@@ -67,5 +73,3 @@ main = do
   (asyncWhichStopped, result :: Either SomeException ()) <- waitAnyCatchCancel [inputReader, hlsReader]
 
   putStrLn [i|Final result: #{result}|]
-
-readSingle h = undefined

@@ -11,7 +11,7 @@
 
 , symbols ? false
 
-, checkMaterialization ? false
+, checkMaterialization ? true
 
 , profile ? false
 }:
@@ -32,7 +32,7 @@ in
 haskell-nix.stackProject {
   inherit src;
 
-  stack-sha256 = "sha256-lYQ4LIqzMerEFuryhBr20sysUF+5iWJqKN+zApXrny7=";
-  # materialized = ./materialized;
-  # inherit checkMaterialization;
+  stack-sha256 = "sha256-lYQ4LIqzMerEFuryhBr20sysUF+5iWJqKN+zApXrny8=";
+  materialized = ./materialized;
+  inherit checkMaterialization;
 }

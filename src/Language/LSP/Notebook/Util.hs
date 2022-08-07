@@ -2,8 +2,6 @@
 module Language.LSP.Notebook.Util where
 
 import IHaskell.Eval.Parser
-import Language.Haskell.GHC.Parser as GHC
-
 
 
 isImportLine :: CodeBlock -> Bool

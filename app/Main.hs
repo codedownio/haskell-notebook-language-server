@@ -7,6 +7,8 @@ module Main where
 
 import Control.Monad
 import Data.Aeson as A hiding (Options)
+import qualified Data.ByteString.Lazy as BL
+import qualified Data.ByteString.Lazy.Char8 as BL8
 import Data.Maybe
 import Data.Sequence hiding (zip)
 import Data.String.Interpolate
@@ -46,7 +48,7 @@ main = do
     Nothing -> throwIO $ userError [i|Couldn't find haskell-language-server binary.|]
     Just x -> return x
 
-  (p, hlsIn, Just hlsOut, hlsErr) <- createProcess (
+  (p, Just hlsIn, Just hlsOut, hlsErr) <- createProcess (
     (proc wrappedLanguageServerPath (maybe [] (fmap T.unpack . T.words) optHlsArgs)) {
         close_fds = True
         , create_group = True
@@ -63,10 +65,15 @@ main = do
   withAsync (readHlsOut hlsOut) $ \_ ->
     forever $ do
       (A.eitherDecode <$> parseStream stdin) >>= \case
-        Left err -> undefined
-        Right (x :: ()) -> undefined
+        Left err -> ioError $ userError [i|Couldn't decode incoming message: #{err}|]
+        Right (x :: A.Value) -> writeToHandle hlsIn (A.encode x)
 
 readHlsOut hlsOut = forever $ do
   (A.eitherDecode <$> parseStream hlsOut) >>= \case
-    Left err -> undefined
-    Right (x :: ()) -> undefined
+    Left err -> ioError $ userError [i|Couldn't decode HLS output: #{err}|]
+    Right (x :: A.Value) -> writeToHandle stdout (A.encode x)
+
+
+writeToHandle :: Handle -> BL8.ByteString -> IO ()
+writeToHandle h bytes =
+  BL8.hPutStrLn h [i|Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]

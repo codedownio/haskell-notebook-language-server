@@ -60,16 +60,13 @@ main = do
   hSetBuffering hlsOut NoBuffering
   hSetEncoding  hlsOut utf8
 
-  inputReader <- async $ forever $ do
-    (A.eitherDecode <$> parseStream stdin) >>= \case
-      Left err -> undefined
-      Right (x :: ()) -> undefined
+  withAsync (readHlsOut hlsOut) $ \_ ->
+    forever $ do
+      (A.eitherDecode <$> parseStream stdin) >>= \case
+        Left err -> undefined
+        Right (x :: ()) -> undefined
 
-  hlsReader <- async $ forever $ do
-    (A.eitherDecode <$> parseStream hlsOut) >>= \case
-      Left err -> undefined
-      Right (x :: ()) -> undefined
-
-  (asyncWhichStopped, result :: Either SomeException ()) <- waitAnyCatchCancel [inputReader, hlsReader]
-
-  putStrLn [i|Final result: #{result}|]
+readHlsOut hlsOut = forever $ do
+  (A.eitherDecode <$> parseStream hlsOut) >>= \case
+    Left err -> undefined
+    Right (x :: ()) -> undefined

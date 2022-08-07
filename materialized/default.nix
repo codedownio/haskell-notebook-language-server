@@ -6,7 +6,7 @@
         lsp-transformer = ./.stack-to-nix.cache.0;
         };
       };
-  resolver = "nightly-2022-03-03";
+  resolver = "lts-19.15";
   modules = [
     ({ lib, ... }:
       { packages = {}; })

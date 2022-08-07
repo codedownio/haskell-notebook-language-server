@@ -1,5 +1,5 @@
 {
-  haskellNix ? import (builtins.fetchTarball "https://github.com/codedownio/haskell.nix/archive/5867bbb4aba60d7bcc1d4291e23325a4c38efdb5.tar.gz") {}
+  haskellNix ? import (builtins.fetchTarball "https://github.com/input-output-hk/haskell.nix/archive/9709b2d05acb8b2d1451e5d7593756ca3a1be7d7.tar.gz") {}
 
 , nixpkgsArgs ? haskellNix.nixpkgsArgs
 
@@ -32,7 +32,7 @@ in
 haskell-nix.project {
   inherit src;
 
-  stack-sha256 = "149p2nlb7di9zg27z8gv0k4kdjxbxkf7p5d8grijk0j1d9fln0zr";
+  stack-sha256 = "01mxvgqrkqbllay4dmpa86f7dkakx0l29kkr82apbypxirf08fav";
   materialized = ./materialized;
   inherit checkMaterialization;
 

@@ -20,18 +20,18 @@ dependencies:
 - vector
 
 default-extensions:
-  - OverloadedStrings
-  - QuasiQuotes
-  - NamedFieldPuns
-  - RecordWildCards
-  - ScopedTypeVariables
-  - FlexibleContexts
-  - FlexibleInstances
-  - LambdaCase
-  - ViewPatterns
-  - MultiWayIf
-  - TupleSections
-  - NumericUnderscores
+- OverloadedStrings
+- QuasiQuotes
+- NamedFieldPuns
+- RecordWildCards
+- ScopedTypeVariables
+- FlexibleContexts
+- FlexibleInstances
+- LambdaCase
+- ViewPatterns
+- MultiWayIf
+- TupleSections
+- NumericUnderscores
 
 library:
   source-dirs: src

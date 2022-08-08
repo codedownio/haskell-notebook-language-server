@@ -48,7 +48,7 @@ main = do
     Nothing -> throwIO $ userError [i|Couldn't find haskell-language-server binary.|]
     Just x -> return x
 
-  (p, Just hlsIn, Just hlsOut, hlsErr) <- createProcess (
+  (Just hlsIn, Just hlsOut, hlsErr, p) <- createProcess (
     (proc wrappedLanguageServerPath (maybe [] (fmap T.unpack . T.words) optHlsArgs)) {
         close_fds = True
         , create_group = True

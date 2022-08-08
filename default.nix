@@ -7,6 +7,8 @@
 
 , pkgs ? if static then nixpkgs.pkgsCross.musl64 else nixpkgs
 
+, haskell-language-server ? pkgs.haskell-language-server
+
 , static ? false
 
 , symbols ? false
@@ -37,6 +39,11 @@ haskell-nix.project {
   inherit checkMaterialization;
 
   modules = [{
+    packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.postInstall = ''
+      wrapProgram $out/bin/haskell-notebook-language-server \
+        --prefix PATH ":" ${makeBinPath [haskell-language-server]}
+    '';
+
     # https://github.com/input-output-hk/haskell.nix/issues/1177#issuecomment-891568396
     nonReinstallablePkgs = [
       "rts" "ghc-heap" "ghc-prim" "integer-gmp" "integer-simple" "base"

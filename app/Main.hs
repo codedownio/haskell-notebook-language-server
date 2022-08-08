@@ -32,8 +32,8 @@ data Options = Options {
 
 options :: Parser Options
 options = Options
-  <$> optional (strOption (long "--wrapped-hls" <> help "Wrapped haskell-language-server binary"))
-  <*> optional (strOption (long "--hls-args" <> help "Extra arguments to haskell-language-server"))
+  <$> optional (strOption (long "wrapped-hls" <> help "Wrapped haskell-language-server binary"))
+  <*> optional (strOption (long "hls-args" <> help "Extra arguments to haskell-language-server"))
 
 fullOpts :: ParserInfo Options
 fullOpts = info (options <**> helper) (

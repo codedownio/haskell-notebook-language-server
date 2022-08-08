@@ -52,6 +52,7 @@ main = do
     (proc wrappedLanguageServerPath (maybe [] (fmap T.unpack . T.words) optHlsArgs)) {
         close_fds = True
         , create_group = True
+        , std_in = CreatePipe
         , std_out = CreatePipe
         , std_err = Inherit
         })

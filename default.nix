@@ -39,9 +39,10 @@ haskell-nix.project {
   inherit checkMaterialization;
 
   modules = [{
+    packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.build-tools = [makeWrapper];
     packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.postInstall = ''
       wrapProgram $out/bin/haskell-notebook-language-server \
-        --prefix PATH ":" ${makeBinPath [haskell-language-server]}
+        --prefix PATH ":" ${lib.makeBinPath [haskell-language-server]}
     '';
 
     # https://github.com/input-output-hk/haskell.nix/issues/1177#issuecomment-891568396

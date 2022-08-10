@@ -76,5 +76,6 @@ readHlsOut hlsOut = forever $ do
 
 
 writeToHandle :: Handle -> BL8.ByteString -> IO ()
-writeToHandle h bytes =
-  BL8.hPutStrLn h [i|Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
+writeToHandle h bytes = do
+  BL8.hPutStr h [i|Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
+  hFlush h

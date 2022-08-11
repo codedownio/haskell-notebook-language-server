@@ -54,6 +54,7 @@ library
 executable haskell-notebook-language-server
   main-is: Main.hs
   other-modules:
+      RequestMap
       Streams
       Test
       Paths_haskell_notebook_language_server
@@ -85,6 +86,7 @@ executable haskell-notebook-language-server
     , ghc-paths
     , haskell-notebook-language-server
     , ihaskell
+    , lens
     , lsp-transformer
     , lsp-types
     , optparse-applicative

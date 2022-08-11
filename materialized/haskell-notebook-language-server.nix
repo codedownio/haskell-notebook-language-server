@@ -67,6 +67,7 @@
             (hsPkgs."ghc-paths" or (errorHandler.buildDepError "ghc-paths"))
             (hsPkgs."haskell-notebook-language-server" or (errorHandler.buildDepError "haskell-notebook-language-server"))
             (hsPkgs."ihaskell" or (errorHandler.buildDepError "ihaskell"))
+            (hsPkgs."lens" or (errorHandler.buildDepError "lens"))
             (hsPkgs."lsp-transformer" or (errorHandler.buildDepError "lsp-transformer"))
             (hsPkgs."lsp-types" or (errorHandler.buildDepError "lsp-types"))
             (hsPkgs."optparse-applicative" or (errorHandler.buildDepError "optparse-applicative"))

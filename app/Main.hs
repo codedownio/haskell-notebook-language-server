@@ -1,12 +1,17 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE RankNTypes #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Redundant <$>" #-}
 
 module Main where
 
+import Control.Lens
 import Control.Monad
+import Control.Monad.IO.Class
 import Data.Aeson as A hiding (Options)
+import qualified Data.Aeson.Types as A
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as BL8
 import Data.Maybe
@@ -14,15 +19,22 @@ import Data.Sequence hiding (zip)
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.IO as T
 import Language.LSP.Notebook
 import Language.LSP.Transformer
+import Language.LSP.Types hiding (FromServerMessage'(..), FromServerMessage, FromClientMessage'(..), FromClientMessage, parseClientMessage, parseServerMessage)
+import qualified Language.LSP.Types.Lens as Lens
 import Options.Applicative
-import Streams
 import System.IO
 import UnliftIO.Async
 import UnliftIO.Directory
 import UnliftIO.Exception
+import UnliftIO.MVar
 import UnliftIO.Process
+
+import Streams
+import RequestMap
+import Parsing
 
 
 data Options = Options {
@@ -63,17 +75,63 @@ main = do
   hSetBuffering hlsOut NoBuffering
   hSetEncoding  hlsOut utf8
 
-  withAsync (readHlsOut hlsOut) $ \_ ->
+  clientReqMap <- newMVar newClientRequestMap
+  serverReqMap <- newMVar newServerRequestMap
+
+  withAsync (readHlsOut clientReqMap serverReqMap hlsOut) $ \_ ->
     forever $ do
       (A.eitherDecode <$> parseStream stdin) >>= \case
-        Left err -> ioError $ userError [i|Couldn't decode incoming message: #{err}|]
-        Right (x :: A.Value) -> writeToHandle hlsIn (A.encode x)
+        Left err -> logError [i|Couldn't decode incoming message: #{err}|]
+        Right (x :: A.Value) -> do
+          m <- readMVar serverReqMap
+          case A.parseEither (parseClientMessage (lookupServerId m)) x of
+            Left err -> do
+              logError [i|Couldn't decode incoming message: #{err}|]
+              writeToHandle hlsIn (A.encode x)
+            Right (FromClientRsp meth msg) -> do
+              writeToHandle hlsIn (A.encode x)
+            Right (FromClientReq meth msg) -> do
+              let msgId = msg ^. Lens.id
+              modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId meth of
+                Just m' -> return m'
+                Nothing -> return m
+              writeToHandle hlsIn (A.encode x)
+            Right (FromClientNot _ _) ->
+              writeToHandle hlsIn (A.encode x)
 
-readHlsOut hlsOut = forever $ do
+readHlsOut clientReqMap serverReqMap hlsOut = forever $ do
   (A.eitherDecode <$> parseStream hlsOut) >>= \case
-    Left err -> ioError $ userError [i|Couldn't decode HLS output: #{err}|]
-    Right (x :: A.Value) -> writeToHandle stdout (A.encode x)
+    Left err -> logError [i|Couldn't decode HLS output: #{err}|]
+    Right (x :: A.Value) -> do
+      m <- readMVar clientReqMap
+      case A.parseEither (parseServerMessage (lookupClientId m)) x of
+        Left err -> do
+          logError [i|Couldn't decode server message: #{err}|]
+          writeToHandle stdout (A.encode x)
+        Right (FromServerNot (meth :: SServerMethod m) (msg :: NotificationMessage m)) ->
+          writeToHandle stdout (A.encode x)
+        Right (FromServerReq meth msg) -> do
+          let msgId = msg ^. Lens.id
+          modifyMVar_ serverReqMap $ \m -> case updateServerRequestMap m msgId meth of
+            Just m' -> return m'
+            Nothing -> return m
+          writeToHandle stdout (A.encode x)
+        Right (FromServerRsp _ _) -> writeToHandle stdout (A.encode x)
 
+lookupServerId :: ServerRequestMap -> LookupFunc FromServer SMethod
+lookupServerId serverReqMap sid = do
+  case lookupServerRequestMap serverReqMap sid of
+    Nothing -> Nothing
+    Just meth -> Just (meth, meth)
+
+lookupClientId :: ClientRequestMap -> LookupFunc FromClient SMethod
+lookupClientId clientReqMap sid = do
+  case lookupClientRequestMap clientReqMap sid of
+    Nothing -> Nothing
+    Just meth -> Just (meth, meth)
+
+logError :: MonadIO m => Text -> m ()
+logError = liftIO . T.hPutStrLn stderr
 
 writeToHandle :: Handle -> BL8.ByteString -> IO ()
 writeToHandle h bytes = do

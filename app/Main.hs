@@ -32,6 +32,10 @@ import UnliftIO.Exception
 import UnliftIO.MVar
 import UnliftIO.Process
 
+import Transform.ClientNot
+import Transform.ClientReq
+import Transform.ClientRsp
+
 import Streams
 import RequestMap
 import Parsing
@@ -78,6 +82,8 @@ main = do
   clientReqMap <- newMVar newClientRequestMap
   serverReqMap <- newMVar newServerRequestMap
 
+  -- TODO: switch to using pickFromIxMap or some other way to remove old entries
+
   withAsync (readHlsOut clientReqMap serverReqMap hlsOut) $ \_ ->
     forever $ do
       (A.eitherDecode <$> parseStream stdin) >>= \case
@@ -89,15 +95,15 @@ main = do
               logError [i|Couldn't decode incoming message: #{err}|]
               writeToHandle hlsIn (A.encode x)
             Right (FromClientRsp meth msg) -> do
-              writeToHandle hlsIn (A.encode x)
+              writeToHandle hlsIn (A.encode (transformClientRsp meth msg))
             Right (FromClientReq meth msg) -> do
               let msgId = msg ^. Lens.id
               modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId meth of
                 Just m' -> return m'
                 Nothing -> return m
-              writeToHandle hlsIn (A.encode x)
-            Right (FromClientNot _ _) ->
-              writeToHandle hlsIn (A.encode x)
+              writeToHandle hlsIn (A.encode (transformClientReq meth msg))
+            Right (FromClientNot meth msg) ->
+              writeToHandle hlsIn (A.encode (transformClientNot meth msg))
 
 readHlsOut clientReqMap serverReqMap hlsOut = forever $ do
   (A.eitherDecode <$> parseStream hlsOut) >>= \case

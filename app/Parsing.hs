@@ -35,31 +35,12 @@ data FromServerMessage' a where
 
 type FromServerMessage = FromServerMessage' SMethod
 
--- instance Eq FromServerMessage where
---   (==) = (==) `on` toJSON
--- instance Show FromServerMessage where
---   show = show . toJSON
-
--- instance ToJSON FromServerMessage where
---   toJSON (FromServerNot m p) = serverMethodJSON m (toJSON p)
---   toJSON (FromServerReq m p) = serverMethodJSON m (toJSON p)
---   toJSON (FromServerRsp m p) = clientResponseJSON m (toJSON p)
-
 data FromClientMessage' a where
-  FromClientReq :: forall t (m :: Method FromClient Request) a. SMethod m -> RequestMessage m -> FromClientMessage' a
-  FromClientNot :: forall t (m :: Method FromClient Notification) a. SMethod m -> NotificationMessage m -> FromClientMessage' a
-  FromClientRsp  :: forall (m :: Method FromServer Request) a. a m -> ResponseMessage m -> FromClientMessage' a
+  FromClientReq :: forall t (m :: Method FromClient Request) a. (ToJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromClientMessage' a
+  FromClientNot :: forall t (m :: Method FromClient Notification) a. (ToJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromClientMessage' a
+  FromClientRsp  :: forall (m :: Method FromServer Request) a. (ToJSON (ResponseMessage m)) => a m -> ResponseMessage m -> FromClientMessage' a
 
 type FromClientMessage = FromClientMessage' SMethod
-
--- instance ToJSON FromClientMessage where
---   toJSON (FromClientReq m p) = clientMethodJSON m (toJSON p)
---   toJSON (FromClientNot m p) = clientMethodJSON m (toJSON p)
---   toJSON (FromClientRsp m p) = serverResponseJSON m (toJSON p)
-
--- ---------------------------------------------------------------------
--- Parsing
--- ---------------------------------------------------------------------
 
 {-# INLINE parseServerMessage #-}
 parseServerMessage :: LookupFunc FromClient a -> Value -> Parser (FromServerMessage' a)

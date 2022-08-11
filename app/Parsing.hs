@@ -1,20 +1,20 @@
-{-# LANGUAGE GADTs                      #-}
-{-# LANGUAGE TypeOperators              #-}
-{-# LANGUAGE UndecidableInstances       #-}
-{-# LANGUAGE TypeFamilies               #-}
-{-# LANGUAGE RankNTypes                 #-}
-{-# LANGUAGE FlexibleContexts           #-}
-{-# LANGUAGE DuplicateRecordFields      #-}
-{-# LANGUAGE ConstraintKinds            #-}
-{-# LANGUAGE TypeInType                 #-}
-{-# LANGUAGE StandaloneDeriving         #-}
-{-# LANGUAGE DeriveGeneric              #-}
-{-# LANGUAGE OverloadedStrings          #-}
-{-# LANGUAGE FlexibleInstances          #-}
-{-# LANGUAGE TupleSections              #-}
-{-# LANGUAGE TypeApplications           #-}
-{-# OPTIONS_GHC -Wno-unticked-promoted-constructors #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE TypeInType #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE TupleSections #-}
+{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# OPTIONS_GHC -Wno-unticked-promoted-constructors #-}
 
 module Parsing where
 

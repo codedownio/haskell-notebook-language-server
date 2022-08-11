@@ -24,14 +24,11 @@ import Data.Function (on)
 import Data.Type.Equality
 import Language.LSP.Types hiding (FromServerMessage'(..), FromServerMessage, FromClientMessage'(..), FromClientMessage)
 
--- ---------------------------------------------------------------------
--- Working with arbitrary messages
--- ---------------------------------------------------------------------
 
 data FromServerMessage' a where
-  FromServerReq :: forall t (m :: Method FromServer Request) a. SMethod m -> RequestMessage m -> FromServerMessage' a
-  FromServerNot :: forall t (m :: Method FromServer Notification) a. SMethod m -> NotificationMessage m -> FromServerMessage' a
-  FromServerRsp  :: forall (m :: Method FromClient Request) a. a m -> ResponseMessage m -> FromServerMessage' a
+  FromServerReq :: forall t (m :: Method FromServer Request) a. (ToJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromServerMessage' a
+  FromServerNot :: forall t (m :: Method FromServer Notification) a. (ToJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromServerMessage' a
+  FromServerRsp  :: forall (m :: Method FromClient Request) a. (ToJSON (ResponseMessage m)) => a m -> ResponseMessage m -> FromServerMessage' a
 
 type FromServerMessage = FromServerMessage' SMethod
 

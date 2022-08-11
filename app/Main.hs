@@ -35,6 +35,9 @@ import UnliftIO.Process
 import Transform.ClientNot
 import Transform.ClientReq
 import Transform.ClientRsp
+import Transform.ServerNot
+import Transform.ServerReq
+import Transform.ServerRsp
 
 import Streams
 import RequestMap
@@ -114,15 +117,16 @@ readHlsOut clientReqMap serverReqMap hlsOut = forever $ do
         Left err -> do
           logError [i|Couldn't decode server message: #{err}|]
           writeToHandle stdout (A.encode x)
-        Right (FromServerNot (meth :: SServerMethod m) (msg :: NotificationMessage m)) ->
-          writeToHandle stdout (A.encode x)
+        Right (FromServerNot meth msg) ->
+          writeToHandle stdout (A.encode (transformServerNot meth msg))
         Right (FromServerReq meth msg) -> do
           let msgId = msg ^. Lens.id
           modifyMVar_ serverReqMap $ \m -> case updateServerRequestMap m msgId meth of
             Just m' -> return m'
             Nothing -> return m
-          writeToHandle stdout (A.encode x)
-        Right (FromServerRsp _ _) -> writeToHandle stdout (A.encode x)
+          writeToHandle stdout (A.encode (transformServerReq meth msg))
+        Right (FromServerRsp meth msg) ->
+          writeToHandle stdout (A.encode (transformServerRsp meth msg))
 
 lookupServerId :: ServerRequestMap -> LookupFunc FromServer SMethod
 lookupServerId serverReqMap sid = do

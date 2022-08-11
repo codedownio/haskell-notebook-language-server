@@ -25,22 +25,18 @@ import Data.Type.Equality
 import Language.LSP.Types hiding (FromServerMessage'(..), FromServerMessage, FromClientMessage'(..), FromClientMessage)
 
 
-data FromServerMessage' a where
-  FromServerReq :: forall t (m :: Method FromServer Request) a. (ToJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromServerMessage' a
-  FromServerNot :: forall t (m :: Method FromServer Notification) a. (ToJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromServerMessage' a
-  FromServerRsp  :: forall (m :: Method FromClient Request) a. (ToJSON (ResponseMessage m)) => a m -> ResponseMessage m -> FromServerMessage' a
+data FromServerMessage where
+  FromServerReq :: forall t (m :: Method FromServer Request). (ToJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromServerMessage
+  FromServerNot :: forall t (m :: Method FromServer Notification). (ToJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromServerMessage
+  FromServerRsp  :: forall (m :: Method FromClient Request). (ToJSON (ResponseMessage m)) => SMethod m -> ResponseMessage m -> FromServerMessage
 
-type FromServerMessage = FromServerMessage' SMethod
-
-data FromClientMessage' a where
-  FromClientReq :: forall t (m :: Method FromClient Request) a. (ToJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromClientMessage' a
-  FromClientNot :: forall t (m :: Method FromClient Notification) a. (ToJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromClientMessage' a
-  FromClientRsp  :: forall (m :: Method FromServer Request) a. (ToJSON (ResponseMessage m)) => a m -> ResponseMessage m -> FromClientMessage' a
-
-type FromClientMessage = FromClientMessage' SMethod
+data FromClientMessage where
+  FromClientReq :: forall t (m :: Method FromClient Request). (ToJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromClientMessage
+  FromClientNot :: forall t (m :: Method FromClient Notification). (ToJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromClientMessage
+  FromClientRsp  :: forall (m :: Method FromServer Request). (ToJSON (ResponseMessage m)) => SMethod m -> ResponseMessage m -> FromClientMessage
 
 {-# INLINE parseServerMessage #-}
-parseServerMessage :: LookupFunc FromClient a -> Value -> Parser (FromServerMessage' a)
+parseServerMessage :: LookupFunc FromClient SMethod -> Value -> Parser FromServerMessage
 parseServerMessage lookupId v@(Object o) = do
   methMaybe <- o .:! "method"
   idMaybe <- o .:! "id"
@@ -63,13 +59,13 @@ parseServerMessage lookupId v@(Object o) = do
       case idMaybe of
         Just i -> do
           case lookupId i of
-            Just (m,res) -> clientResponseJSON m $ FromServerRsp res <$> parseJSON v
+            Just (m, res) -> clientResponseJSON m $ FromServerRsp res <$> parseJSON v
             Nothing -> fail $ unwords ["Failed in looking up response type of", show v]
         Nothing -> fail $ unwords ["Got unexpected message without method or id"]
 parseServerMessage _ v = fail $ unwords ["parseServerMessage expected object, got:",show v]
 
 {-# INLINE parseClientMessage #-}
-parseClientMessage :: LookupFunc FromServer a -> Value -> Parser (FromClientMessage' a)
+parseClientMessage :: LookupFunc FromServer SMethod -> Value -> Parser FromClientMessage
 parseClientMessage lookupId v@(Object o) = do
   methMaybe <- o .:! "method"
   idMaybe <- o .:! "id"

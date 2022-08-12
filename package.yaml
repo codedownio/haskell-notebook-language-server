@@ -50,7 +50,9 @@ executables:
     - aeson
     - attoparsec
     - bytestring
+    - filepath
     - lens
+    - network-uri
     - optparse-applicative
     - safe
     - unliftio

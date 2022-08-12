@@ -54,9 +54,16 @@ library
 executable haskell-notebook-language-server
   main-is: Main.hs
   other-modules:
+      Parsing
       RequestMap
       Streams
       Test
+      Transform.ClientNot
+      Transform.ClientReq
+      Transform.ClientRsp
+      Transform.ServerNot
+      Transform.ServerReq
+      Transform.ServerRsp
       Paths_haskell_notebook_language_server
   hs-source-dirs:
       app
@@ -80,6 +87,7 @@ executable haskell-notebook-language-server
     , base >=4.7 && <5
     , bytestring
     , containers
+    , filepath
     , ghc
     , ghc-lib-parser
     , ghc-parser
@@ -89,6 +97,7 @@ executable haskell-notebook-language-server
     , lens
     , lsp-transformer
     , lsp-types
+    , network-uri
     , optparse-applicative
     , safe
     , string-interpolate

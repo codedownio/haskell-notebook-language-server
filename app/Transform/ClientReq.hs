@@ -1,10 +1,13 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE DataKinds #-}
 
 module Transform.ClientReq where
 
 import Control.Lens hiding ((:>))
+import Control.Monad.Logger
 import qualified Data.Char as C
+import Data.String.Interpolate
 import Data.Text
 import qualified Data.Text as T
 import Language.LSP.Notebook
@@ -15,23 +18,14 @@ import Network.URI
 import System.FilePath
 
 
-transformClientReq :: SMethod m -> RequestMessage m -> RequestMessage m
-transformClientReq meth = over Lens.params (transformClientReq' meth)
-
-transformClientReq' :: SMethod m -> MessageParams m -> MessageParams m
-transformClientReq' STextDocumentDidOpen params = whenNotebook params (over (textDocument . text) transformText params)
-transformClientReq' _ params = params
+type ClientReqMethod m = SMethod (m :: Method FromClient Request)
 
 
-whenNotebook :: Lens.HasTextDocument a TextDocumentItem => a -> a -> a
-whenNotebook params notebookParams = case parseURIReference (T.unpack (getUri (params ^. (textDocument . uri)))) of
-  Nothing -> params
-  Just (URI {..})
-    | fmap C.toLower (takeExtension uriPath) == ".ipynb" -> notebookParams
-    | fmap C.toLower (takeExtension uriPath) == ".ipynb.hs" -> notebookParams
-    | otherwise -> params
+transformClientReq :: (MonadLoggerIO n) => ClientReqMethod m -> RequestMessage m -> n (RequestMessage m)
+transformClientReq meth msg = do
+  logInfoN [i|Transforming #{meth}|]
+  p' <- transformClientReq' meth (msg ^. params)
+  return $ set params p' msg
 
-
-transformText :: Text -> Text
-transformText (T.lines -> ls) = T.intercalate "\n" ls'
-  where (ls', transformer' :: HaskellNotebookTransformer) = project ((EDParams 10) :> ()) ls
+transformClientReq' :: (MonadLoggerIO n) => ClientReqMethod m -> MessageParams m -> n (MessageParams m)
+transformClientReq' _ params = return params

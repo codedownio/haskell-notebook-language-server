@@ -42,6 +42,7 @@ import Transform.ServerRsp
 import Streams
 import RequestMap
 import Parsing
+import Control.Monad.Logger (runStderrLoggingT)
 
 
 data Options = Options {
@@ -88,8 +89,8 @@ main = do
   -- TODO: switch to using pickFromIxMap or some other way to remove old entries
 
   withAsync (readHlsOut clientReqMap serverReqMap hlsOut) $ \_ ->
-    forever $ do
-      (A.eitherDecode <$> parseStream stdin) >>= \case
+    runStderrLoggingT $ forever $ do
+      (A.eitherDecode <$> liftIO (parseStream stdin)) >>= \case
         Left err -> logError [i|Couldn't decode incoming message: #{err}|]
         Right (x :: A.Value) -> do
           m <- readMVar serverReqMap
@@ -104,9 +105,9 @@ main = do
               modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId meth of
                 Just m' -> return m'
                 Nothing -> return m
-              writeToHandle hlsIn (A.encode (transformClientReq meth msg))
+              transformClientReq meth msg >>= writeToHandle hlsIn . A.encode
             Right (FromClientNot meth msg) ->
-              writeToHandle hlsIn (A.encode (transformClientNot meth msg))
+              transformClientNot meth msg >>= writeToHandle hlsIn . A.encode
 
 readHlsOut clientReqMap serverReqMap hlsOut = forever $ do
   (A.eitherDecode <$> parseStream hlsOut) >>= \case
@@ -143,7 +144,7 @@ lookupClientId clientReqMap sid = do
 logError :: MonadIO m => Text -> m ()
 logError = liftIO . T.hPutStrLn stderr
 
-writeToHandle :: Handle -> BL8.ByteString -> IO ()
-writeToHandle h bytes = do
+writeToHandle :: MonadIO m => Handle -> BL8.ByteString -> m ()
+writeToHandle h bytes = liftIO $ do
   BL8.hPutStr h [i|Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
   hFlush h

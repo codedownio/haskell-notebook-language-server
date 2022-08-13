@@ -71,6 +71,7 @@
             (hsPkgs."lens" or (errorHandler.buildDepError "lens"))
             (hsPkgs."lsp-transformer" or (errorHandler.buildDepError "lsp-transformer"))
             (hsPkgs."lsp-types" or (errorHandler.buildDepError "lsp-types"))
+            (hsPkgs."monad-logger" or (errorHandler.buildDepError "monad-logger"))
             (hsPkgs."network-uri" or (errorHandler.buildDepError "network-uri"))
             (hsPkgs."optparse-applicative" or (errorHandler.buildDepError "optparse-applicative"))
             (hsPkgs."safe" or (errorHandler.buildDepError "safe"))

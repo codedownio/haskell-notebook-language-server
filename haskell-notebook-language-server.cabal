@@ -97,6 +97,7 @@ executable haskell-notebook-language-server
     , lens
     , lsp-transformer
     , lsp-types
+    , monad-logger
     , network-uri
     , optparse-applicative
     , safe

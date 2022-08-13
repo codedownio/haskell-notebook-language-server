@@ -52,6 +52,7 @@ executables:
     - bytestring
     - filepath
     - lens
+    - monad-logger
     - network-uri
     - optparse-applicative
     - safe

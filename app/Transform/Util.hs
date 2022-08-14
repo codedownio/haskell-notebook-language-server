@@ -60,3 +60,11 @@ lookupTransformer :: TransformerMonad m => Uri -> m (Maybe HaskellNotebookTransf
 lookupTransformer uri = do
   TransformerState {..} <- ask
   M.lookup (getUri uri) <$> readMVar transformerDocuments
+
+withTransformer :: (TransformerMonad n) => a -> (HaskellNotebookTransformer -> n a) -> Uri -> n a
+withTransformer def cb uri = do
+  lookupTransformer uri >>= \case
+    Nothing -> do
+      logWarnN [i|Couldn't find expected transformer for uri #{uri}|]
+      return def
+    Just tx -> cb tx

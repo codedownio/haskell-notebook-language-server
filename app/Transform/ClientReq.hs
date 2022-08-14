@@ -1,6 +1,8 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Transform.ClientReq where
 
@@ -28,16 +30,23 @@ transformClientReq meth msg = do
   p' <- transformClientReq' meth (msg ^. params)
   return $ set params p' msg
 
-transformClientReq' :: (TransformerMonad n) => ClientReqMethod m -> MessageParams m -> n (MessageParams m)
-transformClientReq' STextDocumentDocumentHighlight params = whenNotebook params $ \uri -> do
-  lookupTransformer uri >>= \case
-    Nothing -> do
-      logWarnN [i|Couldn't find expected transformer for uri #{uri}|]
-      return params
-    Just tx -> do
-      case transformPosition transformerParams tx (params ^. position) of
-        Nothing -> do
-          logWarnN [i|Couldn't transform position #{params ^. position} for uri #{uri}|]
-          return params
-        Just pos' -> return $ set position pos' params
+transformClientReq' :: forall m n. (TransformerMonad n) => ClientReqMethod m -> MessageParams m -> n (MessageParams m)
+transformClientReq' STextDocumentDocumentHighlight params = whenNotebook params $ withTransformer params $ doTransformPosition @m params
+transformClientReq' STextDocumentHover params = whenNotebook params $ withTransformer params $ doTransformPosition @m params
+
+transformClientReq' STextDocumentDefinition params = whenNotebook params $ withTransformer params $ doTransformPosition @m params
+transformClientReq' STextDocumentTypeDefinition params = whenNotebook params $ withTransformer params $ doTransformPosition @m params
+transformClientReq' STextDocumentImplementation params = whenNotebook params $ withTransformer params $ doTransformPosition @m params
+
+-- transformClientReq' STextDocumentCodeAction params = whenNotebook params $ withTransformer params $ doTransformPosition @m params
+
 transformClientReq' _ params = return params
+
+
+
+doTransformPosition :: forall m n. (TransformerMonad n, (HasPosition (MessageParams m) Position)) => MessageParams m -> HaskellNotebookTransformer -> n (MessageParams m)
+doTransformPosition params tx = case transformPosition transformerParams tx (params ^. position) of
+  Nothing -> do
+    logWarnN [i|Couldn't transform position #{params ^. position}|]
+    return params
+  Just pos' -> return $ set position pos' params

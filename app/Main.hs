@@ -132,7 +132,7 @@ readHlsOut clientReqMap serverReqMap hlsOut = forever $ do
             Nothing -> return m
           writeToHandle stdout (A.encode (transformServerReq meth msg))
         Right (FromServerRsp meth msg) ->
-          writeToHandle stdout (A.encode (transformServerRsp meth msg))
+          transformServerRsp meth msg >>= writeToHandle stdout . A.encode
 
 lookupServerId :: ServerRequestMap -> LookupFunc FromServer SMethod
 lookupServerId serverReqMap sid = do

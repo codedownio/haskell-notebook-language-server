@@ -32,15 +32,13 @@ transformClientNot meth msg = do
   return $ set params p' msg
 
 transformClientNot' :: (TransformerMonad n) => ClientNotMethod m -> MessageParams m -> n (MessageParams m)
-transformClientNot' STextDocumentDidOpen params = whenNotebook params $ do
+transformClientNot' STextDocumentDidOpen params = whenNotebook params $ \uri -> do
   let (ls', transformer' :: HaskellNotebookTransformer) = project transformerParams (T.lines (params ^. (textDocument . text)))
   TransformerState {..} <- ask
-  let uriText = getUri (params ^. (textDocument . uri))
-  modifyMVar_ transformerDocuments (\x -> return $! M.insert uriText (SomeTransformer transformer' transformerParams) x)
+  modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri uri) transformer' x)
   return $ set (textDocument . text) (T.intercalate "\n" ls') params
-transformClientNot' STextDocumentDidClose params = whenNotebook' params $ do
-  let uriText = getUri (params ^. (textDocument . uri))
+transformClientNot' STextDocumentDidClose params = whenNotebook params $ \uri -> do
   TransformerState {..} <- ask
-  modifyMVar_ transformerDocuments (\x -> return $! M.delete uriText x)
+  modifyMVar_ transformerDocuments (\x -> return $! M.delete (getUri uri) x)
   return params
 transformClientNot' _ params = return params

@@ -24,21 +24,18 @@ import System.FilePath
 import UnliftIO.MVar
 
 
-whenNotebook :: (MonadLoggerIO n, HasTextDocument a TextDocumentItem) => a -> n a -> n a
-whenNotebook params notebookParams = whenNotebook'' (params ^. (textDocument . uri)) params notebookParams
+whenNotebook :: (MonadLoggerIO n, HasTextDocument a b, HasUri b Uri) => a -> (Uri -> n a) -> n a
+whenNotebook params = whenNotebook' (params ^. (textDocument . uri)) params
 
-whenNotebook' :: (MonadLoggerIO n, HasTextDocument a TextDocumentIdentifier) => a -> n a -> n a
-whenNotebook' params notebookParams = whenNotebook'' undefined params notebookParams
-
-whenNotebook'' :: (MonadLoggerIO n) => Uri -> a -> n a -> n a
-whenNotebook'' uri params notebookParams = case parseURIReference (T.unpack (getUri uri)) of
+whenNotebook' :: (MonadLoggerIO n) => Uri -> a -> (Uri -> n a) -> n a
+whenNotebook' uri params notebookParams = case parseURIReference (T.unpack (getUri uri)) of
   Nothing -> do
     logInfoN [i|Failed to parse URI|]
     return params
   Just (URI {..}) -> do
     logInfoN [i|Got uriPath: #{uriPath}|]
-    if | fmap C.toLower (takeExtension uriPath) == ".ipynb" -> notebookParams
-       | fmap C.toLower (takeExtension uriPath) == ".ipynb.hs" -> notebookParams
+    if | fmap C.toLower (takeExtension uriPath) == ".ipynb" -> notebookParams uri
+       | fmap C.toLower (takeExtension uriPath) == ".ipynb.hs" -> notebookParams uri
        | otherwise -> return params
 
 type TransformerMonad n = (MonadLoggerIO n, MonadReader TransformerState n, MonadUnliftIO n)
@@ -46,11 +43,17 @@ type TransformerMonad n = (MonadLoggerIO n, MonadReader TransformerState n, Mona
 -- * TransformerState
 
 data TransformerState = TransformerState {
-  transformerDocuments :: MVar (Map Text SomeTransformer)
+  transformerDocuments :: MVar (Map Text HaskellNotebookTransformer)
   }
 
 newTransformerState :: (MonadIO m) => m TransformerState
 newTransformerState = TransformerState
   <$> newMVar mempty
 
+transformerParams :: Params HaskellNotebookTransformer
 transformerParams = (EDParams 10) :> ()
+
+lookupTransformer :: TransformerMonad m => Uri -> m (Maybe HaskellNotebookTransformer)
+lookupTransformer uri = do
+  TransformerState {..} <- ask
+  M.lookup (getUri uri) <$> readMVar transformerDocuments

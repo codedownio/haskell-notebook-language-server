@@ -27,6 +27,9 @@ import UnliftIO.MVar
 whenNotebook :: (MonadLoggerIO n, HasTextDocument a b, HasUri b Uri) => a -> (Uri -> n a) -> n a
 whenNotebook params = whenNotebook' (params ^. (textDocument . uri)) params
 
+whenNotebookResult :: (MonadLoggerIO n, HasTextDocument a b, HasUri b Uri) => a -> c -> (Uri -> n c) -> n c
+whenNotebookResult params = whenNotebook' (params ^. (textDocument . uri))
+
 whenNotebook' :: (MonadLoggerIO n) => Uri -> a -> (Uri -> n a) -> n a
 whenNotebook' uri params notebookParams = case parseURIReference (T.unpack (getUri uri)) of
   Nothing -> do

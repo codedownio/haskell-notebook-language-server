@@ -22,7 +22,7 @@ import qualified Data.Text as T
 import qualified Data.Text.IO as T
 import Language.LSP.Notebook
 import Language.LSP.Transformer
-import Language.LSP.Types hiding (FromServerMessage'(..), FromServerMessage, FromClientMessage'(..), FromClientMessage, parseClientMessage, parseServerMessage)
+import Language.LSP.Types hiding (FromServerMessage'(..), FromServerMessage, FromClientMessage'(..), FromClientMessage, parseClientMessage, parseServerMessage, LookupFunc)
 import qualified Language.LSP.Types.Lens as Lens
 import Options.Applicative
 import System.IO
@@ -107,7 +107,7 @@ main = do
                 writeToHandle hlsIn (A.encode (transformClientRsp meth msg))
               Right (FromClientReq meth msg) -> do
                 let msgId = msg ^. Lens.id
-                modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId meth of
+                modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of
                   Just m' -> return m'
                   Nothing -> return m
                 transformClientReq meth msg >>= writeToHandle hlsIn . A.encode
@@ -127,24 +127,24 @@ readHlsOut clientReqMap serverReqMap hlsOut = forever $ do
           writeToHandle stdout (A.encode (transformServerNot meth msg))
         Right (FromServerReq meth msg) -> do
           let msgId = msg ^. Lens.id
-          modifyMVar_ serverReqMap $ \m -> case updateServerRequestMap m msgId meth of
+          modifyMVar_ serverReqMap $ \m -> case updateServerRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of
             Just m' -> return m'
             Nothing -> return m
           writeToHandle stdout (A.encode (transformServerReq meth msg))
-        Right (FromServerRsp meth msg) ->
-          transformServerRsp meth msg >>= writeToHandle stdout . A.encode
+        Right (FromServerRsp meth initialParams msg) ->
+          transformServerRsp meth initialParams msg >>= writeToHandle stdout . A.encode
 
-lookupServerId :: ServerRequestMap -> LookupFunc FromServer SMethod
+lookupServerId :: ServerRequestMap -> LookupFunc FromServer
 lookupServerId serverReqMap sid = do
   case lookupServerRequestMap serverReqMap sid of
     Nothing -> Nothing
-    Just meth -> Just (meth, meth)
+    Just (SMethodAndParams meth initialParams) -> Just (meth, initialParams)
 
-lookupClientId :: ClientRequestMap -> LookupFunc FromClient SMethod
+lookupClientId :: ClientRequestMap -> LookupFunc FromClient
 lookupClientId clientReqMap sid = do
   case lookupClientRequestMap clientReqMap sid of
     Nothing -> Nothing
-    Just meth -> Just (meth, meth)
+    Just (SMethodAndParams meth initialParams) -> Just (meth, initialParams)
 
 logErr :: MonadLoggerIO m => Text -> m ()
 logErr = logInfoN

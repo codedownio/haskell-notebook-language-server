@@ -53,10 +53,12 @@ executables:
     - filepath
     - lens
     - monad-logger
+    - mtl
     - network-uri
     - optparse-applicative
     - safe
     - unliftio
+    - unliftio-core
 
   haskell-notebook-language-server-test:
     main:                Main.hs

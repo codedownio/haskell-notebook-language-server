@@ -38,11 +38,13 @@ import Transform.ClientRsp
 import Transform.ServerNot
 import Transform.ServerReq
 import Transform.ServerRsp
+import Transform.Util
 
 import Streams
 import RequestMap
 import Parsing
 import Control.Monad.Logger (runStderrLoggingT)
+import Control.Monad.Reader
 
 
 data Options = Options {
@@ -88,29 +90,32 @@ main = do
 
   -- TODO: switch to using pickFromIxMap or some other way to remove old entries
 
-  withAsync (readHlsOut clientReqMap serverReqMap hlsOut) $ \_ ->
-    runStderrLoggingT $ forever $ do
-      (A.eitherDecode <$> liftIO (parseStream stdin)) >>= \case
-        Left err -> logError [i|Couldn't decode incoming message: #{err}|]
-        Right (x :: A.Value) -> do
-          m <- readMVar serverReqMap
-          case A.parseEither (parseClientMessage (lookupServerId m)) x of
-            Left err -> do
-              logError [i|Couldn't decode incoming message: #{err}|]
-              writeToHandle hlsIn (A.encode x)
-            Right (FromClientRsp meth msg) -> do
-              writeToHandle hlsIn (A.encode (transformClientRsp meth msg))
-            Right (FromClientReq meth msg) -> do
-              let msgId = msg ^. Lens.id
-              modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId meth of
-                Just m' -> return m'
-                Nothing -> return m
-              transformClientReq meth msg >>= writeToHandle hlsIn . A.encode
-            Right (FromClientNot meth msg) ->
-              transformClientNot meth msg >>= writeToHandle hlsIn . A.encode
+  transformerState <- newTransformerState
+
+  runStderrLoggingT $ flip runReaderT transformerState $
+    withAsync (readHlsOut clientReqMap serverReqMap hlsOut) $ \_ ->
+      forever $ do
+        (A.eitherDecode <$> liftIO (parseStream stdin)) >>= \case
+          Left err -> logError [i|Couldn't decode incoming message: #{err}|]
+          Right (x :: A.Value) -> do
+            m <- readMVar serverReqMap
+            case A.parseEither (parseClientMessage (lookupServerId m)) x of
+              Left err -> do
+                logError [i|Couldn't decode incoming message: #{err}|]
+                writeToHandle hlsIn (A.encode x)
+              Right (FromClientRsp meth msg) -> do
+                writeToHandle hlsIn (A.encode (transformClientRsp meth msg))
+              Right (FromClientReq meth msg) -> do
+                let msgId = msg ^. Lens.id
+                modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId meth of
+                  Just m' -> return m'
+                  Nothing -> return m
+                transformClientReq meth msg >>= writeToHandle hlsIn . A.encode
+              Right (FromClientNot meth msg) ->
+                transformClientNot meth msg >>= writeToHandle hlsIn . A.encode
 
 readHlsOut clientReqMap serverReqMap hlsOut = forever $ do
-  (A.eitherDecode <$> parseStream hlsOut) >>= \case
+  (A.eitherDecode <$> liftIO (parseStream hlsOut)) >>= \case
     Left err -> logError [i|Couldn't decode HLS output: #{err}|]
     Right (x :: A.Value) -> do
       m <- readMVar clientReqMap

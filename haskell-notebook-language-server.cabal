@@ -64,6 +64,7 @@ executable haskell-notebook-language-server
       Transform.ServerNot
       Transform.ServerReq
       Transform.ServerRsp
+      Transform.Util
       Paths_haskell_notebook_language_server
   hs-source-dirs:
       app
@@ -98,12 +99,14 @@ executable haskell-notebook-language-server
     , lsp-transformer
     , lsp-types
     , monad-logger
+    , mtl
     , network-uri
     , optparse-applicative
     , safe
     , string-interpolate
     , text
     , unliftio
+    , unliftio-core
     , vector
   default-language: Haskell2010
 

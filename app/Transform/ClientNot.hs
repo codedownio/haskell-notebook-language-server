@@ -27,7 +27,7 @@ type ClientNotMethod m = SMethod (m :: Method FromClient Notification)
 
 transformClientNot :: (TransformerMonad n) => ClientNotMethod m -> NotificationMessage m -> n (NotificationMessage m)
 transformClientNot meth msg = do
-  logInfoN [i|Transforming #{meth}|]
+  logInfoN [i|Transforming client not #{meth}|]
   p' <- transformClientNot' meth (msg ^. params)
   return $ set params p' msg
 

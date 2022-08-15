@@ -68,3 +68,12 @@ withTransformer def cb uri = do
       logWarnN [i|Couldn't find expected transformer for uri #{uri}|]
       return def
     Just tx -> cb tx
+
+modifyTransformer :: (TransformerMonad n) => a -> (HaskellNotebookTransformer -> n (HaskellNotebookTransformer, a)) -> Uri -> n a
+modifyTransformer def cb uri = do
+  TransformerState {..} <- ask
+  modifyMVar transformerDocuments $ \m -> case M.lookup (getUri uri) m of
+    Nothing -> return (m, def)
+    Just tx -> do
+      (tx', ret) <- cb tx
+      return (M.insert (getUri uri) tx' m, ret)

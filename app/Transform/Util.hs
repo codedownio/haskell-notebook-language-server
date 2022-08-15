@@ -53,8 +53,12 @@ newTransformerState :: (MonadIO m) => m TransformerState
 newTransformerState = TransformerState
   <$> newMVar mempty
 
+
+expressionToDeclarationParams :: Params ExpressionToDeclaration
+expressionToDeclarationParams = EDParams 10
+
 transformerParams :: Params HaskellNotebookTransformer
-transformerParams = (EDParams 10) :> ()
+transformerParams = expressionToDeclarationParams :> ()
 
 lookupTransformer :: TransformerMonad m => Uri -> m (Maybe (HaskellNotebookTransformer, [Text]))
 lookupTransformer uri = do

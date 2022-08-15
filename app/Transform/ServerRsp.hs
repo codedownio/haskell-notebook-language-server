@@ -4,10 +4,11 @@
 
 module Transform.ServerRsp where
 
-import Control.Lens
+import Control.Lens hiding (List)
 import Control.Monad.Logger
 import Data.String.Interpolate
 import Language.LSP.Notebook (HaskellNotebookTransformer)
+import Language.LSP.Notebook.ExpressionToDeclaration (containsExpressionVariable, isExpressionVariable)
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
@@ -30,6 +31,17 @@ transformServerRsp' STextDocumentDocumentHighlight initialParams result = whenNo
   return $ fmap (untransformRanged tx) result
 transformServerRsp' STextDocumentHover initialParams result = whenNotebookResult initialParams result $ withTransformer result $ \(tx, _) -> do
   return (untransformRangedMaybe tx <$> result)
+transformServerRsp' STextDocumentDocumentSymbol initialParams result = whenNotebookResult initialParams result $ withTransformer result $ \(tx, _) ->
+  case result of
+    InL (List documentSymbols) -> return $ InL (List (filter (not . isInternalSymbol) documentSymbols))
+    InR (List symbolInformations) -> return $ InR (List (filter (not . isInternalSymbol) symbolInformations))
+  where
+    isInternalSymbol x = isExpressionVariable expressionToDeclarationParams (x ^. name)
+transformServerRsp' STextDocumentCodeAction initialParams result@(List xs) = whenNotebookResult initialParams result $ withTransformer result $ \(tx, _) ->
+  pure $ List $ filter isInternalReferringCodeAction xs
+  where
+    isInternalReferringCodeAction (InL command) = containsExpressionVariable expressionToDeclarationParams (command ^. title)
+    isInternalReferringCodeAction (InR codeAction) = containsExpressionVariable expressionToDeclarationParams (codeAction ^. title)
 transformServerRsp' _ _ result = return result
 
 

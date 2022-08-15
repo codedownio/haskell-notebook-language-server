@@ -10,8 +10,12 @@
 
 module Language.LSP.Notebook.ExpressionToDeclaration where
 
+import Control.Monad.IO.Class
+import Data.Char (isDigit)
+import Data.Either (fromRight)
 import qualified Data.List as L
 import Data.Set as Set
+import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Vector as V hiding (zip)
@@ -22,12 +26,29 @@ import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Transformer
 import Language.LSP.Types
 import System.IO.Unsafe (unsafePerformIO)
+import Text.Regex.Base (defaultExecOpt)
+import Text.Regex.PCRE.Text (Regex, compile, compBlank, execute)
 
 
 newtype ExpressionToDeclaration = ExpressionToDeclaration (Set UInt)
   deriving Show
 
 data EDParams = EDParams { numberPadding :: Int }
+
+isExpressionVariable :: EDParams -> Text -> Bool
+isExpressionVariable (EDParams { numberPadding }) t
+  | T.length t == 4 + numberPadding = case T.splitAt 4 t of
+      ("expr", digits) -> T.all isDigit digits
+      _ -> False
+  | otherwise = False
+
+containsExpressionVariable :: (MonadIO m, MonadFail m) => EDParams -> Text -> m Bool
+containsExpressionVariable (EDParams {..}) t = do
+  Right regex <- liftIO $ compile compBlank defaultExecOpt [i|expr\\d{#{numberPadding}}|]
+  liftIO (execute regex t) >>= \case
+    Right Nothing -> return False
+    Left err -> return False -- TODO: exception?
+    _ -> return True
 
 instance Transformer ExpressionToDeclaration where
   type Params ExpressionToDeclaration = EDParams

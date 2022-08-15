@@ -46,6 +46,8 @@ library
     , ihaskell
     , lsp-transformer
     , lsp-types
+    , regex-base
+    , regex-pcre-builtin
     , string-interpolate
     , text
     , vector
@@ -103,6 +105,8 @@ executable haskell-notebook-language-server
     , mtl
     , network-uri
     , optparse-applicative
+    , regex-base
+    , regex-pcre-builtin
     , safe
     , string-interpolate
     , text
@@ -147,6 +151,8 @@ executable haskell-notebook-language-server-test
     , ihaskell
     , lsp-transformer
     , lsp-types
+    , regex-base
+    , regex-pcre-builtin
     , sandwich
     , string-interpolate
     , text

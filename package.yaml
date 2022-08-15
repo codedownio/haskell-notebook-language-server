@@ -57,6 +57,7 @@ executables:
     - network-uri
     - optparse-applicative
     - safe
+    - text-rope
     - unliftio
     - unliftio-core
 

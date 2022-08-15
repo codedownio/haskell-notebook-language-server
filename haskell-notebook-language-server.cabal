@@ -54,6 +54,7 @@ library
 executable haskell-notebook-language-server
   main-is: Main.hs
   other-modules:
+      ApplyChanges
       Parsing
       RequestMap
       Streams
@@ -105,6 +106,7 @@ executable haskell-notebook-language-server
     , safe
     , string-interpolate
     , text
+    , text-rope
     , unliftio
     , unliftio-core
     , vector

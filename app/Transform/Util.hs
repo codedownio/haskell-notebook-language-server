@@ -46,7 +46,7 @@ type TransformerMonad n = (MonadLoggerIO n, MonadReader TransformerState n, Mona
 -- * TransformerState
 
 data TransformerState = TransformerState {
-  transformerDocuments :: MVar (Map Text HaskellNotebookTransformer)
+  transformerDocuments :: MVar (Map Text (HaskellNotebookTransformer, [Text]))
   }
 
 newTransformerState :: (MonadIO m) => m TransformerState
@@ -56,12 +56,12 @@ newTransformerState = TransformerState
 transformerParams :: Params HaskellNotebookTransformer
 transformerParams = (EDParams 10) :> ()
 
-lookupTransformer :: TransformerMonad m => Uri -> m (Maybe HaskellNotebookTransformer)
+lookupTransformer :: TransformerMonad m => Uri -> m (Maybe (HaskellNotebookTransformer, [Text]))
 lookupTransformer uri = do
   TransformerState {..} <- ask
   M.lookup (getUri uri) <$> readMVar transformerDocuments
 
-withTransformer :: (TransformerMonad n) => a -> (HaskellNotebookTransformer -> n a) -> Uri -> n a
+withTransformer :: (TransformerMonad n) => a -> ((HaskellNotebookTransformer, [Text]) -> n a) -> Uri -> n a
 withTransformer def cb uri = do
   lookupTransformer uri >>= \case
     Nothing -> do
@@ -69,7 +69,7 @@ withTransformer def cb uri = do
       return def
     Just tx -> cb tx
 
-modifyTransformer :: (TransformerMonad n) => a -> (HaskellNotebookTransformer -> n (HaskellNotebookTransformer, a)) -> Uri -> n a
+modifyTransformer :: (TransformerMonad n) => a -> ((HaskellNotebookTransformer, [Text]) -> n ((HaskellNotebookTransformer, [Text]), a)) -> Uri -> n a
 modifyTransformer def cb uri = do
   TransformerState {..} <- ask
   modifyMVar transformerDocuments $ \m -> case M.lookup (getUri uri) m of

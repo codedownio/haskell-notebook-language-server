@@ -4,6 +4,7 @@
 
 module Transform.ClientNot where
 
+import ApplyChanges
 import Control.Lens hiding ((:>), List)
 import Control.Monad.Logger
 import Control.Monad.Reader
@@ -12,6 +13,8 @@ import Data.Map as M
 import Data.String.Interpolate
 import Data.Text
 import qualified Data.Text as T
+import qualified Data.Text.Utf16.Lines as Lines
+import qualified Data.Text.Utf16.Rope as Rope
 import Language.LSP.Notebook
 import Language.LSP.Transformer
 import Language.LSP.Types
@@ -34,16 +37,18 @@ transformClientNot meth msg = do
 transformClientNot' :: (TransformerMonad n) => ClientNotMethod m -> MessageParams m -> n (MessageParams m)
 
 transformClientNot' STextDocumentDidOpen params = whenNotebook params $ \uri -> do
-  let (ls', transformer' :: HaskellNotebookTransformer) = project transformerParams (T.lines (params ^. (textDocument . text)))
+  let ls = T.lines (params ^. (textDocument . text))
+  let (ls', transformer' :: HaskellNotebookTransformer) = project transformerParams ls
   TransformerState {..} <- ask
-  modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri uri) transformer' x)
+  modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri uri) (transformer', ls) x)
   return $ set (textDocument . text) (T.intercalate "\n" ls') params
-transformClientNot' STextDocumentDidChange params = whenNotebook params $ modifyTransformer params $ \tx -> do
-  let before = undefined
-  let after = undefined
+transformClientNot' STextDocumentDidChange params = whenNotebook params $ modifyTransformer params $ \(tx, before) -> do
   let (List changeEvents) = params ^. contentChanges
-  let (before', after', changeEvents', tx') = handleDiff transformerParams before after changeEvents tx
-  return (tx', set contentChanges (List changeEvents') params)
+  afterRope <- applyChanges (before & T.intercalate "\n" & Rope.fromText) changeEvents
+  let after = Rope.toTextLines afterRope
+            & Lines.lines
+  let (_before', _after', changeEvents', tx') = handleDiff transformerParams before after changeEvents tx
+  return ((tx', after), set contentChanges (List changeEvents') params)
 transformClientNot' STextDocumentDidClose params = whenNotebook params $ \uri -> do
   TransformerState {..} <- ask
   modifyMVar_ transformerDocuments (\x -> return $! M.delete (getUri uri) x)

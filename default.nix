@@ -34,7 +34,7 @@ in
 haskell-nix.project {
   inherit src;
 
-  stack-sha256 = "18p3nsxfzc29zcwmkm7sc5pa56m1zgbxpkhjx47saxpc6gc9shy0";
+  stack-sha256 = "0qaar0hb3x1qd0p2dl96yhl2s9spbdfmza2w740wkvi8grg0a2y5";
   materialized = ./materialized;
   inherit checkMaterialization;
 

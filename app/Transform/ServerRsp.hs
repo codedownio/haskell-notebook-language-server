@@ -26,9 +26,9 @@ transformServerRsp meth initialParams msg = do
       return $ set result (Right p') msg
 
 transformServerRsp' :: (TransformerMonad n) => ServerRspMethod m -> MessageParams m -> ResponseResult m -> n (ResponseResult m)
-transformServerRsp' STextDocumentDocumentHighlight initialParams result = whenNotebookResult initialParams result $ withTransformer result $ \tx -> do
+transformServerRsp' STextDocumentDocumentHighlight initialParams result = whenNotebookResult initialParams result $ withTransformer result $ \(tx, _) -> do
   return $ fmap (untransformRanged tx) result
-transformServerRsp' STextDocumentHover initialParams result = whenNotebookResult initialParams result $ withTransformer result $ \tx -> do
+transformServerRsp' STextDocumentHover initialParams result = whenNotebookResult initialParams result $ withTransformer result $ \(tx, _) -> do
   return (untransformRangedMaybe tx <$> result)
 transformServerRsp' _ _ result = return result
 

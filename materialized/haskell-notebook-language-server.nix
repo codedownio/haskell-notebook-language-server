@@ -78,6 +78,7 @@
             (hsPkgs."safe" or (errorHandler.buildDepError "safe"))
             (hsPkgs."string-interpolate" or (errorHandler.buildDepError "string-interpolate"))
             (hsPkgs."text" or (errorHandler.buildDepError "text"))
+            (hsPkgs."text-rope" or (errorHandler.buildDepError "text-rope"))
             (hsPkgs."unliftio" or (errorHandler.buildDepError "unliftio"))
             (hsPkgs."unliftio-core" or (errorHandler.buildDepError "unliftio-core"))
             (hsPkgs."vector" or (errorHandler.buildDepError "vector"))

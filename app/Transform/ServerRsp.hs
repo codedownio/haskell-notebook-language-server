@@ -39,8 +39,7 @@ transformServerRsp' STextDocumentDocumentSymbol initialParams result = whenNoteb
   where
     isInternalSymbol x = isExpressionVariable expressionToDeclarationParams (x ^. name)
 transformServerRsp' STextDocumentCodeAction initialParams result@(List xs) = whenNotebookResult initialParams result $ withTransformer result $ \(tx, _) -> do
-  filtered <- filterM isInternalReferringCodeAction xs
-  pure $ List filtered
+  List <$> filterM (fmap not . isInternalReferringCodeAction) xs
   where
     isInternalReferringCodeAction (InL command) = containsExpressionVariable expressionToDeclarationParams (command ^. title)
     isInternalReferringCodeAction (InR codeAction) = containsExpressionVariable expressionToDeclarationParams (codeAction ^. title)

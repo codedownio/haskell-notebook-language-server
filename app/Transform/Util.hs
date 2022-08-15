@@ -41,7 +41,7 @@ whenNotebook' uri params notebookParams = case parseURIReference (T.unpack (getU
        | fmap C.toLower (takeExtension uriPath) == ".ipynb.hs" -> notebookParams uri
        | otherwise -> return params
 
-type TransformerMonad n = (MonadLoggerIO n, MonadReader TransformerState n, MonadUnliftIO n)
+type TransformerMonad n = (MonadLoggerIO n, MonadReader TransformerState n, MonadUnliftIO n, MonadFail n)
 
 -- * TransformerState
 

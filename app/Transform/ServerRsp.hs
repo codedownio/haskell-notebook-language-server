@@ -5,6 +5,7 @@
 module Transform.ServerRsp where
 
 import Control.Lens hiding (List)
+import Control.Monad
 import Control.Monad.Logger
 import Data.String.Interpolate
 import Language.LSP.Notebook (HaskellNotebookTransformer)
@@ -37,8 +38,9 @@ transformServerRsp' STextDocumentDocumentSymbol initialParams result = whenNoteb
     InR (List symbolInformations) -> return $ InR (List (filter (not . isInternalSymbol) symbolInformations))
   where
     isInternalSymbol x = isExpressionVariable expressionToDeclarationParams (x ^. name)
-transformServerRsp' STextDocumentCodeAction initialParams result@(List xs) = whenNotebookResult initialParams result $ withTransformer result $ \(tx, _) ->
-  pure $ List $ filter isInternalReferringCodeAction xs
+transformServerRsp' STextDocumentCodeAction initialParams result@(List xs) = whenNotebookResult initialParams result $ withTransformer result $ \(tx, _) -> do
+  filtered <- filterM isInternalReferringCodeAction xs
+  pure $ List filtered
   where
     isInternalReferringCodeAction (InL command) = containsExpressionVariable expressionToDeclarationParams (command ^. title)
     isInternalReferringCodeAction (InR codeAction) = containsExpressionVariable expressionToDeclarationParams (codeAction ^. title)

@@ -12,15 +12,13 @@ import Test.Sandwich
 
 spec :: TopSpec
 spec = do
-  it "strips out GHCi commands" $ do
+  it "strips out GHCi directives" $ do
     let (ls, ed@(StripDirective affectedLines)) = project SDParams ["foo = 42", ":t foo"]
     ls `shouldBe` ["foo = 42", ""]
     affectedLines `shouldBe` [1]
 
-    -- transformAndUntransform (EDParams 10) (Position 0 0) (Position 0 17) ed
-    -- transformAndUntransform (EDParams 10) (Position 0 1) (Position 0 18) ed
-    -- transformAndUntransform (EDParams 10) (Position 1 0) (Position 1 0) ed
-
+    transformPosition SDParams ed (Position 1 3) `shouldBe` (Just (Position 1 0))
+    untransformPosition SDParams ed (Position 1 0) `shouldBe` (Position 1 0)
 
 
 main :: IO ()

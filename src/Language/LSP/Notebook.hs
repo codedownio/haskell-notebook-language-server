@@ -8,7 +8,8 @@ module Language.LSP.Notebook (
 
 import Language.LSP.Notebook.ExpressionToDeclaration
 import Language.LSP.Notebook.FrontSifter
+import Language.LSP.Notebook.StripDirective
 import Language.LSP.Transformer
 
 
-type HaskellNotebookTransformer = ExpressionToDeclaration :> FrontSifter
+type HaskellNotebookTransformer = StripDirective :> ExpressionToDeclaration :> FrontSifter

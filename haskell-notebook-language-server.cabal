@@ -18,6 +18,7 @@ library
       Language.LSP.Notebook
       Language.LSP.Notebook.ExpressionToDeclaration
       Language.LSP.Notebook.FrontSifter
+      Language.LSP.Notebook.StripDirective
       Language.LSP.Notebook.Util
   other-modules:
       Paths_haskell_notebook_language_server

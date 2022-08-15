@@ -19,7 +19,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 main :: IO ()
 main = do
-  let text = many
+  let text = ghciCommand
 
   locatedCodeBlocks <- runGhc (Just GHC.Paths.libdir) $ parseString $ T.unpack text
   putStrLn [i|Got parsed: #{fmap unloc locatedCodeBlocks}|]
@@ -46,4 +46,10 @@ reorder =
          FooBar
          )
        bar = 42
+      |]
+
+ghciCommand :: Text
+ghciCommand =
+  [__i|foo = 42
+       :t foo
       |]

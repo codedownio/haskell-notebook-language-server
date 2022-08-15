@@ -16,6 +16,7 @@ import Data.String.Interpolate
 import Data.Text
 import qualified Data.Text as T
 import Language.LSP.Notebook
+import Language.LSP.Notebook.StripDirective
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
@@ -41,7 +42,12 @@ whenNotebook' uri params notebookParams = case parseURIReference (T.unpack (getU
        | fmap C.toLower (takeExtension uriPath) == ".ipynb.hs" -> notebookParams uri
        | otherwise -> return params
 
-type TransformerMonad n = (MonadLoggerIO n, MonadReader TransformerState n, MonadUnliftIO n, MonadFail n)
+type TransformerMonad n = (
+  MonadLoggerIO n
+  , MonadReader TransformerState n
+  , MonadUnliftIO n
+  , MonadFail n
+  )
 
 -- * TransformerState
 
@@ -58,7 +64,7 @@ expressionToDeclarationParams :: Params ExpressionToDeclaration
 expressionToDeclarationParams = EDParams 10
 
 transformerParams :: Params HaskellNotebookTransformer
-transformerParams = expressionToDeclarationParams :> ()
+transformerParams = SDParams :> expressionToDeclarationParams :> ()
 
 lookupTransformer :: TransformerMonad m => Uri -> m (Maybe (HaskellNotebookTransformer, [Text]))
 lookupTransformer uri = do

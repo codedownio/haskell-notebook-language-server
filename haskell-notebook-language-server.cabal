@@ -20,6 +20,7 @@ library
       Language.LSP.Notebook.FrontSifter
       Language.LSP.Notebook.StripDirective
       Language.LSP.Notebook.Util
+      Language.LSP.Transformer
   other-modules:
       Paths_haskell_notebook_language_server
   hs-source-dirs:
@@ -45,7 +46,6 @@ library
     , ghc-parser
     , ghc-paths
     , ihaskell
-    , lsp-transformer
     , lsp-types
     , regex-base
     , regex-pcre-builtin
@@ -100,7 +100,6 @@ executable haskell-notebook-language-server
     , haskell-notebook-language-server
     , ihaskell
     , lens
-    , lsp-transformer
     , lsp-types
     , monad-logger
     , mtl
@@ -151,7 +150,6 @@ executable haskell-notebook-language-server-test
     , ghc-paths
     , haskell-notebook-language-server
     , ihaskell
-    , lsp-transformer
     , lsp-types
     , regex-base
     , regex-pcre-builtin

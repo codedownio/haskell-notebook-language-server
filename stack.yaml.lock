@@ -3,18 +3,7 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages:
-- completed:
-    name: lsp-transformer
-    version: 0.1.0.0
-    git: https://github.com/codedownio/lsp-transformer.git
-    pantry-tree:
-      size: 588
-      sha256: 41d3f9cfaf446fc97c0d1cbdcd3c4200c73f2c5524e36ff21685ff0150854dfe
-    commit: 65b4e01bd931d080ad2fe592983d2f3c88f4f91e
-  original:
-    git: https://github.com/codedownio/lsp-transformer.git
-    commit: 65b4e01bd931d080ad2fe592983d2f3c88f4f91e
+packages: []
 snapshots:
 - completed:
     size: 618952

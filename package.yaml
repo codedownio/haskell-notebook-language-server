@@ -13,7 +13,6 @@ dependencies:
 - ghc-parser
 - ghc-paths
 - ihaskell
-- lsp-transformer
 - lsp-types
 - regex-base
 - regex-pcre-builtin

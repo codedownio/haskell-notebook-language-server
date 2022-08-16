@@ -9,12 +9,12 @@ packages:
     version: 0.1.0.0
     git: https://github.com/codedownio/lsp-transformer.git
     pantry-tree:
-      size: 587
-      sha256: dc41b2b4de701c4ad3e693d4fab41050517dc4b1289bd6fc74422ff9cbabbaca
-    commit: 520bd819461f2b47d631e551badf1e05bdaa1cbf
+      size: 588
+      sha256: 41d3f9cfaf446fc97c0d1cbdcd3c4200c73f2c5524e36ff21685ff0150854dfe
+    commit: 65b4e01bd931d080ad2fe592983d2f3c88f4f91e
   original:
     git: https://github.com/codedownio/lsp-transformer.git
-    commit: 520bd819461f2b47d631e551badf1e05bdaa1cbf
+    commit: 65b4e01bd931d080ad2fe592983d2f3c88f4f91e
 snapshots:
 - completed:
     size: 618952

@@ -124,6 +124,7 @@ executable haskell-notebook-language-server-test
       Test.Common
       Test.ExpressionToDeclaration
       Test.FrontendSifter
+      Test.StripDirective
       Paths_haskell_notebook_language_server
   hs-source-dirs:
       test

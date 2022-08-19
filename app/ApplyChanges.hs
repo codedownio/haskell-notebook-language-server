@@ -2,13 +2,29 @@
 module ApplyChanges where
 
 import Control.Monad
+import Control.Monad.Identity
 import Control.Monad.Logger
+import Data.Function
 import Data.String.Interpolate
 import Data.Text
+import qualified Data.Text as T
+import qualified Data.Text.Utf16.Lines as Lines
 import Data.Text.Utf16.Rope ( Rope )
 import qualified Data.Text.Utf16.Rope as Rope
 import qualified Language.LSP.Types as J
 
+
+applyChangesText :: (MonadLogger m) => [J.TextDocumentContentChangeEvent] -> [Text] -> m [Text]
+applyChangesText changes before = do
+  afterRope <- applyChanges (before & T.intercalate "\n" & Rope.fromText) changes
+  return $ Rope.toTextLines afterRope
+         & Lines.lines
+
+applyChangesTextSilent :: [J.TextDocumentContentChangeEvent] -> [Text] -> [Text]
+applyChangesTextSilent changes before = runIdentity $ do
+  afterRope <- runNoLoggingT $ applyChanges (before & T.intercalate "\n" & Rope.fromText) changes
+  return $ Rope.toTextLines afterRope
+         & Lines.lines
 
 -- * Based on code from haskell-lsp/lsp (https://github.com/haskell/lsp/tree/master/lsp)
 -- Under MIT license

@@ -44,9 +44,7 @@ transformClientNot' STextDocumentDidOpen params = whenNotebook params $ \uri -> 
   return $ set (textDocument . text) (T.intercalate "\n" ls') params
 transformClientNot' STextDocumentDidChange params = whenNotebook params $ modifyTransformer params $ \(tx, before) -> do
   let (List changeEvents) = params ^. contentChanges
-  afterRope <- applyChanges (before & T.intercalate "\n" & Rope.fromText) changeEvents
-  let after = Rope.toTextLines afterRope
-            & Lines.lines
+  after <- applyChangesText changeEvents before
   let (_before', _after', changeEvents', tx') = handleDiff transformerParams before after changeEvents tx
   return ((tx', after), set contentChanges (List changeEvents') params)
 transformClientNot' STextDocumentDidClose params = whenNotebook params $ \uri -> do

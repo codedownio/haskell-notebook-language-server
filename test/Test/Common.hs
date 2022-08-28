@@ -6,8 +6,8 @@ module Test.Common where
 import Control.Monad.IO.Class
 import Control.Monad.Logger
 import qualified Data.List as L
+import Data.String.Interpolate
 import Data.Text
-import Language.LSP.Transformer
 import qualified Data.Text as T
 import GHC.Stack
 import Language.LSP.Transformer
@@ -35,6 +35,20 @@ arbitrarySingleLineChange docLines = do
 
   pure $ TextDocumentContentChangeEvent (Just (Range (p lineNo pos1) (p lineNo pos2))) Nothing (T.pack toInsert)
 
+arbitraryChange :: [Text] -> Gen TextDocumentContentChangeEvent
+arbitraryChange docLines = do
+  let totalLen = T.length (T.intercalate "\n" docLines)
+  pos1 <- chooseInt (0, max 0 (fromIntegral (totalLen - 1)))
+  pos2 <- chooseInt (pos1, (max pos1 (fromIntegral (totalLen - 1))))
+
+  toInsert :: [String] <- arbitrary
+
+  let posToPosition = undefined
+
+  let position1 = posToPosition pos1
+  let position2 = posToPosition pos2
+
+  pure $ TextDocumentContentChangeEvent (Just (Range position1 position2)) Nothing (T.intercalate "\n" $ fmap T.pack toInsert)
 
 testChange :: forall a. (
   Transformer a, Eq a, Show a
@@ -84,3 +98,38 @@ quickCheckSingleProp prop = do
   liftIO (quickCheckWithResult (stdArgs { Q.chatty = False, Q.maxSuccess = 1 }) prop) >>= \case
     Q.Success {..} -> info (T.pack output)
     x -> throwIO $ Reason (Just callStack) (output x)
+
+
+docLines :: [Text]
+docLines = T.splitOn "\n" doc
+
+doc :: Text
+doc = [i|
+
+\# Here's a Markdown document!
+
+```{python}
+foo = 42
+print(foo)
+```
+
+and some Haskell code:
+
+```{haskell}
+putStrLn "hi there"
+bar = 42
+```
+
+Now let's do a directive
+
+```{haskell}
+:t bar
+```
+
+Finally, an import
+
+```{haskell}
+import Data.Aeson
+```
+
+|]

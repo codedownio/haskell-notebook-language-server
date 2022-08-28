@@ -74,4 +74,5 @@ executables:
     - haskell-notebook-language-server
     - QuickCheck
     - sandwich
+    - sandwich-quickcheck
     - unliftio

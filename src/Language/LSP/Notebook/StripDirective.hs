@@ -31,7 +31,7 @@ import Text.Regex.PCRE.Text (Regex, compile, compBlank, execute)
 
 
 newtype StripDirective = StripDirective (Set UInt)
-  deriving Show
+  deriving (Show, Eq)
 
 data SDParams = SDParams { }
 

@@ -31,7 +31,7 @@ import System.IO.Unsafe (unsafePerformIO)
 
 
 newtype FrontSifter = FrontSifter (Vector Int)
-  deriving Show
+  deriving (Show, Eq)
 
 
 instance Transformer FrontSifter where

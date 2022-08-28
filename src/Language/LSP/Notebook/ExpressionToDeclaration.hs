@@ -31,7 +31,7 @@ import Text.Regex.PCRE.Text (Regex, compile, compBlank, execute)
 
 
 newtype ExpressionToDeclaration = ExpressionToDeclaration (Set UInt)
-  deriving Show
+  deriving (Show, Eq)
 
 data EDParams = EDParams { numberPadding :: Int }
 

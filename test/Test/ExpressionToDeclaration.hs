@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE TypeApplications #-}
 
 module Test.ExpressionToDeclaration where
 
@@ -8,10 +9,11 @@ import Language.LSP.Transformer
 import Language.LSP.Types hiding (line)
 import Test.Common
 import Test.Sandwich
+import Test.Sandwich.QuickCheck
 
 
 spec :: TopSpec
-spec = do
+spec = introduceQuickCheck $ do
   it "projects and transforms a single expression" $ do
     let (ls, ed@(ExpressionToDeclaration affectedLines)) = project (EDParams 10) ["putStrLn 42", "foo = 42"]
     ls `shouldBe` ["expr0000000000 = putStrLn 42", "foo = 42"]
@@ -41,6 +43,11 @@ spec = do
                  , "foo = 42"]
     affectedLines `shouldBe` [0, 1]
 
+  prop "Does handleDiff for single line changes correctly" $ do
+    testChange @ExpressionToDeclaration (EDParams 10) docLines <$> arbitrarySingleLineChange docLines
+
+  prop "Does handleDiff for arbitrary changes correctly" $ do
+    testChange @ExpressionToDeclaration (EDParams 10) docLines <$> arbitraryChange docLines
 
 
 main :: IO ()

@@ -159,6 +159,7 @@ executable haskell-notebook-language-server-test
     , regex-base
     , regex-pcre-builtin
     , sandwich
+    , sandwich-quickcheck
     , string-interpolate
     , text
     , text-rope

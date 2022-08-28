@@ -63,9 +63,7 @@ instance Transformer StripDirective where
       countNewLines (_:xs) = countNewLines xs
       countNewLines [] = 0
 
-  -- TODO: efficient implementation
-  -- handleDiff :: Params StripDirective -> [Text] -> [Text] -> [TextDocumentContentChangeEvent] -> StripDirective -> ([Text], [Text], [TextDocumentContentChangeEvent], StripDirective)
-  -- handleDiff (SDParams {..}) before after changes x@(StripDirective indices) = undefined
+  handleDiff (SDParams {}) changes transformer@(StripDirective indices) = undefined
 
   transformPosition :: Params StripDirective -> StripDirective -> Position -> Maybe Position
   transformPosition SDParams (StripDirective affectedLines) (Position l c)

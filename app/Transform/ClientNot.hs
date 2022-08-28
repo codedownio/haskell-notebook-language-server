@@ -4,7 +4,6 @@
 
 module Transform.ClientNot where
 
-import ApplyChanges
 import Control.Lens hiding ((:>), List)
 import Control.Monad.Logger
 import Control.Monad.Reader
@@ -45,7 +44,7 @@ transformClientNot' STextDocumentDidOpen params = whenNotebook params $ \uri -> 
 transformClientNot' STextDocumentDidChange params = whenNotebook params $ modifyTransformer params $ \(tx, before) -> do
   let (List changeEvents) = params ^. contentChanges
   after <- applyChangesText changeEvents before
-  let (_before', _after', changeEvents', tx') = handleDiff transformerParams before after changeEvents tx
+  let (changeEvents', tx') = handleDiff transformerParams changeEvents tx
   return ((tx', after), set contentChanges (List changeEvents') params)
 transformClientNot' STextDocumentDidClose params = whenNotebook params $ \uri -> do
   TransformerState {..} <- ask

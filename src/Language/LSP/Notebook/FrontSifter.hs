@@ -62,16 +62,7 @@ instance Transformer FrontSifter where
 
       (chosenLines, nonChosenLines) = partitionLines importIndices (zip [0..] ls)
 
-  -- TODO: efficient implementation
-  -- handleDiff :: Params FrontSifter -> [Text] -> [Text] -> [TextDocumentContentChangeEvent] -> FrontSifter -> ([Text], [Text], [TextDocumentContentChangeEvent], FrontSifter)
-  -- handleDiff () before after changes x@(FrontSifter indices) = (before', after', fmap transformChange changes, x')
-  --   where
-  --     (before', _) = project @FrontSifter () before
-  --     (after', x') = project @FrontSifter () after
-
-  --     transformChange change@(TextDocumentContentChangeEvent {..}) = case _range of
-  --       Just r -> undefined
-  --       Nothing -> undefined
+  handleDiff () changes transformer@(FrontSifter indices) = undefined
 
   transformPosition :: Params FrontSifter -> FrontSifter -> Position -> Maybe Position
   transformPosition () (FrontSifter indices) (Position l c) = case binarySearchVec indices (fromIntegral l) of

@@ -87,9 +87,7 @@ instance Transformer ExpressionToDeclaration where
       countNewLines (_:xs) = countNewLines xs
       countNewLines [] = 0
 
-  -- TODO: efficient implementation
-  -- handleDiff :: Params ExpressionToDeclaration -> [Text] -> [Text] -> [TextDocumentContentChangeEvent] -> ExpressionToDeclaration -> ([Text], [Text], [TextDocumentContentChangeEvent], ExpressionToDeclaration)
-  -- handleDiff (EDParams {..}) before after changes x@(ExpressionToDeclaration indices) = undefined
+  handleDiff (EDParams {}) changes transformer@(ExpressionToDeclaration indices) = undefined
 
   transformPosition :: Params ExpressionToDeclaration -> ExpressionToDeclaration -> Position -> Maybe Position
   transformPosition (EDParams {..}) (ExpressionToDeclaration affectedLines) (Position l c)

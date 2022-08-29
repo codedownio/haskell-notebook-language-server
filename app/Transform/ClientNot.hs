@@ -7,8 +7,11 @@ module Transform.ClientNot where
 import Control.Lens hiding ((:>), List)
 import Control.Monad.Logger
 import Control.Monad.Reader
+import Data.Aeson as A
 import qualified Data.Char as C
-import Data.Map as M
+import Data.Foldable as F
+import Data.Map as M hiding (toList)
+import Data.Maybe
 import Data.String.Interpolate
 import Data.Text
 import qualified Data.Text as T
@@ -31,6 +34,17 @@ transformClientNot :: (TransformerMonad n) => ClientNotMethod m -> NotificationM
 transformClientNot meth msg = do
   logInfoN [i|Transforming client not #{meth}|]
   p' <- transformClientNot' meth (msg ^. params)
+
+  case (meth, msg) of
+    (STextDocumentDidChange, (^. params) -> p) -> do
+      let originalRanges = fmap (^. range) (p ^. contentChanges)
+      let newRanges = toList $ fmap (^. range) (p' ^. contentChanges)
+
+      when (F.all isJust originalRanges && not (F.all isJust newRanges)) $ do
+        logWarnN [i|Introduced a full text replace for changes: #{A.encode (p ^. contentChanges)}|]
+
+    _ -> return ()
+
   return $ set params p' msg
 
 transformClientNot' :: (TransformerMonad n) => ClientNotMethod m -> MessageParams m -> n (MessageParams m)

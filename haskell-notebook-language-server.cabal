@@ -18,6 +18,7 @@ library
       Language.LSP.Notebook
       Language.LSP.Notebook.ExpressionToDeclaration
       Language.LSP.Notebook.FrontSifter
+      Language.LSP.Notebook.FrontSifter.Util
       Language.LSP.Notebook.StripDirective
       Language.LSP.Notebook.Util
       Language.LSP.Transformer
@@ -124,7 +125,7 @@ executable haskell-notebook-language-server-test
       Test.BinarySearchVec
       Test.Common
       Test.ExpressionToDeclaration
-      Test.FrontendSifter
+      Test.FrontSifter
       Test.StripDirective
       Paths_haskell_notebook_language_server
   hs-source-dirs:

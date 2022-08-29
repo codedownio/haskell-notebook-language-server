@@ -6,6 +6,7 @@ module Test.BinarySearchVec where
 
 
 import Language.LSP.Notebook.FrontSifter
+import Language.LSP.Notebook.FrontSifter.Util
 import Language.LSP.Transformer
 import Language.LSP.Types hiding (line)
 import Test.Sandwich

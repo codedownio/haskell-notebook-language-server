@@ -4,6 +4,7 @@
 
 module Test.StripDirective where
 
+import Data.IntMap as IM hiding (toList)
 import Language.LSP.Notebook.StripDirective
 import Language.LSP.Transformer
 import Language.LSP.Types hiding (line)
@@ -17,7 +18,7 @@ spec = introduceQuickCheck $ do
   it "strips out GHCi directives" $ do
     let (ls, ed@(StripDirective affectedLines)) = project SDParams ["foo = 42", ":t foo"]
     ls `shouldBe` ["foo = 42", ""]
-    affectedLines `shouldBe` [1]
+    affectedLines `shouldBe` (IM.fromList [(1, "foo = 42")])
 
     transformPosition SDParams ed (Position 1 3) `shouldBe` (Just (Position 1 0))
     untransformPosition SDParams ed (Position 1 0) `shouldBe` (Position 1 0)

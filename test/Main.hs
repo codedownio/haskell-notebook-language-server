@@ -6,14 +6,14 @@ import Test.Sandwich
 
 import qualified Test.BinarySearchVec
 import qualified Test.ExpressionToDeclaration
-import qualified Test.FrontendSifter
+import qualified Test.FrontSifter
 import qualified Test.StripDirective
 
 spec :: TopSpec
 spec = do
   Test.BinarySearchVec.spec
   Test.ExpressionToDeclaration.spec
-  Test.FrontendSifter.spec
+  Test.FrontSifter.spec
   Test.StripDirective.spec
 
 main :: IO ()

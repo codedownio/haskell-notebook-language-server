@@ -2,7 +2,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeApplications #-}
 
-module Test.FrontendSifter where
+module Test.FrontSifter where
 
 import Language.LSP.Notebook.FrontSifter
 import Language.LSP.Transformer

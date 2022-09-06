@@ -13,12 +13,15 @@
 module Language.LSP.Notebook.FrontSifter where
 
 import Data.Bits
+import Data.Foldable
 import Data.Function
 import Data.Functor.Identity (Identity(runIdentity))
+import qualified Data.List as L
+import Data.Sequence as Seq hiding (fromList, zip)
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Vector as V hiding (zip)
+import Data.Vector as V hiding (toList, zip)
 import GHC
 import qualified GHC.Paths
 import IHaskell.Eval.Parser
@@ -31,7 +34,6 @@ import System.IO.Unsafe (unsafePerformIO)
 
 newtype FrontSifter = FrontSifter (Vector Int)
   deriving (Show, Eq)
-
 
 instance Transformer FrontSifter where
   type Params FrontSifter = ()
@@ -61,7 +63,9 @@ instance Transformer FrontSifter where
 
       (chosenLines, nonChosenLines) = partitionLines importIndices (zip [0..] ls)
 
-  handleDiff () changes transformer@(FrontSifter indices) = undefined
+  handleDiff params changes transformer@(FrontSifter indices) = (toList finalChanges, FrontSifter finalIndices)
+    where
+      (finalChanges, finalIndices) = L.foldl' (handleSingleDiff params) (mempty, indices) changes
 
   transformPosition :: Params FrontSifter -> FrontSifter -> Position -> Maybe Position
   transformPosition () (FrontSifter indices) (Position l c) = case binarySearchVec indices (fromIntegral l) of
@@ -70,7 +74,7 @@ instance Transformer FrontSifter where
 
   untransformPosition :: Params FrontSifter -> FrontSifter -> Position -> Position
   untransformPosition () (FrontSifter indices) (Position l c)
-    | l < fromIntegral (V.length indices) = Position (fromIntegral (indices ! (fromIntegral l))) c
+    | l < fromIntegral (V.length indices) = Position (fromIntegral (indices ! fromIntegral l)) c
     | otherwise = Position finalL c
         where
           finalL = flip fix (V.length indices - 1, l) $ \loop -> \case
@@ -78,3 +82,19 @@ instance Transformer FrontSifter where
             (chosenLineIndex, currentL) -> let chosenOrig = indices ! chosenLineIndex in
               if | chosenOrig >= fromIntegral currentL -> loop (chosenLineIndex - 1, currentL - 1)
                  | otherwise -> (fromIntegral currentL)
+
+
+
+handleSingleDiff ::
+  Params FrontSifter
+  -> (Seq TextDocumentContentChangeEvent, Vector Int)
+  -> TextDocumentContentChangeEvent
+  -> (Seq TextDocumentContentChangeEvent, Vector Int)
+handleSingleDiff params (changesSoFar, indices) (TextDocumentContentChangeEvent Nothing rangeLen newText) = (change' <| changesSoFar, indices')
+  where
+    (projectedLines, FrontSifter indices') = project params (T.splitOn "\n" newText)
+    change' = TextDocumentContentChangeEvent Nothing rangeLen (T.intercalate "\n" projectedLines)
+handleSingleDiff params (changesSoFar, indices) (TextDocumentContentChangeEvent (Just (Range (Position l1 c1) (Position l2 c2))) rangeLen newText)
+  | l1 == l2 = undefined
+      where
+        newLineText = undefined

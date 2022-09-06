@@ -76,7 +76,11 @@ instance Transformer StripDirective where
     | otherwise = Position l c
 
 
-handleSingleDiff :: Params StripDirective -> (Seq TextDocumentContentChangeEvent, IntMap Text) -> TextDocumentContentChangeEvent -> (Seq TextDocumentContentChangeEvent, IntMap Text)
+handleSingleDiff ::
+  Params StripDirective
+  -> (Seq TextDocumentContentChangeEvent, IntMap Text)
+  -> TextDocumentContentChangeEvent
+  -> (Seq TextDocumentContentChangeEvent, IntMap Text)
 handleSingleDiff params (changesSoFar, indices) (TextDocumentContentChangeEvent Nothing rangeLen newText) = (change' <| changesSoFar, indices')
   where
     (projectedLines, StripDirective indices') = project params (T.splitOn "\n" newText)

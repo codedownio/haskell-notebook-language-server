@@ -16,12 +16,18 @@ import Language.LSP.Notebook
 import Language.LSP.Transformer
 import System.IO.Unsafe (unsafePerformIO)
 
+-- import Data.Time
+
 
 main :: IO ()
 main = do
-  let text = ghciCommand
+  let text = reorder
 
+  -- start <- getCurrentTime
   locatedCodeBlocks <- runGhc (Just GHC.Paths.libdir) $ parseString $ T.unpack text
+  -- end <- getCurrentTime
+
+  -- putStrLn [i|Parsed in #{diffUTCTime end start}|]
   putStrLn [i|Got parsed: #{fmap unloc locatedCodeBlocks}|]
 
 

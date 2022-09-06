@@ -57,8 +57,11 @@ executables:
     - mtl
     - network-uri
     - optparse-applicative
+    - process
+    - retry
     - safe
     - text-rope
+    - unix
     - unliftio
     - unliftio-core
 

@@ -22,7 +22,7 @@ parseStream h = do
 
 readHeader :: Int -> Handle -> IO Int
 readHeader contentLengthCandidate h = do
-  hWaitForInput h 30000 >>= \case
+  hWaitForInput h 1_000 >>= \case
     False -> readHeader contentLengthCandidate h
     True -> do
       line <- T.hGetLine h

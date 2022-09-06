@@ -59,6 +59,7 @@ executable haskell-notebook-language-server
   other-modules:
       ApplyChanges
       Parsing
+      Process
       RequestMap
       Streams
       Test
@@ -105,12 +106,15 @@ executable haskell-notebook-language-server
     , mtl
     , network-uri
     , optparse-applicative
+    , process
     , regex-base
     , regex-pcre-builtin
+    , retry
     , safe
     , string-interpolate
     , text
     , text-rope
+    , unix
     , unliftio
     , unliftio-core
     , vector

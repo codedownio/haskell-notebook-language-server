@@ -26,7 +26,9 @@ import Language.LSP.Types hiding (FromServerMessage'(..), FromServerMessage, Fro
 import qualified Language.LSP.Types.Lens as Lens
 import Options.Applicative
 import System.IO
+import System.Posix.Signals
 import UnliftIO.Async
+import UnliftIO.Concurrent
 import UnliftIO.Directory
 import UnliftIO.Exception
 import UnliftIO.MVar
@@ -43,8 +45,10 @@ import Transform.Util
 import Streams
 import RequestMap
 import Parsing
+import Process
 import Control.Monad.Logger
 import Control.Monad.Reader
+import System.Exit
 
 
 data Options = Options {
@@ -79,11 +83,14 @@ main = do
         , std_err = Inherit
         })
 
-  hSetBuffering stdin NoBuffering
+  hSetBuffering stdin NoBuffering -- TODO: LineBuffering here and below?
   hSetEncoding  stdin utf8
 
   hSetBuffering hlsOut NoBuffering
   hSetEncoding  hlsOut utf8
+
+  hSetBuffering stdout LineBuffering
+  hSetEncoding  stdout utf8
 
   clientReqMap <- newMVar newClientRequestMap
   serverReqMap <- newMVar newServerRequestMap
@@ -92,27 +99,43 @@ main = do
 
   transformerState <- newTransformerState
 
+  processWaiter <- async $ waitForProcess p
+
+  let cleanup :: String -> IO ()
+      cleanup signal = runStderrLoggingT $ do
+        logInfoN [i|Got signal: #{signal}|]
+        gracefullyStopProcess p 15_000_000
+
+  void $ liftIO $ installHandler sigINT (Catch (cleanup "sigINT")) Nothing
+  void $ liftIO $ installHandler sigTERM (Catch (cleanup "sigTERM")) Nothing
+
   runStderrLoggingT $ flip runReaderT transformerState $
-    withAsync (readHlsOut clientReqMap serverReqMap hlsOut) $ \_ ->
-      forever $ do
-        (A.eitherDecode <$> liftIO (parseStream stdin)) >>= \case
-          Left err -> logErr [i|Couldn't decode incoming message: #{err}|]
-          Right (x :: A.Value) -> do
-            m <- readMVar serverReqMap
-            case A.parseEither (parseClientMessage (lookupServerId m)) x of
-              Left err -> do
-                logErr [i|Couldn't decode incoming message: #{err}|]
-                writeToHandle hlsIn (A.encode x)
-              Right (FromClientRsp meth msg) -> do
-                writeToHandle hlsIn (A.encode (transformClientRsp meth msg))
-              Right (FromClientReq meth msg) -> do
-                let msgId = msg ^. Lens.id
-                modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of
-                  Just m' -> return m'
-                  Nothing -> return m
-                transformClientReq meth msg >>= writeToHandle hlsIn . A.encode
-              Right (FromClientNot meth msg) ->
-                transformClientNot meth msg >>= writeToHandle hlsIn . A.encode
+    withAsync (readHlsOut clientReqMap serverReqMap hlsOut) $ \_hlsOutAsync ->
+      withAsync (forever $ handleStdin hlsIn clientReqMap serverReqMap transformerState) $ \_stdinAsync -> do
+        waitForProcess p >>= \case
+          ExitFailure n -> logErrorN [i|haskell-language-server subprocess exited with code #{n}|]
+          ExitSuccess -> logInfoN [i|haskell-language-server subprocess exited successfully|]
+
+
+handleStdin hlsIn clientReqMap serverReqMap transformerState = do
+  (A.eitherDecode <$> liftIO (parseStream stdin)) >>= \case
+    Left err -> logErr [i|Couldn't decode incoming message: #{err}|]
+    Right (x :: A.Value) -> do
+      m <- readMVar serverReqMap
+      case A.parseEither (parseClientMessage (lookupServerId m)) x of
+        Left err -> do
+          logErr [i|Couldn't decode incoming message: #{err}|]
+          writeToHandle hlsIn (A.encode x)
+        Right (FromClientRsp meth msg) -> do
+          writeToHandle hlsIn (A.encode (transformClientRsp meth msg))
+        Right (FromClientReq meth msg) -> do
+          let msgId = msg ^. Lens.id
+          modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of
+            Just m' -> return m'
+            Nothing -> return m
+          transformClientReq meth msg >>= writeToHandle hlsIn . A.encode
+        Right (FromClientNot meth msg) ->
+          transformClientNot meth msg >>= writeToHandle hlsIn . A.encode
 
 readHlsOut clientReqMap serverReqMap hlsOut = forever $ do
   (A.eitherDecode <$> liftIO (parseStream hlsOut)) >>= \case

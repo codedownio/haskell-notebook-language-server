@@ -1,9 +1,9 @@
 { mkDerivation, aeson, attoparsec, base, bytestring, containers
 , filepath, ghc, ghc-lib-parser, ghc-parser, ghc-paths, hpack
 , ihaskell, lens, lib, lsp-types, monad-logger, mtl, network-uri
-, optparse-applicative, regex-base, regex-pcre-builtin, safe
-, sandwich, string-interpolate, text, text-rope, unliftio
-, unliftio-core, vector
+, optparse-applicative, process, regex-base, regex-pcre-builtin
+, retry, safe, sandwich, string-interpolate, text, text-rope, unix
+, unliftio, unliftio-core, vector
 }:
 mkDerivation {
   pname = "haskell-notebook-language-server";
@@ -20,9 +20,10 @@ mkDerivation {
   executableHaskellDepends = [
     aeson attoparsec base bytestring containers filepath ghc
     ghc-lib-parser ghc-parser ghc-paths ihaskell lens lsp-types
-    monad-logger mtl network-uri optparse-applicative regex-base
-    regex-pcre-builtin safe sandwich string-interpolate text text-rope
-    unliftio unliftio-core vector
+    monad-logger mtl network-uri optparse-applicative process
+    regex-base regex-pcre-builtin retry safe sandwich
+    string-interpolate text text-rope unix unliftio unliftio-core
+    vector
   ];
   prePatch = "hpack";
   license = lib.licenses.bsd3;

@@ -127,7 +127,7 @@ handleStdin hlsIn clientReqMap serverReqMap transformerState = do
           logErr [i|Couldn't decode incoming message: #{err}|]
           writeToHandle hlsIn (A.encode x)
         Right (FromClientRsp meth msg) -> do
-          writeToHandle hlsIn (A.encode (transformClientRsp meth msg))
+          transformClientRsp meth msg >>= writeToHandle hlsIn . A.encode
         Right (FromClientReq meth msg) -> do
           let msgId = msg ^. Lens.id
           modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of

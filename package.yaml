@@ -6,18 +6,35 @@ extra-source-files:
 - ChangeLog.md
 
 dependencies:
+- aeson
+- attoparsec
 - base >= 4.7 && < 5
+- bytestring
 - containers
+- filepath
 - ghc
-- ghc-lib-parser
 - ghc-parser
 - ghc-paths
 - ihaskell
+- lens
+- lens-regex-pcre
 - lsp-types
+- monad-logger
+- mtl
+- network-uri
+- optparse-applicative
+- pcre-light
+- process
 - regex-base
 - regex-pcre-builtin
+- retry
+- safe
 - string-interpolate
 - text
+- text-rope
+- unix
+- unliftio
+- unliftio-core
 - vector
 
 default-extensions:
@@ -47,23 +64,6 @@ executables:
     - -with-rtsopts=-N
     dependencies:
     - haskell-notebook-language-server
-
-    - aeson
-    - attoparsec
-    - bytestring
-    - filepath
-    - lens
-    - monad-logger
-    - mtl
-    - network-uri
-    - optparse-applicative
-    - process
-    - retry
-    - safe
-    - text-rope
-    - unix
-    - unliftio
-    - unliftio-core
 
   haskell-notebook-language-server-test:
     main:                Main.hs

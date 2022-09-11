@@ -11,7 +11,7 @@ import Test.Sandwich
 
 
 spec :: TopSpec
-spec = do
+spec = describe "StripDirective" $ do
   it "strips out GHCi directives" $ do
     let (ls, ed@(StripDirective affectedLines)) = project SDParams ["foo = 42", ":t foo"]
     ls `shouldBe` ["foo = 42", ""]

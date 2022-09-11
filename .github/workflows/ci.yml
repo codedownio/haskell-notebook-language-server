@@ -70,6 +70,11 @@ jobs:
           - "9.2.4"
 
     steps:
+    - name: Install libraries
+      run: |
+        sudo apt update
+        sudo apt install -y libzmq5-dev libpcre3-dev
+
     - uses: actions/checkout@v2
       if: github.event.action == 'opened' || github.event.action == 'synchronize' || github.event.ref == 'refs/heads/master'
 
@@ -97,4 +102,4 @@ jobs:
 
     - name: Test
       run: |
-        stack test --system-ghc
+        stack run --system-ghc haskell-notebook-language-server-test -- --print

@@ -57,6 +57,10 @@ fixupDocumentReferences' docRegex transformer t = t & (regexing docRegex) . grou
 mkDocRegex :: Text -> Regex
 mkDocRegex docName = compile [i|#{escapedName}:(\\d+):(\\d+)|] [utf8]
   where
-    escapedName = L.foldl' (.) id [T.replace c ("\\" <> c) | c <- pcreChars] docName
+    escapedName = docName
+      & (\x -> if filePrefix `T.isPrefixOf` x then T.drop (T.length filePrefix) x else x)
+      & L.foldl' (.) id [T.replace c ("\\" <> c) | c <- pcreChars]
+
+    filePrefix = "file://"
 
     pcreChars = [".", "^", "$", "*", "+", "?", "(", ")", "[", "{", "\\", "|"]

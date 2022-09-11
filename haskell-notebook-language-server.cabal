@@ -144,10 +144,10 @@ executable haskell-notebook-language-server-test
   other-modules:
       Test.BinarySearchVec
       Test.Common
-      Test.ExpressionToDeclaration
-      Test.FrontendSifter
       Test.Hover
-      Test.StripDirective
+      Test.Transformer.ExpressionToDeclaration
+      Test.Transformer.FrontSifter
+      Test.Transformer.StripDirective
       Paths_haskell_notebook_language_server
   hs-source-dirs:
       test

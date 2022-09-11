@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.FrontendSifter where
+module Test.Transformer.FrontSifter where
 
 import Language.LSP.Notebook.FrontSifter
 import Language.LSP.Transformer
@@ -11,7 +11,7 @@ import Test.Sandwich
 
 
 spec :: TopSpec
-spec = do
+spec = describe "FrontSifter" $ do
   it "projects and transforms a single import" $ do
     let (ls, sifter@(FrontSifter indices)) = project () ["putStrLn 42", "import Bar"]
     ls `shouldBe` ["import Bar", "putStrLn 42"]

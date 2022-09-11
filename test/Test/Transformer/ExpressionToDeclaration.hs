@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.ExpressionToDeclaration where
+module Test.Transformer.ExpressionToDeclaration where
 
 import Language.LSP.Notebook.ExpressionToDeclaration
 import Language.LSP.Transformer
@@ -11,7 +11,7 @@ import Test.Sandwich
 
 
 spec :: TopSpec
-spec = do
+spec = describe "ExpressionToDeclaration" $ do
   it "projects and transforms a single expression" $ do
     let (ls, ed@(ExpressionToDeclaration affectedLines)) = project (EDParams 10) ["putStrLn 42", "foo = 42"]
     ls `shouldBe` ["expr0000000000 = putStrLn 42", "foo = 42"]

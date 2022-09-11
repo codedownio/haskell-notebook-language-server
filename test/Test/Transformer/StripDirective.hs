@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedLists #-}
 {-# LANGUAGE OverloadedStrings #-}
 
-module Test.StripDirective where
+module Test.Transformer.StripDirective where
 
 import Language.LSP.Notebook.StripDirective
 import Language.LSP.Transformer

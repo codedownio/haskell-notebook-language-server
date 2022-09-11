@@ -5,16 +5,25 @@ import Language.LSP.Types hiding (line)
 import Test.Sandwich
 
 import qualified Test.BinarySearchVec
-import qualified Test.ExpressionToDeclaration
-import qualified Test.FrontendSifter
-import qualified Test.StripDirective
+
+import qualified Test.Transformer.ExpressionToDeclaration
+import qualified Test.Transformer.FrontSifter
+import qualified Test.Transformer.StripDirective
+
+import qualified Test.Hover
+
 
 spec :: TopSpec
 spec = do
-  Test.BinarySearchVec.spec
-  Test.ExpressionToDeclaration.spec
-  Test.FrontendSifter.spec
-  Test.StripDirective.spec
+  describe "Util" $ do
+    Test.BinarySearchVec.spec
+
+  describe "Transformers" $ do
+    Test.Transformer.ExpressionToDeclaration.spec
+    Test.Transformer.FrontSifter.spec
+    Test.Transformer.StripDirective.spec
+
+  Test.Hover.spec
 
 main :: IO ()
 main = runSandwichWithCommandLineArgs defaultOptions spec

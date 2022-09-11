@@ -5,6 +5,8 @@
 module Transform.ClientRsp.Hover (
   fixupHoverText
 
+  , mkDocRegex
+
   -- For testing
   , fixupDocumentReferences'
   ) where
@@ -12,15 +14,15 @@ module Transform.ClientRsp.Hover (
 import Control.Lens hiding (List)
 import Control.Lens.Regex.Text
 import Control.Monad.Reader
-import Data.Function
+import Data.Function (fix)
+import qualified Data.List as L
 import qualified Data.Map as M
 import Data.String.Interpolate
-import Data.Text
 import Data.Text as T
 import Language.LSP.Notebook (HaskellNotebookTransformer)
 import Language.LSP.Transformer
 import Language.LSP.Types
-import Language.LSP.Types.Lens hiding (trace)
+import Language.LSP.Types.Lens hiding (id, trace)
 import Safe
 import Text.Regex.PCRE.Light
 import Transform.Util
@@ -32,25 +34,29 @@ fixupHoverText initialHover = do
   documentsMap <- ask >>= (readMVar . transformerDocuments)
   flip fix (initialHover, M.toList documentsMap) $ \loop args -> case args of
     (paramsInProgress, []) -> return paramsInProgress
-    (paramsInProgress, (docName, (transformer, curLines)):xs) -> loop (newParams, xs)
-      where newParams = over contents (fixupDocumentReferences docName transformer curLines) paramsInProgress
+    (paramsInProgress, (_, DocumentState {..}):xs) -> loop (newParams, xs)
+      where newParams = over contents (fixupDocumentReferences referenceRegex transformer curLines) paramsInProgress
 
-fixupDocumentReferences :: Text -> HaskellNotebookTransformer -> [Text] -> HoverContents -> HoverContents
-fixupDocumentReferences docName transformer curLines (HoverContents (MarkupContent k t)) = HoverContents (MarkupContent k (fixupDocumentReferences' docName transformer t))
-fixupDocumentReferences docName transformer curLines (HoverContentsMS mss) = HoverContentsMS (fmap transformMarkedString mss)
+fixupDocumentReferences :: Regex -> HaskellNotebookTransformer -> [Text] -> HoverContents -> HoverContents
+fixupDocumentReferences docRegex transformer curLines (HoverContents (MarkupContent k t)) = HoverContents (MarkupContent k (fixupDocumentReferences' docRegex transformer t))
+fixupDocumentReferences docRegex transformer curLines (HoverContentsMS mss) = HoverContentsMS (fmap transformMarkedString mss)
   where
-    transformMarkedString (PlainString t) = PlainString (fixupDocumentReferences' docName transformer t)
-    transformMarkedString (CodeString (LanguageString l t)) = CodeString (LanguageString l (fixupDocumentReferences' docName transformer t))
+    transformMarkedString (PlainString t) = PlainString (fixupDocumentReferences' docRegex transformer t)
+    transformMarkedString (CodeString (LanguageString l t)) = CodeString (LanguageString l (fixupDocumentReferences' docRegex transformer t))
 
-fixupDocumentReferences' :: Text -> HaskellNotebookTransformer -> Text -> Text
-fixupDocumentReferences' docName transformer t = t & (regexing regex) . groups %~ transformGroup docName transformer
+fixupDocumentReferences' :: Regex -> HaskellNotebookTransformer -> Text -> Text
+fixupDocumentReferences' docRegex transformer t = t & (regexing docRegex) . groups %~ transformGroup transformer
   where
-    regex :: Regex
-    regex = compile [i|#{docName}:(\\d+):(\\d+)|] [utf8]
-
-    transformGroup :: Text -> HaskellNotebookTransformer -> [Text] -> [Text]
-    transformGroup _docName transformer matches@[(readMay . T.unpack) -> Just line, (readMay . T.unpack) -> Just ch] = [T.pack $ show line', T.pack $ show ch']
+    transformGroup :: HaskellNotebookTransformer -> [Text] -> [Text]
+    transformGroup transformer matches@[(readMay . T.unpack) -> Just line, (readMay . T.unpack) -> Just ch] = [T.pack $ show line', T.pack $ show ch']
       where
         (Position line' ch') = untransformPosition transformerParams transformer (Position line ch)
 
-    transformGroup _ _ matches = matches
+    transformGroup _ matches = matches
+
+mkDocRegex :: Text -> Regex
+mkDocRegex docName = compile [i|#{escapedName}:(\\d+):(\\d+)|] [utf8]
+  where
+    escapedName = L.foldl' (.) id [T.replace c ("\\" <> c) | c <- pcreChars] docName
+
+    pcreChars = [".", "^", "$", "*", "+", "?", "(", ")", "[", "{", "\\", "|"]

@@ -6,6 +6,7 @@
 module Transform.Util where
 
 import Control.Lens hiding ((:>))
+import Control.Lens.Regex.Text
 import Control.Monad.IO.Class
 import Control.Monad.IO.Unlift
 import Control.Monad.Logger
@@ -51,8 +52,14 @@ type TransformerMonad n = (
 
 -- * TransformerState
 
+data DocumentState = DocumentState {
+  transformer :: HaskellNotebookTransformer
+  , curLines :: [Text]
+  , referenceRegex :: Regex
+  }
+
 data TransformerState = TransformerState {
-  transformerDocuments :: MVar (Map Text (HaskellNotebookTransformer, [Text]))
+  transformerDocuments :: MVar (Map Text DocumentState)
   }
 
 newTransformerState :: (MonadIO m) => m TransformerState
@@ -66,12 +73,12 @@ expressionToDeclarationParams = EDParams 10
 transformerParams :: Params HaskellNotebookTransformer
 transformerParams = SDParams :> expressionToDeclarationParams :> ()
 
-lookupTransformer :: TransformerMonad m => Uri -> m (Maybe (HaskellNotebookTransformer, [Text]))
+lookupTransformer :: TransformerMonad m => Uri -> m (Maybe DocumentState)
 lookupTransformer uri = do
   TransformerState {..} <- ask
   M.lookup (getUri uri) <$> readMVar transformerDocuments
 
-withTransformer :: (TransformerMonad n) => a -> ((HaskellNotebookTransformer, [Text]) -> n a) -> Uri -> n a
+withTransformer :: (TransformerMonad n) => a -> (DocumentState -> n a) -> Uri -> n a
 withTransformer def cb uri = do
   lookupTransformer uri >>= \case
     Nothing -> do
@@ -79,7 +86,7 @@ withTransformer def cb uri = do
       return def
     Just tx -> cb tx
 
-modifyTransformer :: (TransformerMonad n) => a -> ((HaskellNotebookTransformer, [Text]) -> n ((HaskellNotebookTransformer, [Text]), a)) -> Uri -> n a
+modifyTransformer :: (TransformerMonad n) => a -> (DocumentState -> n (DocumentState, a)) -> Uri -> n a
 modifyTransformer def cb uri = do
   TransformerState {..} <- ask
   modifyMVar transformerDocuments $ \m -> case M.lookup (getUri uri) m of

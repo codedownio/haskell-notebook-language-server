@@ -44,8 +44,8 @@ transformClientReq' _ params = return params
 
 
 
-doTransformPosition :: forall m n. (TransformerMonad n, (HasPosition (MessageParams m) Position)) => MessageParams m -> (HaskellNotebookTransformer, [Text]) -> n (MessageParams m)
-doTransformPosition params (tx, _) = case transformPosition transformerParams tx (params ^. position) of
+doTransformPosition :: forall m n. (TransformerMonad n, (HasPosition (MessageParams m) Position)) => MessageParams m -> DocumentState -> n (MessageParams m)
+doTransformPosition params (DocumentState {transformer=tx}) = case transformPosition transformerParams tx (params ^. position) of
   Nothing -> do
     logWarnN [i|Couldn't transform position #{params ^. position}|]
     return params

@@ -16,11 +16,16 @@ import Transform.Util
 
 spec :: TopSpec
 spec = describe "Hover" $ do
-  it "fixes up document references" $ do
+  describe "fixes up document references" $ do
     let (_, transformer) = project transformerParams ["foo = 42", "import Data.Aeson"]
 
-    fixupDocumentReferences' "main.ipynb" transformer "Defined at: main.ipynb:1:1"
-      `shouldBe` "Defined at: main.ipynb:0:1"
+    it "Basic case" $ do
+      fixupDocumentReferences' (mkDocRegex "main.ipynb") transformer "Defined at: main.ipynb:1:1"
+        `shouldBe` "Defined at: main.ipynb:0:1"
+
+    it "Works with weird PCRE characters in the file name" $ do
+      fixupDocumentReferences' (mkDocRegex "ma$in.i?pynb") transformer "Defined at: ma$in.i?pynb:1:1"
+        `shouldBe` "Defined at: ma$in.i?pynb:0:1"
 
 
 main :: IO ()

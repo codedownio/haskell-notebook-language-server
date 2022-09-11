@@ -21,6 +21,7 @@ import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
 import Network.URI
 import System.FilePath
+import Transform.ClientRsp.Hover (mkDocRegex)
 import Transform.Util
 import UnliftIO.MVar
 
@@ -40,13 +41,15 @@ transformClientNot' STextDocumentDidOpen params = whenNotebook params $ \uri -> 
   let ls = T.lines (params ^. (textDocument . text))
   let (ls', transformer' :: HaskellNotebookTransformer) = project transformerParams ls
   TransformerState {..} <- ask
-  modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri uri) (transformer', ls) x)
+  let docRegex = getUri uri
+  logInfoN [i|Made doc regex: #{docRegex}|]
+  modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri uri) (DocumentState transformer' ls (mkDocRegex docRegex)) x)
   return $ set (textDocument . text) (T.intercalate "\n" ls') params
-transformClientNot' STextDocumentDidChange params = whenNotebook params $ modifyTransformer params $ \(tx, before) -> do
+transformClientNot' STextDocumentDidChange params = whenNotebook params $ modifyTransformer params $ \ds@(DocumentState {transformer=tx, curLines=before}) -> do
   let (List changeEvents) = params ^. contentChanges
   after <- applyChangesText changeEvents before
   let (_before', _after', changeEvents', tx') = handleDiff transformerParams before after changeEvents tx
-  return ((tx', after), set contentChanges (List changeEvents') params)
+  return (ds { transformer = tx', curLines = after }, set contentChanges (List changeEvents') params)
 transformClientNot' STextDocumentDidClose params = whenNotebook params $ \uri -> do
   TransformerState {..} <- ask
   modifyMVar_ transformerDocuments (\x -> return $! M.delete (getUri uri) x)

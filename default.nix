@@ -1,9 +1,9 @@
 { mkDerivation, aeson, attoparsec, base, bytestring, containers
-, filepath, ghc, ghc-lib-parser, ghc-parser, ghc-paths, hpack
-, ihaskell, lens, lib, lsp-types, monad-logger, mtl, network-uri
-, optparse-applicative, process, regex-base, regex-pcre-builtin
-, retry, safe, sandwich, string-interpolate, text, text-rope, unix
-, unliftio, unliftio-core, vector
+, filepath, ghc, ghc-parser, ghc-paths, hpack, ihaskell, lens
+, lens-regex-pcre, lib, lsp-types, monad-logger, mtl, network-uri
+, optparse-applicative, pcre-light, process, regex-base
+, regex-pcre-builtin, retry, safe, sandwich, string-interpolate
+, text, text-rope, unix, unliftio, unliftio-core, vector
 }:
 mkDerivation {
   pname = "haskell-notebook-language-server";
@@ -12,18 +12,19 @@ mkDerivation {
   isLibrary = true;
   isExecutable = true;
   libraryHaskellDepends = [
-    base containers ghc ghc-lib-parser ghc-parser ghc-paths ihaskell
-    lsp-types regex-base regex-pcre-builtin string-interpolate text
-    vector
+    aeson attoparsec base bytestring containers filepath ghc ghc-parser
+    ghc-paths ihaskell lens lens-regex-pcre lsp-types monad-logger mtl
+    network-uri optparse-applicative pcre-light process regex-base
+    regex-pcre-builtin retry safe string-interpolate text text-rope
+    unix unliftio unliftio-core vector
   ];
   libraryToolDepends = [ hpack ];
   executableHaskellDepends = [
-    aeson attoparsec base bytestring containers filepath ghc
-    ghc-lib-parser ghc-parser ghc-paths ihaskell lens lsp-types
-    monad-logger mtl network-uri optparse-applicative process
-    regex-base regex-pcre-builtin retry safe sandwich
-    string-interpolate text text-rope unix unliftio unliftio-core
-    vector
+    aeson attoparsec base bytestring containers filepath ghc ghc-parser
+    ghc-paths ihaskell lens lens-regex-pcre lsp-types monad-logger mtl
+    network-uri optparse-applicative pcre-light process regex-base
+    regex-pcre-builtin retry safe sandwich string-interpolate text
+    text-rope unix unliftio unliftio-core vector
   ];
   prePatch = "hpack";
   license = lib.licenses.bsd3;

@@ -144,7 +144,7 @@ readHlsOut clientReqMap serverReqMap hlsOut = forever $ do
       m <- readMVar clientReqMap
       case A.parseEither (parseServerMessage (lookupClientId m)) x of
         Left err -> do
-          logErr [i|Couldn't decode server message: #{err}|]
+          logErr [i|Couldn't decode server message: #{A.encode x} (#{err})|]
           writeToHandle stdout (A.encode x)
         Right (FromServerNot meth msg) ->
           writeToHandle stdout (A.encode (transformServerNot meth msg))

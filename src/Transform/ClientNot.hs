@@ -39,21 +39,26 @@ transformClientNot meth msg = do
 
 transformClientNot' :: (TransformerMonad n) => ClientNotMethod m -> MessageParams m -> n (MessageParams m)
 
-transformClientNot' STextDocumentDidOpen params = whenNotebook params $ \uri -> do
+transformClientNot' STextDocumentDidOpen params = whenNotebook params $ \u -> do
   let ls = T.lines (params ^. (textDocument . text))
   let (ls', transformer' :: HaskellNotebookTransformer) = project transformerParams ls
   TransformerState {..} <- ask
-  let docRegex = getUri uri
-  modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri uri) (DocumentState transformer' ls (mkDocRegex docRegex)) x)
-  return $ set (textDocument . text) (T.intercalate "\n" ls') params
-transformClientNot' STextDocumentDidChange params = whenNotebook params $ modifyTransformer params $ \ds@(DocumentState {transformer=tx, curLines=before}) -> do
+  Uri newUri <- addExtensionToUri ".hs" u
+  modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri u) (DocumentState transformer' ls (Uri newUri) (mkDocRegex newUri)) x)
+  return $ params
+         & set (textDocument . text) (T.intercalate "\n" ls')
+         & set (textDocument . uri) (Uri newUri)
+transformClientNot' STextDocumentDidChange params = whenNotebook params $ modifyTransformer params $ \ds@(DocumentState {transformer=tx, curLines=before, newUri}) -> do
   let (List changeEvents) = params ^. contentChanges
   after <- applyChangesText changeEvents before
   let (_before', _after', changeEvents', tx') = handleDiff transformerParams before after changeEvents tx
-  return (ds { transformer = tx', curLines = after }, set contentChanges (List changeEvents') params)
-transformClientNot' STextDocumentDidClose params = whenNotebook params $ \uri -> do
+  return (ds { transformer = tx', curLines = after }, params & set contentChanges (List changeEvents')
+                                                             & set (textDocument . uri) newUri)
+transformClientNot' STextDocumentDidClose params = whenNotebook params $ \u -> do
   TransformerState {..} <- ask
-  modifyMVar_ transformerDocuments (\x -> return $! M.delete (getUri uri) x)
-  return params
+  modifyMVar_ transformerDocuments (\x -> return $! M.delete (getUri u) x)
+  newUri <- addExtensionToUri ".hs" u
+  return $ params
+         & set (textDocument . uri) newUri
 
 transformClientNot' _ params = return params

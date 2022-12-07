@@ -22,14 +22,14 @@ import Language.LSP.Types hiding (FromServerMessage'(..), FromServerMessage, Fro
 
 
 data FromServerMessage where
-  FromServerReq :: forall t (m :: Method FromServer Request). (ToJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromServerMessage
-  FromServerNot :: forall t (m :: Method FromServer Notification). (ToJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromServerMessage
-  FromServerRsp  :: forall (m :: Method FromClient Request). (ToJSON (ResponseMessage m)) => SMethod m -> MessageParams m -> ResponseMessage m -> FromServerMessage
+  FromServerReq :: forall t (m :: Method FromServer Request). (HasJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromServerMessage
+  FromServerNot :: forall t (m :: Method FromServer Notification). (HasJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromServerMessage
+  FromServerRsp  :: forall (m :: Method FromClient Request). (HasJSON (ResponseMessage m)) => SMethod m -> MessageParams m -> ResponseMessage m -> FromServerMessage
 
 data FromClientMessage where
-  FromClientReq :: forall t (m :: Method FromClient Request). (ToJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromClientMessage
-  FromClientNot :: forall t (m :: Method FromClient Notification). (ToJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromClientMessage
-  FromClientRsp  :: forall (m :: Method FromServer Request). (ToJSON (ResponseMessage m)) => SMethod m -> ResponseMessage m -> FromClientMessage
+  FromClientReq :: forall t (m :: Method FromClient Request). (HasJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromClientMessage
+  FromClientNot :: forall t (m :: Method FromClient Notification). (HasJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromClientMessage
+  FromClientRsp  :: forall (m :: Method FromServer Request). (HasJSON (ResponseMessage m)) => SMethod m -> ResponseMessage m -> FromClientMessage
 
 type LookupFunc f = forall (m :: Method f 'Request). LspId m -> Maybe (SMethod m, MessageParams m)
 

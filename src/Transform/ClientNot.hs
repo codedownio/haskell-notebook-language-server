@@ -8,6 +8,7 @@ import ApplyChanges
 import Control.Lens hiding ((:>), List)
 import Control.Monad.Logger
 import Control.Monad.Reader
+import Data.Aeson as A
 import qualified Data.Char as C
 import Data.Map as M
 import Data.String.Interpolate
@@ -29,11 +30,12 @@ import UnliftIO.MVar
 type ClientNotMethod m = SMethod (m :: Method FromClient Notification)
 
 
-transformClientNot :: (TransformerMonad n) => ClientNotMethod m -> NotificationMessage m -> n (NotificationMessage m)
+transformClientNot :: (TransformerMonad n, HasJSON (NotificationMessage m)) => ClientNotMethod m -> NotificationMessage m -> n (NotificationMessage m)
 transformClientNot meth msg = do
-  logInfoN [i|Transforming client not #{meth}|]
   p' <- transformClientNot' meth (msg ^. params)
-  return $ set params p' msg
+  let msg' = set params p' msg
+  logInfoN [i|Transforming client not #{meth}: (#{A.encode msg} --> #{A.encode msg'})|]
+  return msg'
 
 transformClientNot' :: (TransformerMonad n) => ClientNotMethod m -> MessageParams m -> n (MessageParams m)
 

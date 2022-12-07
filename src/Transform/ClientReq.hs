@@ -8,6 +8,7 @@ module Transform.ClientReq where
 
 import Control.Lens hiding ((:>))
 import Control.Monad.Logger
+import Data.Aeson as A
 import qualified Data.Char as C
 import Data.String.Interpolate
 import Data.Text
@@ -24,11 +25,12 @@ import Transform.Util
 type ClientReqMethod m = SMethod (m :: Method FromClient Request)
 
 
-transformClientReq :: (TransformerMonad n) => ClientReqMethod m -> RequestMessage m -> n (RequestMessage m)
+transformClientReq :: (TransformerMonad n, HasJSON (RequestMessage m)) => ClientReqMethod m -> RequestMessage m -> n (RequestMessage m)
 transformClientReq meth msg = do
-  logInfoN [i|Transforming client req #{meth}|]
   p' <- transformClientReq' meth (msg ^. params)
-  return $ set params p' msg
+  let msg' = set params p' msg
+  logInfoN [i|Transforming client req #{meth}: (#{A.encode msg} --> #{A.encode msg'})|]
+  return msg'
 
 transformClientReq' :: forall m n. (TransformerMonad n) => ClientReqMethod m -> MessageParams m -> n (MessageParams m)
 transformClientReq' STextDocumentDocumentHighlight params = whenNotebook params $ withTransformer params $ doTransformPosition @m params

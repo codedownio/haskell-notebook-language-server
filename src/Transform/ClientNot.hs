@@ -44,7 +44,6 @@ transformClientNot' STextDocumentDidOpen params = whenNotebook params $ \uri -> 
   let (ls', transformer' :: HaskellNotebookTransformer) = project transformerParams ls
   TransformerState {..} <- ask
   let docRegex = getUri uri
-  logInfoN [i|Made doc regex: #{docRegex}|]
   modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri uri) (DocumentState transformer' ls (mkDocRegex docRegex)) x)
   return $ set (textDocument . text) (T.intercalate "\n" ls') params
 transformClientNot' STextDocumentDidChange params = whenNotebook params $ modifyTransformer params $ \ds@(DocumentState {transformer=tx, curLines=before}) -> do

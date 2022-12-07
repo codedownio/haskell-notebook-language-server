@@ -34,7 +34,7 @@ transformClientNot :: (TransformerMonad n, HasJSON (NotificationMessage m)) => C
 transformClientNot meth msg = do
   p' <- transformClientNot' meth (msg ^. params)
   let msg' = set params p' msg
-  logInfoN [i|Transforming client not #{meth}: (#{A.encode msg} --> #{A.encode msg'})|]
+  when (msg' /= msg) $ logInfoN [i|Transforming client not #{meth}: (#{A.encode msg} --> #{A.encode msg'})|]
   return msg'
 
 transformClientNot' :: (TransformerMonad n) => ClientNotMethod m -> MessageParams m -> n (MessageParams m)

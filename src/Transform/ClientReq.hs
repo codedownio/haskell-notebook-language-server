@@ -7,6 +7,7 @@
 module Transform.ClientReq where
 
 import Control.Lens hiding ((:>))
+import Control.Monad
 import Control.Monad.Logger
 import Data.Aeson as A
 import qualified Data.Char as C
@@ -29,7 +30,7 @@ transformClientReq :: (TransformerMonad n, HasJSON (RequestMessage m)) => Client
 transformClientReq meth msg = do
   p' <- transformClientReq' meth (msg ^. params)
   let msg' = set params p' msg
-  logInfoN [i|Transforming client req #{meth}: (#{A.encode msg} --> #{A.encode msg'})|]
+  when (msg' /= msg) $ logInfoN [i|Transforming client req #{meth}: (#{A.encode msg} --> #{A.encode msg'})|]
   return msg'
 
 transformClientReq' :: forall m n. (TransformerMonad n) => ClientReqMethod m -> MessageParams m -> n (MessageParams m)

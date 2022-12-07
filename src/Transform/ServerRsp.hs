@@ -7,6 +7,7 @@ module Transform.ServerRsp where
 import Control.Lens hiding (List)
 import Control.Monad
 import Control.Monad.Logger
+import Data.Aeson as A
 import Data.String.Interpolate
 import Language.LSP.Notebook (HaskellNotebookTransformer)
 import Language.LSP.Notebook.ExpressionToDeclaration (containsExpressionVariable, isExpressionVariable)
@@ -18,13 +19,14 @@ import Transform.Util
 
 type ServerRspMethod m = SMethod (m :: Method FromClient Request)
 
-transformServerRsp :: (TransformerMonad n) => ServerRspMethod m -> MessageParams m -> ResponseMessage m -> n (ResponseMessage m)
+transformServerRsp :: (TransformerMonad n, HasJSON (ResponseMessage m)) => ServerRspMethod m -> MessageParams m -> ResponseMessage m -> n (ResponseMessage m)
 transformServerRsp meth initialParams msg = do
-  logInfoN [i|Transforming server response #{meth}|]
   case msg ^. result of
     Left err -> return msg
     Right ret -> do
       p' <- transformServerRsp' meth initialParams ret
+      let msg' = set result (Right p') msg
+      when (msg' /= msg) $ logInfoN [i|Transforming server rsp #{meth}: (#{A.encode msg} --> #{A.encode msg'})|]
       return $ set result (Right p') msg
 
 transformServerRsp' :: (TransformerMonad n) => ServerRspMethod m -> MessageParams m -> ResponseResult m -> n (ResponseResult m)

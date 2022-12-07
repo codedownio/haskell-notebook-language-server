@@ -7,12 +7,8 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE TypeInType #-}
-{-# LANGUAGE StandaloneDeriving #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE TupleSections #-}
-{-# LANGUAGE TypeApplications #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -Wno-unticked-promoted-constructors #-}
 

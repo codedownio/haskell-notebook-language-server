@@ -14,6 +14,7 @@ import Language.LSP.Notebook.ExpressionToDeclaration (containsExpressionVariable
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
+import Transform.Common
 import Transform.Util
 
 
@@ -36,8 +37,11 @@ transformServerRsp' STextDocumentHover initialParams result = whenNotebookResult
   return (untransformRangedMaybe tx <$> result)
 transformServerRsp' STextDocumentDocumentSymbol initialParams result = whenNotebookResult initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) ->
   case result of
-    InL (List documentSymbols) -> return $ InL (List (filter (not . isInternalSymbol) documentSymbols))
-    InR (List symbolInformations) -> return $ InR (List (filter (not . isInternalSymbol) symbolInformations))
+    InL (List documentSymbols) -> return $ InL $ List (documentSymbols & filter (not . isInternalSymbol)
+                                                                       & fmap (over range (untransformRange tx)
+                                                                              . over selectionRange (untransformRange tx)))
+    InR (List symbolInformations) -> return $ InR $ List (symbolInformations & filter (not . isInternalSymbol)
+                                                                             & fmap (over (location . range) (untransformRange tx)))
   where
     isInternalSymbol x = isExpressionVariable expressionToDeclarationParams (x ^. name)
 transformServerRsp' STextDocumentCodeAction initialParams result@(List xs) = whenNotebookResult initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) -> do
@@ -46,14 +50,3 @@ transformServerRsp' STextDocumentCodeAction initialParams result@(List xs) = whe
     isInternalReferringCodeAction (InL command) = containsExpressionVariable expressionToDeclarationParams (command ^. title)
     isInternalReferringCodeAction (InR codeAction) = containsExpressionVariable expressionToDeclarationParams (codeAction ^. title)
 transformServerRsp' _ _ result = return result
-
-
-untransformRanged :: (HasRange a Range) => HaskellNotebookTransformer -> a -> a
-untransformRanged tx x = x
-  & over (range . start) (untransformPosition transformerParams tx)
-  & over (range . end) (untransformPosition transformerParams tx)
-
-untransformRangedMaybe :: (HasRange a (Maybe Range)) => HaskellNotebookTransformer -> a -> a
-untransformRangedMaybe tx x = x
-  & over (range . _Just . start) (untransformPosition transformerParams tx)
-  & over (range . _Just . end) (untransformPosition transformerParams tx)

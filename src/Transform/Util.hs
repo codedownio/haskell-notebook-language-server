@@ -30,6 +30,9 @@ import UnliftIO.MVar
 whenNotebook :: (MonadLoggerIO n, HasTextDocument a b, HasUri b Uri) => a -> (Uri -> n a) -> n a
 whenNotebook params = whenNotebook' (params ^. (textDocument . uri)) params
 
+whenNotebookUri :: (MonadLoggerIO n, HasUri a Uri) => a -> (Uri -> n a) -> n a
+whenNotebookUri params = whenNotebook' (params ^. uri) params
+
 whenNotebookResult :: (MonadLoggerIO n, HasTextDocument a b, HasUri b Uri) => a -> c -> (Uri -> n c) -> n c
 whenNotebookResult params = whenNotebook' (params ^. (textDocument . uri))
 
@@ -52,6 +55,7 @@ type TransformerMonad n = (
 data DocumentState = DocumentState {
   transformer :: HaskellNotebookTransformer
   , curLines :: [Text]
+  , origUri :: Uri
   , newUri :: Uri
   , referenceRegex :: Regex
   }
@@ -99,3 +103,6 @@ addExtensionToUri ext u@(Uri t) = case parseURIReference (T.unpack t) of
     logErrorN [i|Couldn't parse URI: #{t}|]
     return u
   Just uri -> return $ Uri $ T.pack $ show $ uri { uriPath = uriPath uri <.> ext }
+
+flipTuple :: (b, a) -> (a, b)
+flipTuple (x, y) = (y, x)

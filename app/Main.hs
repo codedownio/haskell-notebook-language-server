@@ -147,7 +147,7 @@ readHlsOut clientReqMap serverReqMap hlsOut = forever $ do
           logErr [i|Couldn't decode server message: #{A.encode x} (#{err})|]
           writeToHandle stdout (A.encode x)
         Right (FromServerNot meth msg) ->
-          writeToHandle stdout (A.encode (transformServerNot meth msg))
+          transformServerNot meth msg >>= writeToHandle stdout . A.encode
         Right (FromServerReq meth msg) -> do
           let msgId = msg ^. Lens.id
           modifyMVar_ serverReqMap $ \m -> case updateServerRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of

@@ -44,7 +44,7 @@ transformClientNot' STextDocumentDidOpen params = whenNotebook params $ \u -> do
   let (ls', transformer' :: HaskellNotebookTransformer) = project transformerParams ls
   TransformerState {..} <- ask
   Uri newUri <- addExtensionToUri ".hs" u
-  modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri u) (DocumentState transformer' ls (Uri newUri) (mkDocRegex newUri)) x)
+  modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri u) (DocumentState transformer' ls u (Uri newUri) (mkDocRegex newUri)) x)
   return $ params
          & set (textDocument . text) (T.intercalate "\n" ls')
          & set (textDocument . uri) (Uri newUri)
@@ -56,8 +56,10 @@ transformClientNot' STextDocumentDidChange params = whenNotebook params $ modify
                                                              & set (textDocument . uri) newUri)
 transformClientNot' STextDocumentDidClose params = whenNotebook params $ \u -> do
   TransformerState {..} <- ask
-  modifyMVar_ transformerDocuments (\x -> return $! M.delete (getUri u) x)
-  newUri <- addExtensionToUri ".hs" u
+  maybeDocumentState <- modifyMVar transformerDocuments (return . flipTuple . M.updateLookupWithKey (\_ _ -> Nothing) (getUri u))
+  newUri <- case maybeDocumentState of
+    Just (DocumentState {..}) -> pure newUri
+    Nothing -> addExtensionToUri ".hs" u -- The client shouldn't be closing a non-open doc
   return $ params
          & set (textDocument . uri) newUri
 

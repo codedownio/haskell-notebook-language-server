@@ -2,7 +2,6 @@
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE DataKinds #-}
-{-# HLINT ignore "Redundant multi-way if" #-}
 
 module Transform.Util where
 

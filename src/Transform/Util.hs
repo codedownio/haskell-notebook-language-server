@@ -33,15 +33,33 @@ whenNotebook params = whenNotebook' (params ^. (textDocument . uri)) params
 whenNotebookUri :: (MonadLoggerIO n, HasUri a Uri) => a -> (Uri -> n a) -> n a
 whenNotebookUri params = whenNotebook' (params ^. uri) params
 
-whenNotebookResult :: (MonadLoggerIO n, HasTextDocument a b, HasUri b Uri) => a -> c -> (Uri -> n c) -> n c
-whenNotebookResult params = whenNotebook' (params ^. (textDocument . uri))
+whenNotebookByInitialParams :: (MonadLoggerIO n, HasTextDocument a b, HasUri b Uri) => a -> c -> (Uri -> n c) -> n c
+whenNotebookByInitialParams params = whenNotebook' (params ^. (textDocument . uri))
 
 whenNotebook' :: (MonadLoggerIO n) => Uri -> a -> (Uri -> n a) -> n a
 whenNotebook' uri params notebookParams = case parseURIReference (T.unpack (getUri uri)) of
   Nothing -> return params
   Just (URI {..}) -> do
-    if | fmap C.toLower (takeExtension uriPath) == ".ipynb" -> notebookParams uri
+    if | ".ipynb" `L.isSuffixOf` fmap C.toLower uriPath -> notebookParams uri
        | otherwise -> return params
+
+-- * whenNotebookResult
+
+whenNotebookResultUri :: (MonadLoggerIO n, HasUri a Uri) => a -> (Uri -> n a) -> n a
+whenNotebookResultUri params = whenNotebookResult' (params ^. uri) params
+
+-- | Note that this takes in server URIs (.ipynb.hs) and calls the callback with original URIs (.ipynb)
+-- TODO: do a lot less String/Text conversion here
+whenNotebookResult' :: (MonadLoggerIO n) => Uri -> a -> (Uri -> n a) -> n a
+whenNotebookResult' uri@(Uri uriText) params notebookParams = case parseURIReference (T.unpack uriText) of
+  Nothing -> return params
+  Just networkUri@(URI {..}) -> do
+    if | ".ipynb.hs" `L.isSuffixOf` fmap C.toLower uriPath -> do
+           let correctedNetworkUri = networkUri { uriPath = T.unpack (T.dropEnd 3 (T.pack uriPath)) }
+           notebookParams (Uri (T.pack (uriToString Prelude.id correctedNetworkUri "")))
+       | otherwise -> return params
+
+-- * TransformerMonad
 
 type TransformerMonad n = (
   MonadLoggerIO n

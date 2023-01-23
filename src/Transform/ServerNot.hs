@@ -26,7 +26,7 @@ transformServerNot meth msg = do
 
 transformServerNot' :: (TransformerMonad n) => SMethod m -> MessageParams m -> n (MessageParams m)
 
-transformServerNot' STextDocumentPublishDiagnostics params = whenNotebookUri params $ withTransformer params $ \(DocumentState {transformer=tx, ..}) -> do
+transformServerNot' STextDocumentPublishDiagnostics params = whenNotebookResultUri params $ withTransformer params $ \(DocumentState {transformer=tx, ..}) -> do
   return $ params
          & set uri origUri
          & over diagnostics (fmap (over range (untransformRange tx)))

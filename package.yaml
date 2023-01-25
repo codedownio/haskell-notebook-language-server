@@ -56,8 +56,9 @@ library:
 
 executables:
   haskell-notebook-language-server:
-    main:                Main.hs
-    source-dirs:         app
+    main: Main.hs
+    source-dirs:
+    - app
     ghc-options:
     - -threaded
     - -rtsopts
@@ -65,9 +66,11 @@ executables:
     dependencies:
     - haskell-notebook-language-server
 
+tests:
   haskell-notebook-language-server-test:
-    main:                Main.hs
-    source-dirs:         test
+    main: Main.hs
+    source-dirs:
+    - test
     ghc-options:
     - -threaded
     - -rtsopts

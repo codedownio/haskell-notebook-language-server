@@ -7,7 +7,8 @@ import Test.Sandwich
 import qualified Test.BinarySearchVec
 
 import qualified Test.Transformer.ExpressionToDeclaration
-import qualified Test.Transformer.FrontSifter
+import qualified Test.Transformer.ImportSifter
+import qualified Test.Transformer.PragmaSifter
 import qualified Test.Transformer.StripDirective
 
 import qualified Test.Hover
@@ -20,7 +21,8 @@ spec = do
 
   describe "Transformers" $ do
     Test.Transformer.ExpressionToDeclaration.spec
-    Test.Transformer.FrontSifter.spec
+    Test.Transformer.ImportSifter.spec
+    Test.Transformer.PragmaSifter.spec
     Test.Transformer.StripDirective.spec
 
   Test.Hover.spec

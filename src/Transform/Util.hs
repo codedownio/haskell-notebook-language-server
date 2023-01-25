@@ -91,7 +91,7 @@ expressionToDeclarationParams :: Params ExpressionToDeclaration
 expressionToDeclarationParams = EDParams 10
 
 transformerParams :: Params HaskellNotebookTransformer
-transformerParams = SDParams :> expressionToDeclarationParams :> ()
+transformerParams = SDParams :> expressionToDeclarationParams :> () :> ()
 
 lookupTransformer :: TransformerMonad m => Uri -> m (Maybe DocumentState)
 lookupTransformer uri = do

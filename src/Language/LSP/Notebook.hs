@@ -12,4 +12,4 @@ import Language.LSP.Notebook.StripDirective
 import Language.LSP.Transformer
 
 
-type HaskellNotebookTransformer = StripDirective :> ExpressionToDeclaration :> FrontSifter
+type HaskellNotebookTransformer = StripDirective :> ExpressionToDeclaration :> ImportSifter :> PragmaSifter

@@ -17,6 +17,7 @@ library
   exposed-modules:
       ApplyChanges
       Language.LSP.Notebook
+      Language.LSP.Notebook.DirectiveToPragma
       Language.LSP.Notebook.ExpressionToDeclaration
       Language.LSP.Notebook.FrontSifter
       Language.LSP.Notebook.StripDirective
@@ -140,14 +141,17 @@ executable haskell-notebook-language-server
     , vector
   default-language: Haskell2010
 
-executable haskell-notebook-language-server-test
+test-suite haskell-notebook-language-server-test
+  type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
       Test.BinarySearchVec
       Test.Common
       Test.Hover
+      Test.Transformer.DirectiveToPragma
       Test.Transformer.ExpressionToDeclaration
-      Test.Transformer.FrontSifter
+      Test.Transformer.ImportSifter
+      Test.Transformer.PragmaSifter
       Test.Transformer.StripDirective
       Paths_haskell_notebook_language_server
   hs-source-dirs:

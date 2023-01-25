@@ -14,9 +14,11 @@
 
 module Language.LSP.Notebook.FrontSifter where
 
+import Data.Bifunctor
 import Data.Bits
 import Data.Function
 import Data.Functor.Identity (Identity(runIdentity))
+import qualified Data.List as L
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -30,64 +32,89 @@ import Language.LSP.Types
 import System.IO.Unsafe (unsafePerformIO)
 
 
-newtype FrontSifter = FrontSifter (Vector Int)
+newtype ImportSifter = ImportSifter (Vector Int)
   deriving Show
+instance Transformer ImportSifter where
+  type Params ImportSifter = ()
+
+  project :: Params ImportSifter -> [Text] -> ([Text], ImportSifter)
+  project () = second ImportSifter . projectChosenLines isImportCodeBlock
+
+  transformPosition :: Params ImportSifter -> ImportSifter -> Position -> Maybe Position
+  transformPosition () (ImportSifter indices) = transformUsingIndices indices
+
+  untransformPosition :: Params ImportSifter -> ImportSifter -> Position -> Position
+  untransformPosition () (ImportSifter indices) = untransformUsingIndices indices
+
+newtype PragmaSifter = PragmaSifter (Vector Int)
+  deriving Show
+instance Transformer PragmaSifter where
+  type Params PragmaSifter = ()
+
+  project :: Params PragmaSifter -> [Text] -> ([Text], PragmaSifter)
+  project () = second PragmaSifter . projectChosenLines isLanguagePragmaCodeBlock
+
+  transformPosition :: Params PragmaSifter -> PragmaSifter -> Position -> Maybe Position
+  transformPosition () (PragmaSifter indices) = transformUsingIndices indices
+
+  untransformPosition :: Params PragmaSifter -> PragmaSifter -> Position -> Position
+  untransformPosition () (PragmaSifter indices) = untransformUsingIndices indices
+
+-- * Generic transformer functions
+
+projectChosenLines :: (CodeBlock -> Maybe String) -> [Text] -> ([Text], Vector Int)
+projectChosenLines chooseFn ls = (chosenLines <> nonChosenLines, fromList importIndices)
+  where
+    locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
+
+    countNewLines ('\n':xs) = 1 + countNewLines xs
+    countNewLines (_:xs) = countNewLines xs
+    countNewLines [] = 0
+
+    getLinesStartingAt t startingAt = [startingAt..(startingAt + countNewLines t)]
+
+    importIndices = mconcat [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
+                            | locatedCodeBlock@((chooseFn . unloc) -> Just t) <- locatedCodeBlocks]
+
+    partitionLines :: [Int] -> [(Int, Text)] -> ([Text], [Text])
+    partitionLines [] remaining = ([], fmap snd remaining)
+    partitionLines _ [] = error "Failed to partition lines"
+    partitionLines all@(nextDesired:xs) ((curIndex, curLine):ys)
+      | nextDesired == curIndex = let (chosen, notChosen) = partitionLines xs ys in
+          (curLine : chosen, notChosen)
+      | otherwise = let (chosen, notChosen) = partitionLines all ys in
+          (chosen, curLine : notChosen)
+
+    (chosenLines, nonChosenLines) = partitionLines importIndices (zip [0..] ls)
 
 
-instance Transformer FrontSifter where
-  type Params FrontSifter = ()
+transformUsingIndices :: Vector Int -> Position -> Maybe Position
+transformUsingIndices indices (Position l c) = case binarySearchVec indices (fromIntegral l) of
+  (i, True) -> Just (Position (fromIntegral i) c)
+  (i, False) -> Just (Position (l + fromIntegral (V.length indices - i)) c)
 
-  project :: Params FrontSifter -> [Text] -> ([Text], FrontSifter)
-  project () ls = (chosenLines <> nonChosenLines, FrontSifter (fromList importIndices))
-    where
-      locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
+untransformUsingIndices :: Integral a => Vector a -> Position -> Position
+untransformUsingIndices indices (Position l c)
+  | l < fromIntegral (V.length indices) = Position (fromIntegral (indices ! (fromIntegral l))) c
+  | otherwise = Position finalL c
+      where
+        finalL = flip fix (V.length indices - 1, l) $ \loop -> \case
+          (-1, currentL) -> fromIntegral currentL
+          (chosenLineIndex, currentL) -> let chosenOrig = indices ! chosenLineIndex in
+            if | chosenOrig >= fromIntegral currentL -> loop (chosenLineIndex - 1, currentL - 1)
+               | otherwise -> (fromIntegral currentL)
 
-      countNewLines ('\n':xs) = 1 + countNewLines xs
-      countNewLines (_:xs) = countNewLines xs
-      countNewLines [] = 0
+-- * Choose functions
 
-      getLinesStartingAt t startingAt = [startingAt..(startingAt + countNewLines t)]
+isImportCodeBlock :: CodeBlock -> Maybe String
+isImportCodeBlock (Import t) = Just t
+isImportCodeBlock _ = Nothing
 
-      importIndices = mconcat [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                              | locatedCodeBlock@(unloc -> Import t) <- locatedCodeBlocks]
+isLanguagePragmaCodeBlock :: CodeBlock -> Maybe String
+isLanguagePragmaCodeBlock (Pragma PragmaLanguage langs) = Just [__i|{-\# LANGUAGE #{L.unwords langs} \#-}|]
+isLanguagePragmaCodeBlock _ = Nothing
 
-      partitionLines :: [Int] -> [(Int, Text)] -> ([Text], [Text])
-      partitionLines [] remaining = ([], fmap snd remaining)
-      partitionLines _ [] = error "Failed to partition lines"
-      partitionLines all@(nextDesired:xs) ((curIndex, curLine):ys)
-        | nextDesired == curIndex = let (chosen, notChosen) = partitionLines xs ys in
-            (curLine : chosen, notChosen)
-        | otherwise = let (chosen, notChosen) = partitionLines all ys in
-            (chosen, curLine : notChosen)
-
-      (chosenLines, nonChosenLines) = partitionLines importIndices (zip [0..] ls)
-
-  -- TODO: efficient implementation
-  -- handleDiff :: Params FrontSifter -> [Text] -> [Text] -> [TextDocumentContentChangeEvent] -> FrontSifter -> ([Text], [Text], [TextDocumentContentChangeEvent], FrontSifter)
-  -- handleDiff () before after changes x@(FrontSifter indices) = (before', after', fmap transformChange changes, x')
-  --   where
-  --     (before', _) = project @FrontSifter () before
-  --     (after', x') = project @FrontSifter () after
-
-  --     transformChange change@(TextDocumentContentChangeEvent {..}) = case _range of
-  --       Just r -> undefined
-  --       Nothing -> undefined
-
-  transformPosition :: Params FrontSifter -> FrontSifter -> Position -> Maybe Position
-  transformPosition () (FrontSifter indices) (Position l c) = case binarySearchVec indices (fromIntegral l) of
-    (i, True) -> Just (Position (fromIntegral i) c)
-    (i, False) -> Just (Position (l + fromIntegral (V.length indices - i)) c)
-
-  untransformPosition :: Params FrontSifter -> FrontSifter -> Position -> Position
-  untransformPosition () (FrontSifter indices) (Position l c)
-    | l < fromIntegral (V.length indices) = Position (fromIntegral (indices ! (fromIntegral l))) c
-    | otherwise = Position finalL c
-        where
-          finalL = flip fix (V.length indices - 1, l) $ \loop -> \case
-            (-1, currentL) -> fromIntegral currentL
-            (chosenLineIndex, currentL) -> let chosenOrig = indices ! chosenLineIndex in
-              if | chosenOrig >= fromIntegral currentL -> loop (chosenLineIndex - 1, currentL - 1)
-                 | otherwise -> (fromIntegral currentL)
+-- * Binary search
 
 binarySearchVec = binarySearchVec' @Int
 
@@ -109,3 +136,11 @@ binarySearchVec' vec desired = binarySearchVec' 0 (fromIntegral $ V.length vec)
       where
         mid = shift (lb + ub) (-1)
         midValue = vec ! fromIntegral mid
+
+
+
+foo = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString [__i|{-\# LANGUAGE TemplateHaskell \#-}
+                                                                          import Data.Aeson.TH
+                                                                          data Foo = Bar | Baz
+                                                                          deriveJSON defaultOptions ''Foo
+                                                                         |]

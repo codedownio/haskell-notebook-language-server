@@ -6,10 +6,11 @@ module Language.LSP.Notebook (
   , HaskellNotebookTransformer
   ) where
 
+import Language.LSP.Notebook.DirectiveToPragma
 import Language.LSP.Notebook.ExpressionToDeclaration
 import Language.LSP.Notebook.FrontSifter
 import Language.LSP.Notebook.StripDirective
 import Language.LSP.Transformer
 
 
-type HaskellNotebookTransformer = StripDirective :> ExpressionToDeclaration :> ImportSifter :> PragmaSifter
+type HaskellNotebookTransformer = DirectiveToPragma :> StripDirective :> ExpressionToDeclaration :> ImportSifter :> PragmaSifter

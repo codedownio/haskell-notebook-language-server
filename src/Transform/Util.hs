@@ -18,6 +18,7 @@ import Data.String.Interpolate
 import Data.Text
 import qualified Data.Text as T
 import Language.LSP.Notebook
+import Language.LSP.Notebook.DirectiveToPragma
 import Language.LSP.Notebook.StripDirective
 import Language.LSP.Transformer
 import Language.LSP.Types
@@ -91,7 +92,7 @@ expressionToDeclarationParams :: Params ExpressionToDeclaration
 expressionToDeclarationParams = EDParams 10
 
 transformerParams :: Params HaskellNotebookTransformer
-transformerParams = SDParams :> expressionToDeclarationParams :> () :> ()
+transformerParams = DTPParams :> SDParams :> expressionToDeclarationParams :> () :> ()
 
 lookupTransformer :: TransformerMonad m => Uri -> m (Maybe DocumentState)
 lookupTransformer uri = do

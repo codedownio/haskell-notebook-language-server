@@ -58,11 +58,13 @@ instance Transformer DirectiveToPragma where
                          | locatedCodeBlock@(unloc -> Directive SetDynFlag t) <- locatedCodeBlocks
                          , all isLanguageOption (L.words t)]
 
+  -- TODO: do better here
   transformPosition :: Params DirectiveToPragma -> DirectiveToPragma -> Position -> Maybe Position
   transformPosition DTPParams (DirectiveToPragma affectedLines) (Position l c)
     | l `Set.member` affectedLines = Just $ Position l 0
     | otherwise = Just $ Position l c
 
+  -- TODO: do better here
   untransformPosition :: Params DirectiveToPragma -> DirectiveToPragma -> Position -> Position
   untransformPosition DTPParams (DirectiveToPragma affectedLines) (Position l c)
     | l `Set.member` affectedLines = Position l 0

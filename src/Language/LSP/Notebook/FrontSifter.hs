@@ -27,6 +27,7 @@ import GHC
 import qualified GHC.Paths
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
+import Language.LSP.Notebook.Util
 import Language.LSP.Transformer
 import Language.LSP.Types
 import System.IO.Unsafe (unsafePerformIO)
@@ -66,10 +67,6 @@ projectChosenLines :: (CodeBlock -> Maybe String) -> [Text] -> ([Text], Vector I
 projectChosenLines chooseFn ls = (chosenLines <> nonChosenLines, fromList importIndices)
   where
     locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
-
-    countNewLines ('\n':xs) = 1 + countNewLines xs
-    countNewLines (_:xs) = countNewLines xs
-    countNewLines [] = 0
 
     getLinesStartingAt t startingAt = [startingAt..(startingAt + countNewLines t)]
 

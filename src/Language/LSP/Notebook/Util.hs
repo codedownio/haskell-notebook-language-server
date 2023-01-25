@@ -1,13 +1,11 @@
 
 module Language.LSP.Notebook.Util where
 
-import IHaskell.Eval.Parser
 
+countNewLines :: String -> Int
+countNewLines ('\n':xs) = 1 + countNewLines xs
+countNewLines (_:xs) = countNewLines xs
+countNewLines [] = 0
 
-isImportLine :: CodeBlock -> Bool
-isImportLine (Import {}) = True
-isImportLine _ = False
-
-isPragmaLine :: CodeBlock -> Bool
-isPragmaLine (Pragma {}) = True
-isPragmaLine _ = False
+getLinesStartingAt :: String -> Int -> [Int]
+getLinesStartingAt t startingAt = [startingAt..(startingAt + countNewLines t)]

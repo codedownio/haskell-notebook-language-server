@@ -23,6 +23,7 @@ import GHC
 import qualified GHC.Paths
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
+import Language.LSP.Notebook.Util
 import Language.LSP.Transformer
 import Language.LSP.Types
 import System.IO.Unsafe (unsafePerformIO)
@@ -79,17 +80,6 @@ instance Transformer ExpressionToDeclaration where
 
       exprIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
                     | locatedCodeBlock@(unloc -> Expression t) <- locatedCodeBlocks]
-
-      getLinesStartingAt :: String -> Int -> [Int]
-      getLinesStartingAt t startingAt = [startingAt..(startingAt + countNewLines t)]
-
-      countNewLines ('\n':xs) = 1 + countNewLines xs
-      countNewLines (_:xs) = countNewLines xs
-      countNewLines [] = 0
-
-  -- TODO: efficient implementation
-  -- handleDiff :: Params ExpressionToDeclaration -> [Text] -> [Text] -> [TextDocumentContentChangeEvent] -> ExpressionToDeclaration -> ([Text], [Text], [TextDocumentContentChangeEvent], ExpressionToDeclaration)
-  -- handleDiff (EDParams {..}) before after changes x@(ExpressionToDeclaration indices) = undefined
 
   transformPosition :: Params ExpressionToDeclaration -> ExpressionToDeclaration -> Position -> Maybe Position
   transformPosition (EDParams {..}) (ExpressionToDeclaration affectedLines) (Position l c)

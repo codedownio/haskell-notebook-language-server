@@ -23,6 +23,7 @@ import GHC
 import qualified GHC.Paths
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
+import Language.LSP.Notebook.Util
 import Language.LSP.Transformer
 import Language.LSP.Types
 import System.IO.Unsafe (unsafePerformIO)
@@ -33,13 +34,13 @@ import Text.Regex.PCRE.Text (Regex, compile, compBlank, execute)
 newtype DirectiveToPragma = DirectiveToPragma (Set UInt)
   deriving Show
 
-data SDParams = SDParams { }
+data DTPParams = DTPParams { }
 
 instance Transformer DirectiveToPragma where
-  type Params DirectiveToPragma = SDParams
+  type Params DirectiveToPragma = DTPParams
 
   project :: Params DirectiveToPragma -> [Text] -> ([Text], DirectiveToPragma)
-  project SDParams ls = (go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat directiveIndices))
+  project DTPParams ls = (go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat directiveIndices))
     where
       locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
 
@@ -54,25 +55,14 @@ instance Transformer DirectiveToPragma where
         | otherwise = l : go counter xs (group:remainingGroups)
 
       directiveIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                         | locatedCodeBlock@(unloc -> Directive _ t) <- locatedCodeBlocks]
-
-      getLinesStartingAt :: String -> Int -> [Int]
-      getLinesStartingAt t startingAt = [startingAt..(startingAt + countNewLines t)]
-
-      countNewLines ('\n':xs) = 1 + countNewLines xs
-      countNewLines (_:xs) = countNewLines xs
-      countNewLines [] = 0
-
-  -- TODO: efficient implementation
-  -- handleDiff :: Params DirectiveToPragma -> [Text] -> [Text] -> [TextDocumentContentChangeEvent] -> DirectiveToPragma -> ([Text], [Text], [TextDocumentContentChangeEvent], DirectiveToPragma)
-  -- handleDiff (SDParams {..}) before after changes x@(DirectiveToPragma indices) = undefined
+                         | locatedCodeBlock@(unloc -> Directive SetOption t) <- locatedCodeBlocks]
 
   transformPosition :: Params DirectiveToPragma -> DirectiveToPragma -> Position -> Maybe Position
-  transformPosition SDParams (DirectiveToPragma affectedLines) (Position l c)
+  transformPosition DTPParams (DirectiveToPragma affectedLines) (Position l c)
     | l `Set.member` affectedLines = Just $ Position l 0
     | otherwise = Just $ Position l c
 
   untransformPosition :: Params DirectiveToPragma -> DirectiveToPragma -> Position -> Position
-  untransformPosition SDParams (DirectiveToPragma affectedLines) (Position l c)
+  untransformPosition DTPParams (DirectiveToPragma affectedLines) (Position l c)
     | l `Set.member` affectedLines = Position l 0
     | otherwise = Position l c

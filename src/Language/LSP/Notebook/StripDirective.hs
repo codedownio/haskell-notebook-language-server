@@ -23,6 +23,7 @@ import GHC
 import qualified GHC.Paths
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
+import Language.LSP.Notebook.Util
 import Language.LSP.Transformer
 import Language.LSP.Types
 import System.IO.Unsafe (unsafePerformIO)
@@ -55,17 +56,6 @@ instance Transformer StripDirective where
 
       directiveIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
                          | locatedCodeBlock@(unloc -> Directive _ t) <- locatedCodeBlocks]
-
-      getLinesStartingAt :: String -> Int -> [Int]
-      getLinesStartingAt t startingAt = [startingAt..(startingAt + countNewLines t)]
-
-      countNewLines ('\n':xs) = 1 + countNewLines xs
-      countNewLines (_:xs) = countNewLines xs
-      countNewLines [] = 0
-
-  -- TODO: efficient implementation
-  -- handleDiff :: Params StripDirective -> [Text] -> [Text] -> [TextDocumentContentChangeEvent] -> StripDirective -> ([Text], [Text], [TextDocumentContentChangeEvent], StripDirective)
-  -- handleDiff (SDParams {..}) before after changes x@(StripDirective indices) = undefined
 
   transformPosition :: Params StripDirective -> StripDirective -> Position -> Maybe Position
   transformPosition SDParams (StripDirective affectedLines) (Position l c)

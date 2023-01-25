@@ -18,7 +18,7 @@ import Data.Set as Set
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
-import Data.Vector as V hiding (zip)
+import Data.Vector as V hiding (all, zip)
 import GHC
 import qualified GHC.Paths
 import IHaskell.Eval.Parser
@@ -40,22 +40,23 @@ instance Transformer DirectiveToPragma where
   type Params DirectiveToPragma = DTPParams
 
   project :: Params DirectiveToPragma -> [Text] -> ([Text], DirectiveToPragma)
-  project DTPParams ls = (go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat directiveIndices))
+  project DTPParams ls = (go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat (fmap fst directiveIndices)))
     where
       locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
 
-      go :: Int -> [(Text, Int)] -> [[Int]] -> [Text]
+      go :: Int -> [(Text, Int)] -> [([Int], [String])] -> [Text]
       go _ [] _ = []
       go _ xs [] = fmap fst xs
-      go _ xs ([]:_) = error "Empty group"
-      go counter ((l, i):xs) (group@(i1:is):remainingGroups)
-        | i == i1 = let
+      go counter ((l, ix):xs) (group@(i1:is, languageOptions):remainingGroups)
+        | ix == i1 = let
             (extraLinesToProcess, remainingLines) = L.splitAt (L.length is) xs
-            in "" : ["" | _ <- extraLinesToProcess] <> go (counter + 1) remainingLines remainingGroups
+            in [i|{-\# LANGUAGE #{L.unwords languageOptions} \#-}|] : ["" | _ <- extraLinesToProcess] <> go (counter + 1) remainingLines remainingGroups
         | otherwise = l : go counter xs (group:remainingGroups)
 
-      directiveIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                         | locatedCodeBlock@(unloc -> Directive SetOption t) <- locatedCodeBlocks]
+      directiveIndices :: [([Int], [String])]
+      directiveIndices = [(getLinesStartingAt t (GHC.line locatedCodeBlock - 1), fmap unflagLanguageOption (L.words t))
+                         | locatedCodeBlock@(unloc -> Directive SetDynFlag t) <- locatedCodeBlocks
+                         , all isLanguageOption (L.words t)]
 
   transformPosition :: Params DirectiveToPragma -> DirectiveToPragma -> Position -> Maybe Position
   transformPosition DTPParams (DirectiveToPragma affectedLines) (Position l c)
@@ -66,3 +67,11 @@ instance Transformer DirectiveToPragma where
   untransformPosition DTPParams (DirectiveToPragma affectedLines) (Position l c)
     | l `Set.member` affectedLines = Position l 0
     | otherwise = Position l c
+
+
+isLanguageOption :: String -> Bool
+isLanguageOption ('-':'X':xs) = True
+isLanguageOption _ = False
+
+unflagLanguageOption :: String -> String
+unflagLanguageOption = L.drop 2

@@ -47,7 +47,6 @@ instance Transformer StripDirective where
       go :: Int -> [(Text, Int)] -> [[Int]] -> [Text]
       go _ [] _ = []
       go _ xs [] = fmap fst xs
-      go _ xs ([]:_) = error "Empty group"
       go counter ((l, i):xs) (group@(i1:is):remainingGroups)
         | i == i1 = let
             (extraLinesToProcess, remainingLines) = L.splitAt (L.length is) xs

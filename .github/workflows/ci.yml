@@ -102,4 +102,4 @@ jobs:
 
     - name: Test
       run: |
-        stack run --system-ghc haskell-notebook-language-server-test -- --print
+        stack test --system-ghc --test-arguments --print

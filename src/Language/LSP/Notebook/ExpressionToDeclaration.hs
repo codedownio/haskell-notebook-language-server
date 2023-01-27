@@ -26,6 +26,7 @@ import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
 import Language.LSP.Transformer
 import Language.LSP.Types
+import Safe
 import System.IO.Unsafe (unsafePerformIO)
 import Text.Regex.Base (defaultExecOpt)
 import Text.Regex.PCRE.Text (Regex, compile, compBlank, execute)
@@ -79,7 +80,8 @@ instance Transformer ExpressionToDeclaration where
         | otherwise = l : go counter xs (group:remainingGroups)
 
       exprIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                    | locatedCodeBlock@(unloc -> Expression t) <- locatedCodeBlocks]
+                    | locatedCodeBlock@(unloc -> Expression t) <- locatedCodeBlocks
+                    , not (looksLikeTemplateHaskell t)]
 
   transformPosition :: Params ExpressionToDeclaration -> ExpressionToDeclaration -> Position -> Maybe Position
   transformPosition (EDParams {..}) (ExpressionToDeclaration affectedLines) (Position l c)
@@ -90,3 +92,17 @@ instance Transformer ExpressionToDeclaration where
   untransformPosition (EDParams {..}) (ExpressionToDeclaration affectedLines) (Position l c)
     | l `Set.member` affectedLines = Position l (fromIntegral (fromIntegral c - numberPadding - 7))
     | otherwise = Position l c
+
+
+-- | This is a hack to deal with the fact that a top-level TH splice can look like either
+-- $(deriveStuff 'f)
+-- or
+-- deriveStuff 'g
+--
+-- The latter is indistinguishable from an IHaskell expression, so we require the user to use
+-- the former in notebooks.
+--
+-- See https://downloads.haskell.org/~ghc/7.6.3/docs/html/users_guide/template-haskell.html
+looksLikeTemplateHaskell :: String -> Bool
+looksLikeTemplateHaskell ('$':'(':rest) = lastMay rest == Just ')'
+looksLikeTemplateHaskell _ = False

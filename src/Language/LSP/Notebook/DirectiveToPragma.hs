@@ -54,6 +54,13 @@ instance Transformer DirectiveToPragma where
                          | locatedCodeBlock@(unloc -> Directive SetDynFlag t) <- locatedCodeBlocks
                          , all isLanguageOption (L.words t)]
 
+      isLanguageOption :: String -> Bool
+      isLanguageOption ('-':'X':xs) = True
+      isLanguageOption _ = False
+
+      unflagLanguageOption :: String -> String
+      unflagLanguageOption = L.drop 2
+
   -- TODO: do better here
   transformPosition :: Params DirectiveToPragma -> DirectiveToPragma -> Position -> Maybe Position
   transformPosition DTPParams (DirectiveToPragma affectedLines) (Position l c)
@@ -69,14 +76,18 @@ instance Transformer DirectiveToPragma where
   handleDiff :: Params DirectiveToPragma -> Doc -> TextDocumentContentChangeEvent -> DirectiveToPragma -> ([TextDocumentContentChangeEvent], DirectiveToPragma)
   handleDiff params before (TextDocumentContentChangeEvent Nothing _ t) (DirectiveToPragma affectedLines) = ([TextDocumentContentChangeEvent Nothing Nothing (Rope.toText doc')], tx)
     where (doc', tx) = project @DirectiveToPragma params (Rope.fromText t)
-  handleDiff params before (TextDocumentContentChangeEvent (Just range@(Range (Position l1 c1) (Position l2 c2))) _ t) (DirectiveToPragma affectedLines) = undefined
+  handleDiff params before change@(TextDocumentContentChangeEvent (Just range@(Range (Position l1 c1) (Position l2 c2))) _ t) (DirectiveToPragma currentAffectedLines)
+    | l1 == l2 && numAddedLines == 1 = undefined
+        -- where
+        --   newLine = undefined
+        --   lineStatusChanged = undefined
+    | otherwise = undefined
     where
-      (beginningLines, rest) = Rope.splitAtLine (fromIntegral l1) before
-      (modifiedLines, endingLines) = Rope.splitAtLine (fromIntegral (l2 - l1)) rest
+      after = applyChange change before
 
-isLanguageOption :: String -> Bool
-isLanguageOption ('-':'X':xs) = True
-isLanguageOption _ = False
+      numAddedLines = (T.count "\n" t) + 1
 
-unflagLanguageOption :: String -> String
-unflagLanguageOption = L.drop 2
+      affectedLineBoundsInclusive = (l1, l2 + fromIntegral numAddedLines - 1)
+
+      -- (beginningLines, rest) = Rope.splitAtLine (fromIntegral l1) before
+      -- (modifiedLines, endingLines) = Rope.splitAtLine (fromIntegral (l2 - l1)) rest

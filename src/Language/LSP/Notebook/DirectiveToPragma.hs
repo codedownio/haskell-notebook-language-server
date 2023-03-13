@@ -36,7 +36,7 @@ instance Transformer DirectiveToPragma where
   type Params DirectiveToPragma = DTPParams
 
   project :: Params DirectiveToPragma -> Doc -> (Doc, DirectiveToPragma)
-  project DTPParams (Rope.lines -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat (fmap fst directiveIndices)))
+  project DTPParams (docToList -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat (fmap fst directiveIndices)))
     where
       locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
 

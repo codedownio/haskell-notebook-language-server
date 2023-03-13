@@ -12,6 +12,8 @@ module Language.LSP.Transformer (
   , defaultHandleDiff
 
   , listToDoc
+  , docToList
+
   , applyChangesText
   , applyChangesTextSilent
   ) where
@@ -94,6 +96,9 @@ applyChangesTextSilent changes before = runIdentity $ runNoLoggingT $ applyChang
 
 listToDoc :: [Text] -> Doc
 listToDoc = Rope.fromText . T.intercalate "\n"
+
+docToList :: Doc -> [Text]
+docToList = T.splitOn "\n" . Rope.toText
 
 -- * Based on code from haskell-lsp/lsp (https://github.com/haskell/lsp/tree/master/lsp)
 -- Under MIT license

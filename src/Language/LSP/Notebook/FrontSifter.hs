@@ -58,7 +58,7 @@ instance Transformer PragmaSifter where
 -- * Generic transformer functions
 
 projectChosenLines :: (CodeBlock -> Maybe String) -> Doc -> (Doc, Vector Int)
-projectChosenLines chooseFn (Rope.lines -> ls) = (listToDoc (chosenLines <> nonChosenLines), fromList importIndices)
+projectChosenLines chooseFn (docToList -> ls) = (listToDoc (chosenLines <> nonChosenLines), fromList importIndices)
   where
     locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
 

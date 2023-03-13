@@ -52,7 +52,7 @@ instance Transformer ExpressionToDeclaration where
   type Params ExpressionToDeclaration = EDParams
 
   project :: Params ExpressionToDeclaration -> Doc -> (Doc, ExpressionToDeclaration)
-  project (EDParams {..}) (Rope.lines -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) exprIndices, ExpressionToDeclaration (Set.fromList $ fromIntegral <$> mconcat exprIndices))
+  project (EDParams {..}) (docToList -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) exprIndices, ExpressionToDeclaration (Set.fromList $ fromIntegral <$> mconcat exprIndices))
     where
       locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
 

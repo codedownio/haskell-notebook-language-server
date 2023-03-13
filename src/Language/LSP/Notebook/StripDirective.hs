@@ -36,7 +36,7 @@ instance Transformer StripDirective where
   type Params StripDirective = SDParams
 
   project :: Params StripDirective -> Doc -> (Doc, StripDirective)
-  project SDParams (Rope.lines -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, StripDirective (Set.fromList $ fromIntegral <$> mconcat directiveIndices))
+  project SDParams (docToList -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, StripDirective (Set.fromList $ fromIntegral <$> mconcat directiveIndices))
     where
       locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
 

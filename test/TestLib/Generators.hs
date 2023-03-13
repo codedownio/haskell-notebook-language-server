@@ -24,7 +24,7 @@ import UnliftIO.Exception
 
 
 arbitrarySingleLineChange :: Doc -> Gen TextDocumentContentChangeEvent
-arbitrarySingleLineChange (Rope.lines -> docLines) = do
+arbitrarySingleLineChange (docToList -> docLines) = do
   lineNo <- chooseInt (0, fromIntegral $ L.length docLines - 1)
   let line = docLines L.!! (fromIntegral lineNo)
 

@@ -14,8 +14,7 @@ module Language.LSP.Transformer (
   , listToDoc
   , docToList
 
-  , applyChangesText
-  , applyChangesTextSilent
+  , applyChanges
   ) where
 
 import Control.Lens hiding ((:>))
@@ -46,7 +45,7 @@ class Transformer a where
 
       f :: ([TextDocumentContentChangeEvent], Doc, a) -> TextDocumentContentChangeEvent -> ([TextDocumentContentChangeEvent], Doc, a)
       f (changesSoFar, curLines, txSoFar) change = let (newChanges, tx') = handleDiff params curLines change txSoFar in
-          (changesSoFar <> newChanges, applyChangesTextSilent [change] curLines, tx')
+          (changesSoFar <> newChanges, applyChanges [change] curLines, tx')
 
   handleDiff :: Params a -> Doc -> TextDocumentContentChangeEvent -> a -> ([TextDocumentContentChangeEvent], a)
   handleDiff = defaultHandleDiff
@@ -82,17 +81,11 @@ defaultHandleDiff :: forall a. Transformer a => Params a -> Doc -> TextDocumentC
 defaultHandleDiff params before change _transformer = (change', transformer')
   where
     (before', _ :: a) = project params before
-    after = applyChangesTextSilent [change] before
+    after = applyChanges [change] before
     (after', transformer' :: a) = project params after
     change' = [TextDocumentContentChangeEvent Nothing Nothing (Rope.toText after')]
 
 -- * Applying changes
-
-applyChangesText :: (MonadLogger m) => [J.TextDocumentContentChangeEvent] -> Doc -> m Doc
-applyChangesText changes before = applyChanges before changes
-
-applyChangesTextSilent :: [J.TextDocumentContentChangeEvent] -> Doc -> Doc
-applyChangesTextSilent changes before = runIdentity $ runNoLoggingT $ applyChanges before changes
 
 listToDoc :: [Text] -> Doc
 listToDoc = Rope.fromText . T.intercalate "\n"
@@ -103,17 +96,17 @@ docToList = T.splitOn "\n" . Rope.toText
 -- * Based on code from haskell-lsp/lsp (https://github.com/haskell/lsp/tree/master/lsp)
 -- Under MIT license
 
-applyChanges :: (MonadLogger m) => Rope -> [J.TextDocumentContentChangeEvent] -> m Rope
-applyChanges = foldM applyChange
+applyChanges :: [J.TextDocumentContentChangeEvent] -> Rope -> Rope
+applyChanges changes rope = L.foldl' (\x y -> applyChange y x) rope changes
 
-applyChange :: (MonadLogger m) => Rope -> J.TextDocumentContentChangeEvent -> m Rope
-applyChange _ (J.TextDocumentContentChangeEvent Nothing _ str)
-  = pure $ Rope.fromText str
-applyChange str (J.TextDocumentContentChangeEvent (Just (J.Range (J.Position sl sc) (J.Position fl fc))) _ txt)
+applyChange :: J.TextDocumentContentChangeEvent -> Rope -> Rope
+applyChange (J.TextDocumentContentChangeEvent Nothing _ str) _
+  = Rope.fromText str
+applyChange (J.TextDocumentContentChangeEvent (Just (J.Range (J.Position sl sc) (J.Position fl fc))) _ txt) str
   = changeChars str (Rope.Position (fromIntegral sl) (fromIntegral sc)) (Rope.Position (fromIntegral fl) (fromIntegral fc)) txt
 
-changeChars :: (MonadLogger m) => Rope -> Rope.Position -> Rope.Position -> Text -> m Rope
-changeChars str start finish new = do
- let (before, after) = Rope.splitAtPosition finish str
- let (before', _) = Rope.splitAtPosition start before
- pure $ mconcat [before', Rope.fromText new, after]
+changeChars :: Rope -> Rope.Position -> Rope.Position -> Text -> Rope
+changeChars str start finish new = mconcat [before', Rope.fromText new, after]
+ where
+   (before, after) = Rope.splitAtPosition finish str
+   (before', _) = Rope.splitAtPosition start before

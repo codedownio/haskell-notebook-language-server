@@ -66,9 +66,13 @@ instance Transformer DirectiveToPragma where
     | l `Set.member` affectedLines = Position l 0
     | otherwise = Position l c
 
-  -- handleDiff :: Params DirectiveToPragma -> Doc -> [TextDocumentContentChangeEvent] -> DirectiveToPragma -> (Doc, [TextDocumentContentChangeEvent], a)
-  -- handleDiff params before after changes (DirectiveToPragma affectedLines) = undefined
-
+  handleDiff :: Params DirectiveToPragma -> Doc -> TextDocumentContentChangeEvent -> DirectiveToPragma -> ([TextDocumentContentChangeEvent], DirectiveToPragma)
+  handleDiff params before (TextDocumentContentChangeEvent Nothing _ t) (DirectiveToPragma affectedLines) = ([TextDocumentContentChangeEvent Nothing Nothing (Rope.toText doc')], tx)
+    where (doc', tx) = project @DirectiveToPragma params (Rope.fromText t)
+  handleDiff params before (TextDocumentContentChangeEvent (Just range@(Range (Position l1 c1) (Position l2 c2))) _ t) (DirectiveToPragma affectedLines) = undefined
+    where
+      (beginningLines, rest) = Rope.splitAtLine (fromIntegral l1) before
+      (modifiedLines, endingLines) = Rope.splitAtLine (fromIntegral (l2 - l1)) rest
 
 isLanguageOption :: String -> Bool
 isLanguageOption ('-':'X':xs) = True

@@ -2,6 +2,7 @@
 
 module Test.Transformer.DirectiveToPragma where
 
+import ApplyChanges
 import Data.String.Interpolate
 import Data.Text as T
 import Language.LSP.Notebook.DirectiveToPragma
@@ -33,8 +34,8 @@ spec = describe "DirectiveToPragma" $ do
   it "Does a simple single line change" $ do
     let changes = [mkChange (4, 16) (4, 16) (Just 0) "2"]
     let (_projectedBefore, dp@(DirectiveToPragma affectedLines)) = project DTPParams docLines
-    let before = undefined
-    let after = undefined
+    let before = docLines
+    let after = applyChangesTextSilent changes docLines
     let (before', after', changes', _transformer') = handleDiff DTPParams before after changes dp
     changes' `shouldBe` changes
 

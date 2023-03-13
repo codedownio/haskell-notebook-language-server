@@ -6,6 +6,7 @@ import Test.Sandwich
 
 import qualified Test.BinarySearchVec
 
+import qualified Test.Transformer.DirectiveToPragma
 import qualified Test.Transformer.ExpressionToDeclaration
 import qualified Test.Transformer.ImportSifter
 import qualified Test.Transformer.PragmaSifter
@@ -20,6 +21,7 @@ spec = do
     Test.BinarySearchVec.spec
 
   describe "Transformers" $ do
+    Test.Transformer.DirectiveToPragma.spec
     Test.Transformer.ExpressionToDeclaration.spec
     Test.Transformer.ImportSifter.spec
     Test.Transformer.PragmaSifter.spec

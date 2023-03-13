@@ -7,7 +7,6 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE TypeInType #-}
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# OPTIONS_GHC -Wno-unticked-promoted-constructors #-}

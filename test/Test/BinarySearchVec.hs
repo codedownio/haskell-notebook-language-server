@@ -1,6 +1,5 @@
 
 {-# LANGUAGE OverloadedLists #-}
-{-# LANGUAGE OverloadedStrings #-}
 
 module Test.BinarySearchVec where
 

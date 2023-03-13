@@ -14,6 +14,7 @@ module Language.LSP.Transformer (
   , listToDoc
   , docToList
 
+  , applyChange
   , applyChanges
   ) where
 

@@ -13,4 +13,9 @@ import Language.LSP.Notebook.StripDirective
 import Language.LSP.Transformer
 
 
-type HaskellNotebookTransformer = DirectiveToPragma :> StripDirective :> ExpressionToDeclaration :> ImportSifter :> PragmaSifter
+type HaskellNotebookTransformer =
+  DirectiveToPragma -- Convert :set -XFoo directives to LANGUAGE pragmas
+  :> StripDirective -- Strip all remaining directives
+  :> ExpressionToDeclaration -- Convert naked expressions do declarations
+  :> ImportSifter -- Sift imports to the top
+  :> PragmaSifter -- Sift pragmas to the top (above imports)

@@ -27,7 +27,7 @@ import Text.Regex.PCRE.Text (Regex, compile, compBlank, execute)
 
 
 newtype DirectiveToPragma = DirectiveToPragma (Set UInt)
-  deriving Show
+  deriving (Show, Eq)
 
 data DTPParams = DTPParams { }
 

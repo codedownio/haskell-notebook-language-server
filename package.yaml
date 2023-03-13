@@ -50,6 +50,7 @@ default-extensions:
 - MultiWayIf
 - TupleSections
 - NumericUnderscores
+- TypeApplications
 
 library:
   source-dirs: src
@@ -79,3 +80,4 @@ tests:
     - haskell-notebook-language-server
     - QuickCheck
     - sandwich
+    - sandwich-quickcheck

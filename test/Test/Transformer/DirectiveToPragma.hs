@@ -10,6 +10,7 @@ import Language.LSP.Transformer
 import Language.LSP.Types hiding (line)
 import Test.Common
 import Test.Sandwich
+import Test.Sandwich.QuickCheck
 import TestLib.Generators
 
 
@@ -38,6 +39,10 @@ spec = describe "DirectiveToPragma" $ do
     let after = applyChangesTextSilent changes docLines
     let (before', after', changes', _transformer') = handleDiff DTPParams before after changes dp
     changes' `shouldBe` changes
+
+  describe "QuickCheck" $ introduceQuickCheck $ do
+    prop "Does handleDiff for single line changes correctly" $ do
+      testChange @DirectiveToPragma DTPParams docLines <$> arbitrarySingleLineChange docLines
 
 doc :: Text
 doc = [i|

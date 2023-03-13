@@ -49,6 +49,7 @@ library
       MultiWayIf
       TupleSections
       NumericUnderscores
+      TypeApplications
   build-depends:
       aeson
     , attoparsec
@@ -106,6 +107,7 @@ executable haskell-notebook-language-server
       MultiWayIf
       TupleSections
       NumericUnderscores
+      TypeApplications
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       aeson
@@ -170,6 +172,7 @@ test-suite haskell-notebook-language-server-test
       MultiWayIf
       TupleSections
       NumericUnderscores
+      TypeApplications
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       QuickCheck
@@ -198,6 +201,7 @@ test-suite haskell-notebook-language-server-test
     , retry
     , safe
     , sandwich
+    , sandwich-quickcheck
     , string-interpolate
     , text
     , text-rope

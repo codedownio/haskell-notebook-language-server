@@ -10,11 +10,13 @@ module Language.LSP.Transformer (
   , defaultHandleDiff
   ) where
 
+import ApplyChanges (applyChangesTextSilent)
 import Control.Lens hiding ((:>))
 import Control.Monad
 import Control.Monad.Logger
 import Data.Function
 import Data.Kind
+import qualified Data.List as L
 import Data.String.Interpolate
 import Data.Text
 import qualified Data.Text as T
@@ -28,7 +30,21 @@ class Transformer a where
 
   project :: Params a -> [Text] -> ([Text], a)
 
-  handleDiff :: Params a -> [Text] -> [Text] -> [TextDocumentContentChangeEvent] -> a -> ([Text], [Text], [TextDocumentContentChangeEvent], a)
+  handleDiffMulti ::
+    Params a
+    -> [Text] -- ^ Before text
+    -> [TextDocumentContentChangeEvent]
+    -> a
+    -> ([TextDocumentContentChangeEvent], a)
+  handleDiffMulti params before changes tx = undefined -- (finalChanges, finalTx)
+    where
+      (finalChanges, finalLines, finalTx) = L.foldl' f ([], before, tx) changes
+
+      f :: ([TextDocumentContentChangeEvent], [Text], a) -> TextDocumentContentChangeEvent -> ([TextDocumentContentChangeEvent], [Text], a)
+      f (changesSoFar, curLines, txSoFar) change = let (newChanges, tx') = handleDiff params curLines change txSoFar in
+          (changesSoFar <> newChanges, applyChangesTextSilent [change] curLines, tx')
+
+  handleDiff :: Params a -> [Text] -> TextDocumentContentChangeEvent -> a -> ([TextDocumentContentChangeEvent], a)
   handleDiff = defaultHandleDiff
 
   transformPosition :: Params a -> a -> Position -> Maybe Position
@@ -46,10 +62,10 @@ instance (Transformer a, Transformer b) => Transformer (a :> b) where
     where
       (lines', x) = project xParams lines
       (lines'', y) = project yParams lines'
-  handleDiff (xParams :> yParams) before after change (x :> y) = (before'', after'', change'', x' :> y')
+  handleDiff (xParams :> yParams) before change (x :> y) = (change'', x' :> y')
     where
-      (before', after', change', x') = handleDiff xParams before after change x
-      (before'', after'', change'', y') = handleDiff yParams before' after' change' y
+      (change', x') = handleDiff xParams before change x
+      (change'', y') = handleDiffMulti yParams (fst (project @a xParams before)) change' y
   transformPosition (xParams :> yParams) (x :> y) p = transformPosition xParams x p >>= transformPosition yParams y
   untransformPosition (xParams :> yParams) (x :> y) p = untransformPosition xParams x (untransformPosition yParams y p)
   -- untransformPosition (xParams :> yParams) (x :> y) p = untransformPosition yParams y p >>= untransformPosition xParams x
@@ -58,9 +74,10 @@ data SomeTransformer where
   SomeTransformer :: forall a. (Transformer a) => a -> Params a -> SomeTransformer
 
 -- Inefficient default implementation; instances should define their own
-defaultHandleDiff :: forall a. Transformer a => Params a -> [Text] -> [Text] -> [TextDocumentContentChangeEvent] -> a -> ([Text], [Text], [TextDocumentContentChangeEvent], a)
-defaultHandleDiff params before after _change _transformer = (before', after', change', transformer')
+defaultHandleDiff :: forall a. Transformer a => Params a -> [Text] -> TextDocumentContentChangeEvent -> a -> ([TextDocumentContentChangeEvent], a)
+defaultHandleDiff params before change _transformer = (change', transformer')
   where
     (before', _ :: a) = project params before
+    after = applyChangesTextSilent [change] before
     (after', transformer' :: a) = project params after
     change' = [TextDocumentContentChangeEvent Nothing Nothing (T.intercalate "\n" after')]

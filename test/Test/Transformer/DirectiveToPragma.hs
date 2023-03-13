@@ -36,8 +36,7 @@ spec = describe "DirectiveToPragma" $ do
     let changes = [mkChange (4, 16) (4, 16) (Just 0) "2"]
     let (_projectedBefore, dp@(DirectiveToPragma affectedLines)) = project DTPParams docLines
     let before = docLines
-    let after = applyChangesTextSilent changes docLines
-    let (before', after', changes', _transformer') = handleDiff DTPParams before after changes dp
+    let (changes', _transformer') = handleDiffMulti DTPParams before changes dp
     changes' `shouldBe` changes
 
   describe "QuickCheck" $ introduceQuickCheck $ do

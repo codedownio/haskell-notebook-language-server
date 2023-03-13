@@ -50,8 +50,8 @@ transformClientNot' STextDocumentDidOpen params = whenNotebook params $ \u -> do
          & set (textDocument . uri) (Uri newUri)
 transformClientNot' STextDocumentDidChange params = whenNotebook params $ modifyTransformer params $ \ds@(DocumentState {transformer=tx, curLines=before, newUri}) -> do
   let (List changeEvents) = params ^. contentChanges
+  let (changeEvents', tx') = handleDiffMulti transformerParams before changeEvents tx
   after <- applyChangesText changeEvents before
-  let (_before', _after', changeEvents', tx') = handleDiff transformerParams before after changeEvents tx
   return (ds { transformer = tx', curLines = after }, params & set contentChanges (List changeEvents')
                                                              & set (textDocument . uri) newUri)
 transformClientNot' STextDocumentDidClose params = whenNotebook params $ \u -> do

@@ -60,7 +60,7 @@ testChange' extraProps params docLines change = conjoin ([
     (projectedBefore, transformer :: a) = project params docLines
     (projectedAfter, reprojectedTransformer :: a) = project params docLines'
 
-    (_, _, changes, transformer') = handleDiff params docLines docLines' [change] transformer
+    (changes, transformer') = handleDiff params docLines change transformer
 
     afterFromChange' = applyChangesTextSilent changes projectedBefore
 

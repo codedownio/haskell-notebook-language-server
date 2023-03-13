@@ -65,6 +65,9 @@ instance Transformer DirectiveToPragma where
     | l `Set.member` affectedLines = Position l 0
     | otherwise = Position l c
 
+  -- handleDiff :: Params DirectiveToPragma -> [Text] -> [Text] -> [TextDocumentContentChangeEvent] -> DirectiveToPragma -> ([Text], [Text], [TextDocumentContentChangeEvent], a)
+  -- handleDiff params before after changes (DirectiveToPragma affectedLines) = undefined
+
 
 isLanguageOption :: String -> Bool
 isLanguageOption ('-':'X':xs) = True

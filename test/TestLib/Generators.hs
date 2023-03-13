@@ -11,6 +11,7 @@ module TestLib.Generators (
   , quickCheckSingleProp
   ) where
 
+import ApplyChanges
 import Control.Monad.IO.Class
 import Control.Monad.Logger
 import qualified Data.List as L

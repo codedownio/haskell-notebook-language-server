@@ -19,6 +19,7 @@ import qualified Data.List as L
 import qualified Data.Map as M
 import Data.String.Interpolate
 import Data.Text as T
+import Data.Text.Rope (Rope)
 import Language.LSP.Notebook (HaskellNotebookTransformer)
 import Language.LSP.Transformer
 import Language.LSP.Types
@@ -37,9 +38,9 @@ fixupHoverText initialHover = do
     (paramsInProgress, (_, DocumentState {..}):xs) -> loop (newParams, xs)
       where newParams = over contents (fixupDocumentReferences referenceRegex transformer curLines) paramsInProgress
 
-fixupDocumentReferences :: Regex -> HaskellNotebookTransformer -> [Text] -> HoverContents -> HoverContents
-fixupDocumentReferences docRegex transformer curLines (HoverContents (MarkupContent k t)) = HoverContents (MarkupContent k (fixupDocumentReferences' docRegex transformer t))
-fixupDocumentReferences docRegex transformer curLines (HoverContentsMS mss) = HoverContentsMS (fmap transformMarkedString mss)
+fixupDocumentReferences :: Regex -> HaskellNotebookTransformer -> Rope -> HoverContents -> HoverContents
+fixupDocumentReferences docRegex transformer _curLines (HoverContents (MarkupContent k t)) = HoverContents (MarkupContent k (fixupDocumentReferences' docRegex transformer t))
+fixupDocumentReferences docRegex transformer _curLines (HoverContentsMS mss) = HoverContentsMS (fmap transformMarkedString mss)
   where
     transformMarkedString (PlainString t) = PlainString (fixupDocumentReferences' docRegex transformer t)
     transformMarkedString (CodeString (LanguageString l t)) = CodeString (LanguageString l (fixupDocumentReferences' docRegex transformer t))

@@ -2,9 +2,10 @@
 
 module Test.Transformer.DirectiveToPragma where
 
-import ApplyChanges
 import Data.String.Interpolate
 import Data.Text as T
+import Data.Text.Rope (Rope)
+import qualified Data.Text.Rope as Rope
 import Language.LSP.Notebook.DirectiveToPragma
 import Language.LSP.Transformer
 import Language.LSP.Types hiding (line)
@@ -17,16 +18,16 @@ import TestLib.Generators
 spec :: TopSpec
 spec = describe "DirectiveToPragma" $ do
   it "Converts :set -XFoo directive to LANGUAGE pragma" $ do
-    let (ls, dp@(DirectiveToPragma affectedLines)) = project DTPParams ["foo = 42", ":set -XFoo"]
-    ls `shouldBe` ["foo = 42", "{-# LANGUAGE Foo #-}"]
+    let (ls, dp@(DirectiveToPragma affectedLines)) = project DTPParams (listToDoc ["foo = 42", ":set -XFoo"])
+    ls `shouldBe` (listToDoc ["foo = 42", "{-# LANGUAGE Foo #-}"])
     affectedLines `shouldBe` [1]
 
     transformPosition DTPParams dp (Position 1 3) `shouldBe` (Just (Position 1 0))
     untransformPosition DTPParams dp (Position 1 0) `shouldBe` (Position 1 0)
 
   it "Converts :set -XFoo -XBar directive to LANGUAGE pragmas" $ do
-    let (ls, dp@(DirectiveToPragma affectedLines)) = project DTPParams ["foo = 42", ":set -XFoo -XBar"]
-    ls `shouldBe` ["foo = 42", "{-# LANGUAGE Foo Bar #-}"]
+    let (ls, dp@(DirectiveToPragma affectedLines)) = project DTPParams (listToDoc ["foo = 42", ":set -XFoo -XBar"])
+    ls `shouldBe` (listToDoc ["foo = 42", "{-# LANGUAGE Foo Bar #-}"])
     affectedLines `shouldBe` [1]
 
     transformPosition DTPParams dp (Position 1 3) `shouldBe` (Just (Position 1 0))
@@ -52,8 +53,8 @@ foo = putStrLn 4
 
 |]
 
-docLines :: [Text]
-docLines = T.splitOn "\n" doc
+docLines :: Rope
+docLines = Rope.fromText doc
 
 main :: IO ()
 main = runSandwichWithCommandLineArgs defaultOptions spec

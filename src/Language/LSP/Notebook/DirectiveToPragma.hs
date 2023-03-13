@@ -13,6 +13,7 @@ import Data.Set as Set
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Rope as Rope
 import Data.Vector as V hiding (all, zip)
 import GHC
 import qualified GHC.Paths
@@ -34,8 +35,8 @@ data DTPParams = DTPParams { }
 instance Transformer DirectiveToPragma where
   type Params DirectiveToPragma = DTPParams
 
-  project :: Params DirectiveToPragma -> [Text] -> ([Text], DirectiveToPragma)
-  project DTPParams ls = (go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat (fmap fst directiveIndices)))
+  project :: Params DirectiveToPragma -> Doc -> (Doc, DirectiveToPragma)
+  project DTPParams (Rope.lines -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat (fmap fst directiveIndices)))
     where
       locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
 
@@ -65,7 +66,7 @@ instance Transformer DirectiveToPragma where
     | l `Set.member` affectedLines = Position l 0
     | otherwise = Position l c
 
-  -- handleDiff :: Params DirectiveToPragma -> [Text] -> [Text] -> [TextDocumentContentChangeEvent] -> DirectiveToPragma -> ([Text], [Text], [TextDocumentContentChangeEvent], a)
+  -- handleDiff :: Params DirectiveToPragma -> Doc -> [TextDocumentContentChangeEvent] -> DirectiveToPragma -> (Doc, [TextDocumentContentChangeEvent], a)
   -- handleDiff params before after changes (DirectiveToPragma affectedLines) = undefined
 
 

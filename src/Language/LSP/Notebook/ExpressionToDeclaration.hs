@@ -13,6 +13,7 @@ import Data.Set as Set
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Rope as Rope
 import Data.Vector as V hiding (zip)
 import GHC
 import qualified GHC.Paths
@@ -50,8 +51,8 @@ containsExpressionVariable (EDParams {..}) t = do
 instance Transformer ExpressionToDeclaration where
   type Params ExpressionToDeclaration = EDParams
 
-  project :: Params ExpressionToDeclaration -> [Text] -> ([Text], ExpressionToDeclaration)
-  project (EDParams {..}) ls = (go 0 (zip ls [0 ..]) exprIndices, ExpressionToDeclaration (Set.fromList $ fromIntegral <$> mconcat exprIndices))
+  project :: Params ExpressionToDeclaration -> Doc -> (Doc, ExpressionToDeclaration)
+  project (EDParams {..}) (Rope.lines -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) exprIndices, ExpressionToDeclaration (Set.fromList $ fromIntegral <$> mconcat exprIndices))
     where
       locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
 

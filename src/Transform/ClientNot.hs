@@ -4,7 +4,6 @@
 
 module Transform.ClientNot where
 
-import ApplyChanges
 import Control.Lens hiding ((:>), List)
 import Control.Monad.Logger
 import Control.Monad.Reader
@@ -14,8 +13,7 @@ import Data.Map as M
 import Data.String.Interpolate
 import Data.Text
 import qualified Data.Text as T
-import qualified Data.Text.Utf16.Lines as Lines
-import qualified Data.Text.Utf16.Rope as Rope
+import qualified Data.Text.Rope as Rope
 import Language.LSP.Notebook
 import Language.LSP.Transformer
 import Language.LSP.Types
@@ -40,13 +38,13 @@ transformClientNot meth msg = do
 transformClientNot' :: (TransformerMonad n) => ClientNotMethod m -> MessageParams m -> n (MessageParams m)
 
 transformClientNot' STextDocumentDidOpen params = whenNotebook params $ \u -> do
-  let ls = T.lines (params ^. (textDocument . text))
+  let ls = Rope.fromText (params ^. (textDocument . text))
   let (ls', transformer' :: HaskellNotebookTransformer) = project transformerParams ls
   TransformerState {..} <- ask
   Uri newUri <- addExtensionToUri ".hs" u
   modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri u) (DocumentState transformer' ls u (Uri newUri) (mkDocRegex newUri)) x)
   return $ params
-         & set (textDocument . text) (T.intercalate "\n" ls')
+         & set (textDocument . text) (Rope.toText ls')
          & set (textDocument . uri) (Uri newUri)
 transformClientNot' STextDocumentDidChange params = whenNotebook params $ modifyTransformer params $ \ds@(DocumentState {transformer=tx, curLines=before, newUri}) -> do
   let (List changeEvents) = params ^. contentChanges

@@ -15,6 +15,7 @@ import qualified Data.List as L
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Rope as Rope
 import Data.Vector as V hiding (zip)
 import GHC
 import qualified GHC.Paths
@@ -31,7 +32,7 @@ newtype ImportSifter = ImportSifter (Vector Int)
 instance Transformer ImportSifter where
   type Params ImportSifter = ()
 
-  project :: Params ImportSifter -> [Text] -> ([Text], ImportSifter)
+  project :: Params ImportSifter -> Doc -> (Doc, ImportSifter)
   project () = second ImportSifter . projectChosenLines isImportCodeBlock
 
   transformPosition :: Params ImportSifter -> ImportSifter -> Position -> Maybe Position
@@ -45,7 +46,7 @@ newtype PragmaSifter = PragmaSifter (Vector Int)
 instance Transformer PragmaSifter where
   type Params PragmaSifter = ()
 
-  project :: Params PragmaSifter -> [Text] -> ([Text], PragmaSifter)
+  project :: Params PragmaSifter -> Doc -> (Doc, PragmaSifter)
   project () = second PragmaSifter . projectChosenLines isLanguagePragmaCodeBlock
 
   transformPosition :: Params PragmaSifter -> PragmaSifter -> Position -> Maybe Position
@@ -56,8 +57,8 @@ instance Transformer PragmaSifter where
 
 -- * Generic transformer functions
 
-projectChosenLines :: (CodeBlock -> Maybe String) -> [Text] -> ([Text], Vector Int)
-projectChosenLines chooseFn ls = (chosenLines <> nonChosenLines, fromList importIndices)
+projectChosenLines :: (CodeBlock -> Maybe String) -> Doc -> (Doc, Vector Int)
+projectChosenLines chooseFn (Rope.lines -> ls) = (listToDoc (chosenLines <> nonChosenLines), fromList importIndices)
   where
     locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
 

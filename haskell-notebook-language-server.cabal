@@ -15,7 +15,6 @@ extra-source-files:
 
 library
   exposed-modules:
-      ApplyChanges
       Language.LSP.Notebook
       Language.LSP.Notebook.DirectiveToPragma
       Language.LSP.Notebook.ExpressionToDeclaration

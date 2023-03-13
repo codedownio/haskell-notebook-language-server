@@ -10,11 +10,11 @@ module TestLib.Generators (
   , quickCheckSingleProp
   ) where
 
-import ApplyChanges
 import Control.Monad.IO.Class
 import Control.Monad.Logger
 import qualified Data.List as L
 import Data.Text as T
+import qualified Data.Text.Rope as Rope
 import GHC.Stack
 import Language.LSP.Transformer
 import Language.LSP.Types hiding (Reason, line)
@@ -23,8 +23,8 @@ import Test.Sandwich
 import UnliftIO.Exception
 
 
-arbitrarySingleLineChange :: [Text] -> Gen TextDocumentContentChangeEvent
-arbitrarySingleLineChange docLines = do
+arbitrarySingleLineChange :: Doc -> Gen TextDocumentContentChangeEvent
+arbitrarySingleLineChange (Rope.lines -> docLines) = do
   lineNo <- chooseInt (0, fromIntegral $ L.length docLines - 1)
   let line = docLines L.!! (fromIntegral lineNo)
 
@@ -39,12 +39,12 @@ arbitrarySingleLineChange docLines = do
 
 testChange :: forall a. (
   Transformer a, Eq a, Show a
-  ) => Params a -> [Text] -> TextDocumentContentChangeEvent -> Property
+  ) => Params a -> Doc -> TextDocumentContentChangeEvent -> Property
 testChange = testChange' @a (const [])
 
 testChange' :: forall a. (
   Transformer a, Eq a, Show a
-  ) => ([TextDocumentContentChangeEvent] -> [Property]) -> Params a -> [Text] -> TextDocumentContentChangeEvent -> Property
+  ) => ([TextDocumentContentChangeEvent] -> [Property]) -> Params a -> Doc -> TextDocumentContentChangeEvent -> Property
 testChange' extraProps params docLines change = conjoin ([
   -- Applying the change' returned from handleDiff to the projected before value gives expected projected value
   afterFromChange' === projectedAfter

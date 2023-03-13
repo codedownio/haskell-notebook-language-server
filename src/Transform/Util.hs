@@ -73,7 +73,7 @@ type TransformerMonad n = (
 
 data DocumentState = DocumentState {
   transformer :: HaskellNotebookTransformer
-  , curLines :: [Text]
+  , curLines :: Doc
   , origUri :: Uri
   , newUri :: Uri
   , referenceRegex :: Regex

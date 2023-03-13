@@ -16,7 +16,7 @@ import Transform.Util
 spec :: TopSpec
 spec = describe "Hover" $ do
   describe "fixes up document references" $ do
-    let (_, transformer) = project transformerParams ["foo = 42", "import Data.Aeson"]
+    let (_, transformer) = project transformerParams (listToDoc ["foo = 42", "import Data.Aeson"])
 
     it "Basic case" $ do
       fixupDocumentReferences' (mkDocRegex "main.ipynb") transformer "Defined at: main.ipynb:1:1"

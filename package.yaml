@@ -77,4 +77,5 @@ tests:
     - -with-rtsopts=-N
     dependencies:
     - haskell-notebook-language-server
+    - QuickCheck
     - sandwich

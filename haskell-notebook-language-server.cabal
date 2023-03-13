@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.35.0.
+-- This file has been generated from package.yaml by hpack version 0.35.1.
 --
 -- see: https://github.com/sol/hpack
 
@@ -153,6 +153,7 @@ test-suite haskell-notebook-language-server-test
       Test.Transformer.ImportSifter
       Test.Transformer.PragmaSifter
       Test.Transformer.StripDirective
+      TestLib.Generators
       Paths_haskell_notebook_language_server
   hs-source-dirs:
       test
@@ -171,7 +172,8 @@ test-suite haskell-notebook-language-server-test
       NumericUnderscores
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      aeson
+      QuickCheck
+    , aeson
     , attoparsec
     , base >=4.7 && <5
     , bytestring

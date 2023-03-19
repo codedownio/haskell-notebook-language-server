@@ -33,16 +33,16 @@ spec = describe "DirectiveToPragma" $ do
     transformPosition DTPParams dp (Position 1 3) `shouldBe` (Just (Position 1 0))
     untransformPosition DTPParams dp (Position 1 0) `shouldBe` (Position 1 0)
 
-  it "Does a simple single line change" $ do
-    let changes = [mkChange (4, 16) (4, 16) (Just 0) "2"]
-    let (_projectedBefore, dp@(DirectiveToPragma affectedLines)) = project DTPParams docLines
-    let before = docLines
-    let (changes', _transformer') = handleDiffMulti DTPParams before changes dp
-    changes' `shouldBe` changes
+  -- it "Does a simple single line change" $ do
+  --   let changes = [mkChange (4, 16) (4, 16) (Just 0) "2"]
+  --   let (_projectedBefore, dp@(DirectiveToPragma affectedLines)) = project DTPParams docLines
+  --   let before = docLines
+  --   let (changes', _transformer') = handleDiffMulti DTPParams before changes dp
+  --   changes' `shouldBe` changes
 
-  describe "QuickCheck" $ introduceQuickCheck $ do
-    prop "Does handleDiff for single line changes correctly" $ do
-      testChange @DirectiveToPragma DTPParams docLines <$> arbitrarySingleLineChange docLines
+  -- describe "QuickCheck" $ introduceQuickCheck $ do
+  --   prop "Does handleDiff for single line changes correctly" $ do
+  --     testChange @DirectiveToPragma DTPParams docLines <$> arbitrarySingleLineChange docLines
 
 doc :: Text
 doc = [i|

@@ -3,6 +3,7 @@
 
 module Test where
 
+import Control.Monad
 import Data.Sequence hiding (zip)
 import Data.String.Interpolate
 import Data.Text (Text)
@@ -13,7 +14,6 @@ import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook
 import Language.LSP.Transformer
-import System.IO.Unsafe (unsafePerformIO)
 
 
 main :: IO ()
@@ -21,7 +21,7 @@ main = do
   let text = ghciCommand
 
   locatedCodeBlocks <- runGhc (Just GHC.Paths.libdir) $ parseString $ T.unpack text
-  putStrLn [i|Got parsed: #{fmap unloc locatedCodeBlocks}|]
+  forM_ locatedCodeBlocks print
 
 
 many :: Text
@@ -51,4 +51,18 @@ ghciCommand :: Text
 ghciCommand =
   [__i|foo = 42
        :t foo
+
+       homophones <- readFile "homophones.list"
+
+       putStrLn "HI"
+
+       abc
+
+       import Data.Aeson as A
+
+       -- | Here's a nice comment on bar
+       bar :: IO ()
+       bar = do
+         putStrLn "hello"
+         putStrLn "world"
       |]

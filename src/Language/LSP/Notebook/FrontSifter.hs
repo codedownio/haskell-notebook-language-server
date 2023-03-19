@@ -17,42 +17,30 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Rope as Rope
 import Data.Vector as V hiding (zip)
-import GHC
+import GHC as GHCCore
 import qualified GHC.Paths
 import IHaskell.Eval.Parser
-import Language.Haskell.GHC.Parser as GHC
+import Language.Haskell.GHC.Parser as GHCParser
 import Language.LSP.Notebook.Util
+import Language.LSP.Parse
 import Language.LSP.Transformer
 import Language.LSP.Types
-import System.IO.Unsafe (unsafePerformIO)
 
 
 newtype ImportSifter = ImportSifter (Vector Int)
   deriving Show
 instance Transformer ImportSifter where
   type Params ImportSifter = ()
-
-  project :: Params ImportSifter -> Doc -> (Doc, ImportSifter)
   project () = second ImportSifter . projectChosenLines isImportCodeBlock
-
-  transformPosition :: Params ImportSifter -> ImportSifter -> Position -> Maybe Position
   transformPosition () (ImportSifter indices) = transformUsingIndices indices
-
-  untransformPosition :: Params ImportSifter -> ImportSifter -> Position -> Position
   untransformPosition () (ImportSifter indices) = untransformUsingIndices indices
 
 newtype PragmaSifter = PragmaSifter (Vector Int)
   deriving Show
 instance Transformer PragmaSifter where
   type Params PragmaSifter = ()
-
-  project :: Params PragmaSifter -> Doc -> (Doc, PragmaSifter)
   project () = second PragmaSifter . projectChosenLines isLanguagePragmaCodeBlock
-
-  transformPosition :: Params PragmaSifter -> PragmaSifter -> Position -> Maybe Position
   transformPosition () (PragmaSifter indices) = transformUsingIndices indices
-
-  untransformPosition :: Params PragmaSifter -> PragmaSifter -> Position -> Position
   untransformPosition () (PragmaSifter indices) = untransformUsingIndices indices
 
 -- * Generic transformer functions
@@ -60,12 +48,10 @@ instance Transformer PragmaSifter where
 projectChosenLines :: (CodeBlock -> Maybe String) -> Doc -> (Doc, Vector Int)
 projectChosenLines chooseFn (docToList -> ls) = (listToDoc (chosenLines <> nonChosenLines), fromList importIndices)
   where
-    locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
-
     getLinesStartingAt t startingAt = [startingAt..(startingAt + countNewLines t)]
 
-    importIndices = mconcat [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                            | locatedCodeBlock@((chooseFn . unloc) -> Just t) <- locatedCodeBlocks]
+    importIndices = mconcat [getLinesStartingAt t (GHCParser.line locatedCodeBlock - 1)
+                            | locatedCodeBlock@((chooseFn . unloc) -> Just t) <- parseCodeString (T.unpack (T.intercalate "\n" ls))]
 
     partitionLines :: [Int] -> [(Int, Text)] -> ([Text], [Text])
     partitionLines [] remaining = ([], fmap snd remaining)
@@ -127,11 +113,3 @@ binarySearchVec' vec desired = binarySearchVec' 0 (fromIntegral $ V.length vec)
       where
         mid = shift (lb + ub) (-1)
         midValue = vec ! fromIntegral mid
-
-
-
-foo = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString [__i|{-\# LANGUAGE TemplateHaskell \#-}
-                                                                          import Data.Aeson.TH
-                                                                          data Foo = Bar | Baz
-                                                                          deriveJSON defaultOptions ''Foo
-                                                                         |]

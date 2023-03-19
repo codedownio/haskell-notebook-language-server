@@ -20,9 +20,9 @@ import qualified GHC.Paths
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
+import Language.LSP.Parse
 import Language.LSP.Transformer
 import Language.LSP.Types
-import System.IO.Unsafe (unsafePerformIO)
 import Text.Regex.Base (defaultExecOpt)
 import Text.Regex.PCRE.Text (Regex, compile, compBlank, execute)
 
@@ -38,8 +38,6 @@ instance Transformer DirectiveToPragma where
   project :: Params DirectiveToPragma -> Doc -> (Doc, DirectiveToPragma)
   project DTPParams doc@(docToList -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat (fmap fst directiveIndices)))
     where
-      locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (Rope.toText doc))
-
       go :: Int -> [(Text, Int)] -> [([Int], [String])] -> [Text]
       go _ [] _ = []
       go _ xs [] = fmap fst xs
@@ -51,7 +49,7 @@ instance Transformer DirectiveToPragma where
 
       directiveIndices :: [([Int], [String])]
       directiveIndices = [(getLinesStartingAt t (GHC.line locatedCodeBlock - 1), fmap unflagLanguageOption (L.words t))
-                         | locatedCodeBlock@(unloc -> Directive SetDynFlag t) <- locatedCodeBlocks
+                         | locatedCodeBlock@(unloc -> Directive SetDynFlag t) <- parseCodeString (T.unpack (Rope.toText doc))
                          , all isLanguageOption (L.words t)]
 
       isLanguageOption :: String -> Bool

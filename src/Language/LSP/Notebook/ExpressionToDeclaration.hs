@@ -15,15 +15,13 @@ import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Rope as Rope
 import Data.Vector as V hiding (zip)
-import GHC
-import qualified GHC.Paths
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
+import Language.LSP.Parse
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Safe
-import System.IO.Unsafe (unsafePerformIO)
 import Text.Regex.Base (defaultExecOpt)
 import Text.Regex.PCRE.Text (Regex, compile, compBlank, execute)
 
@@ -54,8 +52,6 @@ instance Transformer ExpressionToDeclaration where
   project :: Params ExpressionToDeclaration -> Doc -> (Doc, ExpressionToDeclaration)
   project (EDParams {..}) (docToList -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) exprIndices, ExpressionToDeclaration (Set.fromList $ fromIntegral <$> mconcat exprIndices))
     where
-      locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
-
       go :: Int -> [(Text, Int)] -> [[Int]] -> [Text]
       go _ [] _ = []
       go _ xs [] = fmap fst xs
@@ -76,7 +72,7 @@ instance Transformer ExpressionToDeclaration where
         | otherwise = l : go counter xs (group:remainingGroups)
 
       exprIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                    | locatedCodeBlock@(unloc -> Expression t) <- locatedCodeBlocks
+                    | locatedCodeBlock@(unloc -> Expression t) <- parseCodeString (T.unpack (T.intercalate "\n" ls))
                     , not (looksLikeTemplateHaskell t)]
 
   transformPosition :: Params ExpressionToDeclaration -> ExpressionToDeclaration -> Position -> Maybe Position

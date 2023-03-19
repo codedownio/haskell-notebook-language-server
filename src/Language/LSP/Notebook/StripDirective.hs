@@ -20,9 +20,9 @@ import qualified GHC.Paths
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
+import Language.LSP.Parse
 import Language.LSP.Transformer
 import Language.LSP.Types
-import System.IO.Unsafe (unsafePerformIO)
 import Text.Regex.Base (defaultExecOpt)
 import Text.Regex.PCRE.Text (Regex, compile, compBlank, execute)
 
@@ -38,8 +38,6 @@ instance Transformer StripDirective where
   project :: Params StripDirective -> Doc -> (Doc, StripDirective)
   project SDParams (docToList -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, StripDirective (Set.fromList $ fromIntegral <$> mconcat directiveIndices))
     where
-      locatedCodeBlocks = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) $ parseString (T.unpack (T.intercalate "\n" ls))
-
       go :: Int -> [(Text, Int)] -> [[Int]] -> [Text]
       go _ [] _ = []
       go _ xs [] = fmap fst xs
@@ -50,7 +48,7 @@ instance Transformer StripDirective where
         | otherwise = l : go counter xs (group:remainingGroups)
 
       directiveIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                         | locatedCodeBlock@(unloc -> Directive _ t) <- locatedCodeBlocks]
+                         | locatedCodeBlock@(unloc -> Directive _ t) <- parseCodeString (T.unpack (T.intercalate "\n" ls))]
 
   transformPosition :: Params StripDirective -> StripDirective -> Position -> Maybe Position
   transformPosition SDParams (StripDirective affectedLines) (Position l c)

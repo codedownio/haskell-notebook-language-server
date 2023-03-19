@@ -53,12 +53,14 @@ import System.Exit
 data Options = Options {
   optWrappedLanguageServer :: Maybe FilePath
   , optHlsArgs :: Maybe Text
+  , optLogLevel :: Maybe Text
   }
 
 options :: Parser Options
 options = Options
   <$> optional (strOption (long "wrapped-hls" <> help "Wrapped haskell-language-server binary"))
   <*> optional (strOption (long "hls-args" <> help "Extra arguments to haskell-language-server"))
+  <*> optional (strOption (long "log-level" <> help "Log level (debug, info, warn, error)"))
 
 fullOpts :: ParserInfo Options
 fullOpts = info (options <**> helper) (
@@ -99,6 +101,17 @@ main = do
   transformerState <- newTransformerState
 
   processWaiter <- async $ waitForProcess p
+
+  logLevel <- case optLogLevel of
+    Nothing -> return LevelInfo
+    Just "debug" -> return LevelDebug
+    Just "info" -> return LevelInfo
+    Just "warn" -> return LevelWarn
+    Just "error" -> return LevelError
+    Just x -> throwIO $ userError [i|Unexpected log level: '#{x}' (must be one of debug, info, warn, error)|]
+
+  let logFilterFn :: LoggingT m a -> LoggingT m a
+      logFilterFn = filterLogger $ \_src level -> level >= logLevel
 
   let cleanup :: String -> IO ()
       cleanup signal = runStderrLoggingT $ do

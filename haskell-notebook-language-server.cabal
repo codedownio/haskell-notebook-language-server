@@ -67,6 +67,7 @@ library
     , lsp-types
     , monad-logger
     , mtl
+    , myers-diff
     , network-uri
     , optparse-applicative
     , pcre-light
@@ -109,7 +110,7 @@ executable haskell-notebook-language-server
       TupleSections
       NumericUnderscores
       TypeApplications
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2 -W
   build-depends:
       aeson
     , attoparsec
@@ -127,6 +128,7 @@ executable haskell-notebook-language-server
     , lsp-types
     , monad-logger
     , mtl
+    , myers-diff
     , network-uri
     , optparse-applicative
     , pcre-light
@@ -174,7 +176,7 @@ test-suite haskell-notebook-language-server-test
       TupleSections
       NumericUnderscores
       TypeApplications
-  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N -O2 -W
   build-depends:
       QuickCheck
     , aeson
@@ -193,6 +195,7 @@ test-suite haskell-notebook-language-server-test
     , lsp-types
     , monad-logger
     , mtl
+    , myers-diff
     , network-uri
     , optparse-applicative
     , pcre-light

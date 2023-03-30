@@ -21,6 +21,7 @@ dependencies:
 - lsp-types
 - monad-logger
 - mtl
+- myers-diff
 - network-uri
 - optparse-applicative
 - pcre-light
@@ -64,6 +65,8 @@ executables:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -O2
+    - -W
     dependencies:
     - haskell-notebook-language-server
 
@@ -76,6 +79,8 @@ tests:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
+    - -O2
+    - -W
     dependencies:
     - haskell-notebook-language-server
     - QuickCheck

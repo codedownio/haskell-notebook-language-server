@@ -21,6 +21,8 @@ module Language.LSP.Transformer (
 import Control.Lens hiding ((:>))
 import Control.Monad
 import Control.Monad.Logger
+import qualified Data.Diff.Types as DT
+import Data.Diff.VectorMyers
 import Data.Function
 import Data.Kind
 import qualified Data.List as L
@@ -77,14 +79,17 @@ instance (Transformer a, Transformer b) => Transformer (a :> b) where
 data SomeTransformer where
   SomeTransformer :: forall a. (Transformer a) => a -> Params a -> SomeTransformer
 
--- Inefficient default implementation; instances should define their own
+-- Default implementation uses diff.
 defaultHandleDiff :: forall a. Transformer a => Params a -> Doc -> TextDocumentContentChangeEvent -> a -> ([TextDocumentContentChangeEvent], a)
 defaultHandleDiff params before change _transformer = (change', transformer')
   where
     (before', _ :: a) = project params before
     after = applyChanges [change] before
     (after', transformer' :: a) = project params after
-    change' = [TextDocumentContentChangeEvent Nothing Nothing (Rope.toText after')]
+    change' = fmap repackChangeEvent $ diffTextsToChangeEventsConsolidate (Rope.toText before') (Rope.toText after')
+
+    repackChangeEvent (DT.ChangeEvent range text) = TextDocumentContentChangeEvent (Just (repackRange range)) Nothing text
+    repackRange (DT.Range (DT.Position l1 c1) (DT.Position l2 c2)) = Range (Position (fromIntegral l1) (fromIntegral c1)) (Position (fromIntegral l2) (fromIntegral c2))
 
 -- * Applying changes
 

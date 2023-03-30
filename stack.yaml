@@ -3,3 +3,7 @@ resolver: lts-19.33
 
 packages:
 - .
+
+extra-deps:
+- git: https://github.com/codedownio/myers-diff.git
+  commit: 2a50b828c0ac29bca7fb3bfaf46b2675db7c16a5

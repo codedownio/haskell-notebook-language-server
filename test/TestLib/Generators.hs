@@ -14,7 +14,6 @@ import Control.Monad.IO.Class
 import Control.Monad.Logger
 import qualified Data.List as L
 import Data.Text as T
-import qualified Data.Text.Rope as Rope
 import GHC.Stack
 import Language.LSP.Transformer
 import Language.LSP.Types hiding (Reason, line)

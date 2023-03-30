@@ -2,13 +2,8 @@
 
 module Test.Hover where
 
-import Data.String.Interpolate
-import Language.LSP.Notebook
 import Language.LSP.Transformer
-import Language.LSP.Types hiding (line)
-import Test.Common
 import Test.Sandwich
-
 import Transform.ClientRsp.Hover
 import Transform.Util
 

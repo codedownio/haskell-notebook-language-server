@@ -34,7 +34,7 @@ spec = describe "ExpressionToDeclaration" $ do
     transformAndUntransform (EDParams 10) (Position 2 0) (Position 2 0) ed
 
   it "numbers expressions incrementally" $ do
-    let (ls, ed@(ExpressionToDeclaration affectedLines)) = project (EDParams 10) (listToDoc ["putStrLn 42", "putStrLn 43", "foo = 42"])
+    let (ls, (ExpressionToDeclaration affectedLines)) = project (EDParams 10) (listToDoc ["putStrLn 42", "putStrLn 43", "foo = 42"])
     ls `shouldBe` (listToDoc ["expr0000000000 = putStrLn 42"
                              , "expr0000000001 = putStrLn 43"
                              , "foo = 42"])

@@ -4,16 +4,12 @@
 module Test where
 
 import Control.Monad
-import Data.Sequence hiding (zip)
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
 import GHC
 import qualified GHC.Paths
 import IHaskell.Eval.Parser
-import Language.Haskell.GHC.Parser as GHC
-import Language.LSP.Notebook
-import Language.LSP.Transformer
 
 
 main :: IO ()

@@ -9,18 +9,17 @@
       let
         pkgs = import nixpkgs { inherit system; };
         default = pkgs.haskell.packages.ghc8107.callPackage ./default.nix {};
+        myersDiff = pkgs.haskell.packages.ghc8107.callPackage ./myers-diff.nix {};
       in
         rec {
           packages = rec {
-            inherit default;
+            inherit default myersDiff;
             inherit (pkgs) cabal2nix;
           };
 
           defaultPackage = packages.default;
 
           nixpkgsPath = pkgs.path;
-
-          # stack = pkgs.stack;
         }
     );
 }

@@ -5,26 +5,18 @@
 
 module Language.LSP.Notebook.DirectiveToPragma where
 
-import Control.Monad.IO.Class
-import Data.Char (isDigit)
-import Data.Either (fromRight)
 import qualified Data.List as L
 import Data.Set as Set
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Rope as Rope
-import Data.Vector as V hiding (all, zip)
-import GHC
-import qualified GHC.Paths
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
 import Language.LSP.Parse
 import Language.LSP.Transformer
 import Language.LSP.Types
-import Text.Regex.Base (defaultExecOpt)
-import Text.Regex.PCRE.Text (Regex, compile, compBlank, execute)
 
 
 newtype DirectiveToPragma = DirectiveToPragma (Set UInt)
@@ -53,7 +45,7 @@ instance Transformer DirectiveToPragma where
                          , all isLanguageOption (L.words t)]
 
       isLanguageOption :: String -> Bool
-      isLanguageOption ('-':'X':xs) = True
+      isLanguageOption ('-':'X':_) = True
       isLanguageOption _ = False
 
       unflagLanguageOption :: String -> String

@@ -8,8 +8,6 @@ import Control.Monad
 import Control.Monad.Logger
 import Data.Aeson as A
 import Data.String.Interpolate
-import Language.LSP.Notebook
-import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens
 import Transform.Common
@@ -31,4 +29,4 @@ transformServerNot' STextDocumentPublishDiagnostics params = whenNotebookResultU
          & set uri origUri
          & over diagnostics (fmap (over range (untransformRange tx)))
 
-transformServerNot' meth msg = pure msg
+transformServerNot' _meth msg = pure msg

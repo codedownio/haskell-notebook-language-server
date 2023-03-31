@@ -52,7 +52,7 @@ whenNotebookResultUri params = whenNotebookResult' (params ^. uri) params
 -- | Note that this takes in server URIs (.ipynb.hs) and calls the callback with original URIs (.ipynb)
 -- TODO: do a lot less String/Text conversion here
 whenNotebookResult' :: (MonadLoggerIO n) => Uri -> a -> (Uri -> n a) -> n a
-whenNotebookResult' uri@(Uri uriText) params notebookParams = case parseURIReference (T.unpack uriText) of
+whenNotebookResult' (Uri uriText) params notebookParams = case parseURIReference (T.unpack uriText) of
   Nothing -> return params
   Just networkUri@(URI {..}) -> do
     if | ".ipynb.hs" `L.isSuffixOf` fmap C.toLower uriPath -> do

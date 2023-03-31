@@ -14,7 +14,6 @@ module Transform.ClientRsp.Hover (
 import Control.Lens hiding (List)
 import Control.Lens.Regex.Text
 import Control.Monad.Reader
-import Data.Function (fix)
 import qualified Data.List as L
 import qualified Data.Map as M
 import Data.String.Interpolate
@@ -49,7 +48,7 @@ fixupDocumentReferences' :: Regex -> HaskellNotebookTransformer -> Text -> Text
 fixupDocumentReferences' docRegex transformer t = t & (regexing docRegex) . groups %~ transformGroup transformer
   where
     transformGroup :: HaskellNotebookTransformer -> [Text] -> [Text]
-    transformGroup transformer matches@[(readMay . T.unpack) -> Just line, (readMay . T.unpack) -> Just ch] = [T.pack $ show line', T.pack $ show ch']
+    transformGroup transformer [(readMay . T.unpack) -> Just line, (readMay . T.unpack) -> Just ch] = [T.pack $ show line', T.pack $ show ch']
       where
         (Position line' ch') = untransformPosition transformerParams transformer (Position line ch)
 

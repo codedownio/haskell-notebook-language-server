@@ -9,16 +9,10 @@ import Control.Lens hiding ((:>))
 import Control.Monad
 import Control.Monad.Logger
 import Data.Aeson as A
-import qualified Data.Char as C
 import Data.String.Interpolate
-import Data.Text
-import qualified Data.Text as T
-import Language.LSP.Notebook
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
-import Network.URI
-import System.FilePath
 import Transform.Util
 
 
@@ -61,4 +55,4 @@ doTransformPositionAndUri params' (DocumentState {transformer=tx, newUri}) = do
 doTransformUri :: forall m n a. (
   TransformerMonad n, HasTextDocument (MessageParams m) a, HasUri a Uri
   ) => MessageParams m -> DocumentState -> n (MessageParams m)
-doTransformUri params' (DocumentState {transformer=tx, newUri}) = return $ params' & set (textDocument . uri) newUri
+doTransformUri params' (DocumentState {newUri}) = return $ params' & set (textDocument . uri) newUri

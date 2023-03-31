@@ -13,19 +13,17 @@ module Parsing where
 
 import Data.Aeson
 import Data.Aeson.Types
-import Data.Function (on)
-import Data.Type.Equality
 import Language.LSP.Types hiding (FromServerMessage'(..), FromServerMessage, FromClientMessage'(..), FromClientMessage, LookupFunc)
 
 
 data FromServerMessage where
-  FromServerReq :: forall t (m :: Method FromServer Request). (HasJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromServerMessage
-  FromServerNot :: forall t (m :: Method FromServer Notification). (HasJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromServerMessage
+  FromServerReq :: forall (m :: Method FromServer Request). (HasJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromServerMessage
+  FromServerNot :: forall (m :: Method FromServer Notification). (HasJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromServerMessage
   FromServerRsp  :: forall (m :: Method FromClient Request). (HasJSON (ResponseMessage m)) => SMethod m -> MessageParams m -> ResponseMessage m -> FromServerMessage
 
 data FromClientMessage where
-  FromClientReq :: forall t (m :: Method FromClient Request). (HasJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromClientMessage
-  FromClientNot :: forall t (m :: Method FromClient Notification). (HasJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromClientMessage
+  FromClientReq :: forall (m :: Method FromClient Request). (HasJSON (RequestMessage m)) => SMethod m -> RequestMessage m -> FromClientMessage
+  FromClientNot :: forall (m :: Method FromClient Notification). (HasJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> FromClientMessage
   FromClientRsp  :: forall (m :: Method FromServer Request). (HasJSON (ResponseMessage m)) => SMethod m -> ResponseMessage m -> FromClientMessage
 
 type LookupFunc f = forall (m :: Method f 'Request). LspId m -> Maybe (SMethod m, MessageParams m)
@@ -83,7 +81,7 @@ parseClientMessage lookupId v@(Object o) = do
       case idMaybe of
         Just i -> do
           case lookupId i of
-            Just (m, initialParams) -> serverResponseJSON m $ FromClientRsp m <$> parseJSON v
+            Just (m, _initialParams) -> serverResponseJSON m $ FromClientRsp m <$> parseJSON v
             Nothing -> fail $ unwords ["Failed in looking up response type of", show v]
         Nothing -> fail $ unwords ["Got unexpected message without method or id"]
 parseClientMessage _ v = fail $ unwords ["parseClientMessage expected object, got:",show v]

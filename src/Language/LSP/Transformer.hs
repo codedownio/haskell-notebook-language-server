@@ -7,7 +7,6 @@ module Language.LSP.Transformer (
   Doc
 
   , Transformer(..)
-  , SomeTransformer
   , (:>)(..)
   , defaultHandleDiff
 
@@ -18,15 +17,10 @@ module Language.LSP.Transformer (
   , applyChanges
   ) where
 
-import Control.Lens hiding ((:>))
-import Control.Monad
-import Control.Monad.Logger
 import Data.Diff.Myers
 import qualified Data.Diff.Types as DT
-import Data.Function
 import Data.Kind
 import qualified Data.List as L
-import Data.String.Interpolate
 import Data.Text
 import qualified Data.Text as T
 import Data.Text.Rope (Rope)
@@ -44,7 +38,7 @@ class Transformer a where
   handleDiffMulti :: Params a -> Doc -> [TextDocumentContentChangeEvent] -> a -> ([TextDocumentContentChangeEvent], a)
   handleDiffMulti params before changes tx = (finalChanges, finalTx)
     where
-      (finalChanges, finalLines, finalTx) = L.foldl' f ([], before, tx) changes
+      (finalChanges, _finalLines, finalTx) = L.foldl' f ([], before, tx) changes
 
       f :: ([TextDocumentContentChangeEvent], Doc, a) -> TextDocumentContentChangeEvent -> ([TextDocumentContentChangeEvent], Doc, a)
       f (changesSoFar, curLines, txSoFar) change = let (newChanges, tx') = handleDiff params curLines change txSoFar in
@@ -75,9 +69,6 @@ instance (Transformer a, Transformer b) => Transformer (a :> b) where
   transformPosition (xParams :> yParams) (x :> y) p = transformPosition xParams x p >>= transformPosition yParams y
   untransformPosition (xParams :> yParams) (x :> y) p = untransformPosition xParams x (untransformPosition yParams y p)
   -- untransformPosition (xParams :> yParams) (x :> y) p = untransformPosition yParams y p >>= untransformPosition xParams x
-
-data SomeTransformer where
-  SomeTransformer :: forall a. (Transformer a) => a -> Params a -> SomeTransformer
 
 -- Default implementation uses diff.
 defaultHandleDiff :: forall a. Transformer a => Params a -> Doc -> TextDocumentContentChangeEvent -> a -> ([TextDocumentContentChangeEvent], a)

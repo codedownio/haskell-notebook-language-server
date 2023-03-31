@@ -9,9 +9,7 @@ import Control.Monad
 import Control.Monad.Logger
 import Data.Aeson as A
 import Data.String.Interpolate
-import Language.LSP.Notebook (HaskellNotebookTransformer)
 import Language.LSP.Notebook.ExpressionToDeclaration (containsExpressionVariable, isExpressionVariable)
-import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
 import Transform.Common
@@ -23,7 +21,7 @@ type ServerRspMethod m = SMethod (m :: Method FromClient Request)
 transformServerRsp :: (TransformerMonad n, HasJSON (ResponseMessage m)) => ServerRspMethod m -> MessageParams m -> ResponseMessage m -> n (ResponseMessage m)
 transformServerRsp meth initialParams msg = do
   case msg ^. result of
-    Left err -> return msg
+    Left _err -> return msg
     Right ret -> do
       p' <- transformServerRsp' meth initialParams ret
       let msg' = set result (Right p') msg
@@ -44,7 +42,7 @@ transformServerRsp' STextDocumentDocumentSymbol initialParams result = whenNoteb
                                                                              & fmap (over (location . range) (untransformRange tx)))
   where
     isInternalSymbol x = isExpressionVariable expressionToDeclarationParams (x ^. name)
-transformServerRsp' STextDocumentCodeAction initialParams result@(List xs) = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) -> do
+transformServerRsp' STextDocumentCodeAction initialParams result@(List xs) = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {}) -> do
   List <$> filterM (fmap not . isInternalReferringCodeAction) xs
   where
     isInternalReferringCodeAction (InL command) = containsExpressionVariable expressionToDeclarationParams (command ^. title)

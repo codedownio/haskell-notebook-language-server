@@ -1,11 +1,6 @@
 
 module Streams where
 
-import Control.Monad
-import Data.Attoparsec.ByteString as Atto
-import Data.Attoparsec.ByteString.Char8 (isDigit_w8)
-import qualified Data.ByteString as B
-import qualified Data.ByteString.Internal as BS (c2w)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text as T
 import qualified Data.Text.IO as T

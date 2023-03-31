@@ -7,14 +7,11 @@ module Language.LSP.Notebook.ExpressionToDeclaration where
 
 import Control.Monad.IO.Class
 import Data.Char (isDigit)
-import Data.Either (fromRight)
 import qualified Data.List as L
 import Data.Set as Set
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.Rope as Rope
-import Data.Vector as V hiding (zip)
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
@@ -23,7 +20,7 @@ import Language.LSP.Transformer
 import Language.LSP.Types
 import Safe
 import Text.Regex.Base (defaultExecOpt)
-import Text.Regex.PCRE.Text (Regex, compile, compBlank, execute)
+import Text.Regex.PCRE.Text (compile, compBlank, execute)
 
 
 newtype ExpressionToDeclaration = ExpressionToDeclaration (Set UInt)
@@ -43,7 +40,7 @@ containsExpressionVariable (EDParams {..}) t = do
   Right regex <- liftIO $ compile compBlank defaultExecOpt [i|expr\\d{#{numberPadding}}|]
   liftIO (execute regex t) >>= \case
     Right Nothing -> return False
-    Left err -> return False -- TODO: exception?
+    Left _err -> return False -- TODO: exception?
     _ -> return True
 
 instance Transformer ExpressionToDeclaration where
@@ -55,7 +52,7 @@ instance Transformer ExpressionToDeclaration where
       go :: Int -> [(Text, Int)] -> [[Int]] -> [Text]
       go _ [] _ = []
       go _ xs [] = fmap fst xs
-      go _ xs ([]:_) = error "Empty group"
+      go _ _ ([]:_) = error "Empty group"
       go counter ((l, i):xs) (group@(i1:is):remainingGroups)
         | i == i1 = let
             prefix = "expr" <> paddedNumber <> " = "

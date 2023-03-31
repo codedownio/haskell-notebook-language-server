@@ -10,15 +10,11 @@ module Language.LSP.Notebook.FrontSifter where
 import Data.Bifunctor
 import Data.Bits
 import Data.Function
-import Data.Functor.Identity (Identity(runIdentity))
 import qualified Data.List as L
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.Rope as Rope
 import Data.Vector as V hiding (zip)
-import GHC as GHCCore
-import qualified GHC.Paths
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHCParser
 import Language.LSP.Notebook.Util

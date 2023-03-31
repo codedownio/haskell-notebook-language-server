@@ -8,18 +8,13 @@ import Control.Lens hiding ((:>), List)
 import Control.Monad.Logger
 import Control.Monad.Reader
 import Data.Aeson as A
-import qualified Data.Char as C
 import Data.Map as M
 import Data.String.Interpolate
-import Data.Text
-import qualified Data.Text as T
 import qualified Data.Text.Rope as Rope
 import Language.LSP.Notebook
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
-import Network.URI
-import System.FilePath
 import Transform.ClientRsp.Hover (mkDocRegex)
 import Transform.Util
 import UnliftIO.MVar

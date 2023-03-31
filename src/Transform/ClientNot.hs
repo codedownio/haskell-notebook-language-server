@@ -5,12 +5,14 @@
 module Transform.ClientNot where
 
 import Control.Lens hiding ((:>), List)
+import Control.Monad.IO.Class
 import Control.Monad.Logger
 import Control.Monad.Reader
 import Data.Aeson as A
 import Data.Map as M
 import Data.String.Interpolate
 import qualified Data.Text.Rope as Rope
+import Data.Time
 import Language.LSP.Notebook
 import Language.LSP.Transformer
 import Language.LSP.Types
@@ -25,9 +27,11 @@ type ClientNotMethod m = SMethod (m :: Method FromClient Notification)
 
 transformClientNot :: (TransformerMonad n, HasJSON (NotificationMessage m)) => ClientNotMethod m -> NotificationMessage m -> n (NotificationMessage m)
 transformClientNot meth msg = do
+  start <- liftIO getCurrentTime
   p' <- transformClientNot' meth (msg ^. params)
+  stop <- liftIO getCurrentTime
   let msg' = set params p' msg
-  when (msg' /= msg) $ logInfoN [i|Transforming client not #{meth}: (#{A.encode msg} --> #{A.encode msg'})|]
+  when (msg' /= msg) $ logInfoN [i|Transforming client not #{meth} in #{diffUTCTime stop start}: (#{A.encode msg} --> #{A.encode msg'})|]
   return msg'
 
 transformClientNot' :: (TransformerMonad n) => ClientNotMethod m -> MessageParams m -> n (MessageParams m)

@@ -33,6 +33,7 @@ dependencies:
 - string-interpolate
 - text
 - text-rope
+- time
 - unix
 - unliftio
 - unliftio-core

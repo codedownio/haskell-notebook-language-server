@@ -6,9 +6,11 @@ module Transform.ServerRsp where
 
 import Control.Lens hiding (List)
 import Control.Monad
+import Control.Monad.IO.Class
 import Control.Monad.Logger
 import Data.Aeson as A
 import Data.String.Interpolate
+import Data.Time
 import Language.LSP.Notebook.ExpressionToDeclaration (containsExpressionVariable, isExpressionVariable)
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
@@ -23,9 +25,11 @@ transformServerRsp meth initialParams msg = do
   case msg ^. result of
     Left _err -> return msg
     Right ret -> do
+      start <- liftIO getCurrentTime
       p' <- transformServerRsp' meth initialParams ret
+      stop <- liftIO getCurrentTime
       let msg' = set result (Right p') msg
-      when (msg' /= msg) $ logInfoN [i|Transforming server rsp #{meth}: (#{A.encode msg} --> #{A.encode msg'})|]
+      when (msg' /= msg) $ logInfoN [i|Transforming server rsp #{meth} in #{diffUTCTime stop start}: (#{A.encode msg} --> #{A.encode msg'})|]
       return $ set result (Right p') msg
 
 transformServerRsp' :: (TransformerMonad n) => ServerRspMethod m -> MessageParams m -> ResponseResult m -> n (ResponseResult m)

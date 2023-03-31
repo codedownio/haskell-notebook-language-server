@@ -7,9 +7,11 @@ module Transform.ClientReq where
 
 import Control.Lens hiding ((:>))
 import Control.Monad
+import Control.Monad.IO.Class
 import Control.Monad.Logger
 import Data.Aeson as A
 import Data.String.Interpolate
+import Data.Time
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
@@ -21,9 +23,11 @@ type ClientReqMethod m = SMethod (m :: Method FromClient Request)
 
 transformClientReq :: (TransformerMonad n, HasJSON (RequestMessage m)) => ClientReqMethod m -> RequestMessage m -> n (RequestMessage m)
 transformClientReq meth msg = do
+  start <- liftIO getCurrentTime
   p' <- transformClientReq' meth (msg ^. params)
+  stop <- liftIO getCurrentTime
   let msg' = set params p' msg
-  when (msg' /= msg) $ logInfoN [i|Transforming client req #{meth}: (#{A.encode msg} --> #{A.encode msg'})|]
+  when (msg' /= msg) $ logInfoN [i|Transforming client req #{meth} in #{diffUTCTime stop start}: (#{A.encode msg} --> #{A.encode msg'})|]
   return msg'
 
 transformClientReq' :: forall m n. (TransformerMonad n) => ClientReqMethod m -> MessageParams m -> n (MessageParams m)

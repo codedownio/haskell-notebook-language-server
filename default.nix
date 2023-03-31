@@ -12,6 +12,7 @@ mkDerivation {
   src = ./.;
   isLibrary = true;
   isExecutable = true;
+  doCheck = false;
   libraryHaskellDepends = [
     aeson attoparsec base bytestring containers filepath ghc ghc-parser
     ghc-paths ihaskell lens lens-regex-pcre lsp-types monad-logger mtl

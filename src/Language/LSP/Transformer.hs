@@ -21,8 +21,8 @@ module Language.LSP.Transformer (
 import Control.Lens hiding ((:>))
 import Control.Monad
 import Control.Monad.Logger
+import Data.Diff.Myers
 import qualified Data.Diff.Types as DT
-import Data.Diff.VectorMyers
 import Data.Function
 import Data.Kind
 import qualified Data.List as L

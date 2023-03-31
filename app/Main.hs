@@ -77,7 +77,7 @@ main = do
         , create_group = True
         , std_in = CreatePipe
         , std_out = CreatePipe
-        , std_err = Inherit
+        , std_err = CreatePipe
         })
 
   hSetBuffering stdin NoBuffering -- TODO: LineBuffering here and below?

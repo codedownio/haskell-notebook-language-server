@@ -9,17 +9,12 @@ mkDerivation {
   src = fetchFromGitHub {
     owner = "codedownio";
     repo = "myers-diff";
-    rev = "cf0ecdd3cb9f15b97cf2b74e221c2f8b62ee37b9";
-    sha256 = "sha256:0npnx0h6bd0d7ql93ka7azhj40zgjp815fw2r6smg8ch9p7mzdlx";
+    rev = "b01ccb5bbeb479ebfde817cc5ac3db8f8e2dae23";
+    sha256 = "0vqi8ylyj48p4dzc65da18z5sv4w1fslq6bm8km86cg0mdxg3wpx";
   };
-  isLibrary = true;
-  isExecutable = true;
+  doCheck = false;
   libraryHaskellDepends = [
     base containers exceptions primitive text vector
-  ];
-  executableHaskellDepends = [
-    base containers deepseq exceptions primitive QuickCheck
-    quickcheck-instances string-interpolate text text-rope vector
   ];
   testHaskellDepends = [
     base containers deepseq exceptions primitive QuickCheck
@@ -33,5 +28,4 @@ mkDerivation {
   ];
   homepage = "https://github.com/codedownio/myers-diff#readme";
   license = lib.licenses.bsd3;
-  mainProgram = "myers-diff";
 }

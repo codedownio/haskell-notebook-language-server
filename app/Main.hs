@@ -123,7 +123,7 @@ main = do
   let sendToStdout :: (MonadUnliftIO m, ToJSON a) => a -> m ()
       sendToStdout x = do
         withMVar stdoutLock $ \_ -> do
-          writeToHandle stdout $ A.encode x
+          liftIO $ writeToHandle stdout $ A.encode x
 
   let logFn :: Loc -> LogSource -> LogLevel -> LogStr -> IO ()
       logFn _loc _src level msg = sendToStdout $ NotificationMessage "2.0" SWindowLogMessage $ LogMessageParams {
@@ -151,17 +151,17 @@ handleStdin hlsIn clientReqMap serverReqMap = do
       case A.parseEither (parseClientMessage (lookupServerId m)) x of
         Left err -> do
           logErr [i|Couldn't decode incoming message: #{err}|]
-          writeToHandle hlsIn (A.encode x)
+          liftIO $ writeToHandle hlsIn (A.encode x)
         Right (FromClientRsp meth msg) -> do
-          transformClientRsp meth msg >>= writeToHandle hlsIn . A.encode
+          transformClientRsp meth msg >>= liftIO . writeToHandle hlsIn . A.encode
         Right (FromClientReq meth msg) -> do
           let msgId = msg ^. Lens.id
           modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of
             Just m' -> return m'
             Nothing -> return m
-          transformClientReq meth msg >>= writeToHandle hlsIn . A.encode
+          transformClientReq meth msg >>= liftIO . writeToHandle hlsIn . A.encode
         Right (FromClientNot meth msg) ->
-          transformClientNot meth msg >>= writeToHandle hlsIn . A.encode
+          transformClientNot meth msg >>= liftIO . writeToHandle hlsIn . A.encode
 
 readHlsOut :: (
   MonadUnliftIO m, MonadLoggerIO m, MonadReader TransformerState m, MonadFail m
@@ -206,8 +206,8 @@ lookupClientId clientReqMap sid = do
 logErr :: MonadLoggerIO m => Text -> m ()
 logErr = logInfoN
 
-writeToHandle :: MonadIO m => Handle -> BL8.ByteString -> m ()
-writeToHandle h bytes = liftIO $ do
+writeToHandle :: Handle -> BL8.ByteString -> IO ()
+writeToHandle h bytes = do
   BL8.hPutStr h [i|Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
   hFlush h
 

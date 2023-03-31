@@ -9,18 +9,15 @@ module Main where
 import Control.Lens
 import Control.Monad
 import Control.Monad.IO.Class
+import Control.Monad.IO.Unlift
 import Data.Aeson as A hiding (Options)
 import qualified Data.Aeson.Types as A
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as BL8
-import Data.Maybe
-import Data.Sequence hiding (zip)
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.IO as T
-import Language.LSP.Notebook
-import Language.LSP.Transformer
+import qualified Data.Text.Encoding as T
 import Language.LSP.Types hiding (FromServerMessage'(..), FromServerMessage, FromClientMessage'(..), FromClientMessage, parseClientMessage, parseServerMessage, LookupFunc)
 import qualified Language.LSP.Types.Lens as Lens
 import Options.Applicative
@@ -30,7 +27,6 @@ import UnliftIO.Async
 import UnliftIO.Concurrent
 import UnliftIO.Directory
 import UnliftIO.Exception
-import UnliftIO.MVar
 import UnliftIO.Process
 
 import Transform.ClientNot
@@ -75,7 +71,7 @@ main = do
     Nothing -> throwIO $ userError [i|Couldn't find haskell-language-server binary.|]
     Just x -> return x
 
-  (Just hlsIn, Just hlsOut, hlsErr, p) <- createProcess (
+  (Just hlsIn, Just hlsOut, Just hlsErr, p) <- createProcess (
     (proc wrappedLanguageServerPath (maybe [] (fmap T.unpack . T.words) optHlsArgs)) {
         close_fds = True
         , create_group = True
@@ -93,14 +89,15 @@ main = do
   hSetBuffering stdout LineBuffering
   hSetEncoding  stdout utf8
 
+  hSetBuffering stderr LineBuffering
+  hSetEncoding  stderr utf8
+
   clientReqMap <- newMVar newClientRequestMap
   serverReqMap <- newMVar newServerRequestMap
 
   -- TODO: switch to using pickFromIxMap or some other way to remove old entries
 
   transformerState <- newTransformerState
-
-  processWaiter <- async $ waitForProcess p
 
   logLevel <- case optLogLevel of
     Nothing -> return LevelInfo
@@ -110,8 +107,8 @@ main = do
     Just "error" -> return LevelError
     Just x -> throwIO $ userError [i|Unexpected log level: '#{x}' (must be one of debug, info, warn, error)|]
 
-  let logFilterFn :: LoggingT m a -> LoggingT m a
-      logFilterFn = filterLogger $ \_src level -> level >= logLevel
+  let logFilterFn :: LogSource -> LogLevel -> Bool
+      logFilterFn _src level = level >= logLevel
 
   let cleanup :: String -> IO ()
       cleanup signal = runStderrLoggingT $ do
@@ -121,15 +118,32 @@ main = do
   void $ liftIO $ installHandler sigINT (Catch (cleanup "sigINT")) Nothing
   void $ liftIO $ installHandler sigTERM (Catch (cleanup "sigTERM")) Nothing
 
-  runStderrLoggingT $ flip runReaderT transformerState $
-    withAsync (readHlsOut clientReqMap serverReqMap hlsOut) $ \_hlsOutAsync ->
-      withAsync (forever $ handleStdin hlsIn clientReqMap serverReqMap transformerState) $ \_stdinAsync -> do
-        waitForProcess p >>= \case
-          ExitFailure n -> logErrorN [i|haskell-language-server subprocess exited with code #{n}|]
-          ExitSuccess -> logInfoN [i|haskell-language-server subprocess exited successfully|]
+  stdoutLock <- newMVar ()
+
+  let sendToStdout :: (MonadUnliftIO m, ToJSON a) => a -> m ()
+      sendToStdout x = do
+        withMVar stdoutLock $ \_ -> do
+          writeToHandle stdout $ A.encode x
+
+  let logFn :: Loc -> LogSource -> LogLevel -> LogStr -> IO ()
+      logFn _loc _src level msg = sendToStdout $ NotificationMessage "2.0" SWindowLogMessage $ LogMessageParams {
+        _xtype = levelToType level
+        , _message = T.decodeUtf8 $ fromLogStr msg
+        }
+
+  flip runLoggingT logFn $ filterLogger logFilterFn $ flip runReaderT transformerState $
+    withAsync (readHlsOut clientReqMap serverReqMap hlsOut sendToStdout) $ \_hlsOutAsync ->
+      withAsync (readHlsErr hlsErr) $ \_hlsErrAsync ->
+        withAsync (forever $ handleStdin hlsIn clientReqMap serverReqMap) $ \_stdinAsync -> do
+          waitForProcess p >>= \case
+            ExitFailure n -> logErrorN [i|haskell-language-server subprocess exited with code #{n}|]
+            ExitSuccess -> logInfoN [i|haskell-language-server subprocess exited successfully|]
 
 
-handleStdin hlsIn clientReqMap serverReqMap transformerState = do
+handleStdin :: (
+  MonadLoggerIO m, MonadReader TransformerState m, MonadUnliftIO m, MonadFail m
+  ) => Handle -> MVar ClientRequestMap -> MVar ServerRequestMap -> m ()
+handleStdin hlsIn clientReqMap serverReqMap = do
   (A.eitherDecode <$> liftIO (parseStream stdin)) >>= \case
     Left err -> logErr [i|Couldn't decode incoming message: #{err}|]
     Right (x :: A.Value) -> do
@@ -149,7 +163,10 @@ handleStdin hlsIn clientReqMap serverReqMap transformerState = do
         Right (FromClientNot meth msg) ->
           transformClientNot meth msg >>= writeToHandle hlsIn . A.encode
 
-readHlsOut clientReqMap serverReqMap hlsOut = forever $ do
+readHlsOut :: (
+  MonadUnliftIO m, MonadLoggerIO m, MonadReader TransformerState m, MonadFail m
+  ) => MVar ClientRequestMap -> MVar ServerRequestMap -> Handle -> (forall a. ToJSON a => a -> m ()) -> m b
+readHlsOut clientReqMap serverReqMap hlsOut sendToStdout = forever $ do
   (A.eitherDecode <$> liftIO (parseStream hlsOut)) >>= \case
     Left err -> logErr [i|Couldn't decode HLS output: #{err}|]
     Right (x :: A.Value) -> do
@@ -157,17 +174,22 @@ readHlsOut clientReqMap serverReqMap hlsOut = forever $ do
       case A.parseEither (parseServerMessage (lookupClientId m)) x of
         Left err -> do
           logErr [i|Couldn't decode server message: #{A.encode x} (#{err})|]
-          writeToHandle stdout (A.encode x)
+          sendToStdout x
         Right (FromServerNot meth msg) ->
-          transformServerNot meth msg >>= writeToHandle stdout . A.encode
+          transformServerNot meth msg >>= sendToStdout
         Right (FromServerReq meth msg) -> do
           let msgId = msg ^. Lens.id
           modifyMVar_ serverReqMap $ \m -> case updateServerRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of
             Just m' -> return m'
             Nothing -> return m
-          writeToHandle stdout (A.encode (transformServerReq meth msg))
+          sendToStdout (transformServerReq meth msg)
         Right (FromServerRsp meth initialParams msg) ->
-          transformServerRsp meth initialParams msg >>= writeToHandle stdout . A.encode
+          transformServerRsp meth initialParams msg >>= sendToStdout
+
+readHlsErr :: MonadLoggerIO m => Handle -> m ()
+readHlsErr hlsErr = forever $ do
+  line <- liftIO (hGetLine hlsErr)
+  logErrorN [i|(HLS stderr) #{line}|]
 
 lookupServerId :: ServerRequestMap -> LookupFunc FromServer
 lookupServerId serverReqMap sid = do
@@ -188,3 +210,10 @@ writeToHandle :: MonadIO m => Handle -> BL8.ByteString -> m ()
 writeToHandle h bytes = liftIO $ do
   BL8.hPutStr h [i|Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
   hFlush h
+
+levelToType :: LogLevel -> MessageType
+levelToType LevelDebug = MtLog
+levelToType LevelInfo = MtInfo
+levelToType LevelWarn = MtWarning
+levelToType LevelError = MtError
+levelToType (LevelOther _typ) = MtInfo

@@ -2,10 +2,10 @@
 
 module Test.Hover where
 
+import Language.LSP.Notebook
 import Language.LSP.Transformer
 import Test.Sandwich
 import Transform.ClientRsp.Hover
-import Transform.Util
 
 
 spec :: TopSpec

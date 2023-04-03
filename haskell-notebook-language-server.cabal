@@ -19,6 +19,7 @@ library
       Language.LSP.Notebook.DirectiveToPragma
       Language.LSP.Notebook.ExpressionToDeclaration
       Language.LSP.Notebook.FrontSifter
+      Language.LSP.Notebook.HeaderTransformer
       Language.LSP.Notebook.StatementToDeclaration
       Language.LSP.Notebook.StripDirective
       Language.LSP.Notebook.Util

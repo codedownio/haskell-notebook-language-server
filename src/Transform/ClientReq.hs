@@ -12,6 +12,7 @@ import Control.Monad.Logger
 import Data.Aeson as A
 import Data.String.Interpolate
 import Data.Time
+import Language.LSP.Notebook
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens

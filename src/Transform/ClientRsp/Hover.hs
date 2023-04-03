@@ -19,7 +19,7 @@ import qualified Data.Map as M
 import Data.String.Interpolate
 import Data.Text as T
 import Data.Text.Rope (Rope)
-import Language.LSP.Notebook (HaskellNotebookTransformer)
+import Language.LSP.Notebook
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens hiding (id, trace)

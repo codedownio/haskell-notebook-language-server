@@ -2,7 +2,7 @@
 module Transform.Common where
 
 import Control.Lens hiding (List)
-import Language.LSP.Notebook (HaskellNotebookTransformer)
+import Language.LSP.Notebook
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens

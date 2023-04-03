@@ -27,21 +27,20 @@ import Text.Regex.PCRE.Text (compile, compBlank, execute)
 
 
 data LineInfo = LineInfo {
-  lineInfoLeftEnd :: UInt
-  , lineInfoRightStart :: UInt
+  lineInfoDivideAt :: UInt
   , lineInfoHasClosingParen :: Bool
   } deriving (Show, Eq)
 
 newtype StatementToDeclaration = StatementToDeclaration (Map UInt LineInfo)
   deriving (Show, Semigroup, Monoid)
 
-data SDParams = SDParams
+data STDParams = STDParams
 
 instance Transformer StatementToDeclaration where
-  type Params StatementToDeclaration = SDParams
+  type Params StatementToDeclaration = STDParams
 
   project :: Params StatementToDeclaration -> Doc -> (Doc, StatementToDeclaration)
-  project (SDParams) (docToList -> ls) = first listToDoc $ go 0 (zip ls [0 ..]) indices
+  project (STDParams) (docToList -> ls) = first listToDoc $ go 0 (zip ls [0 ..]) indices
     where
       go :: Int -> [(Text, Int)] -> [[Int]] -> ([Text], StatementToDeclaration)
       go _ [] _ = ([], mempty)
@@ -58,7 +57,7 @@ instance Transformer StatementToDeclaration where
             newFirstLine = lhs <> "= unsafePerformIO (" <> rhs <> (if not hasExtraLines then ")" else "")
             newLines = newFirstLine : fmap fst extraLines
 
-            params = StatementToDeclaration $ M.fromList [(fromIntegral i, LineInfo (fromIntegral (T.length lhs)) (fromIntegral (T.length lhs) + insertedLen) (not hasExtraLines))]
+            params = StatementToDeclaration $ M.fromList [(fromIntegral i, LineInfo (fromIntegral (T.length lhs)) (not hasExtraLines))]
 
             (restLines, restParams) = go (counter + 1) remainingLines remainingGroups
 
@@ -74,18 +73,18 @@ instance Transformer StatementToDeclaration where
                 | locatedCodeBlock@(unloc -> Statement t) <- parseCodeString (T.unpack (T.intercalate "\n" ls))]
 
   transformPosition :: Params StatementToDeclaration -> StatementToDeclaration -> Position -> Maybe Position
-  transformPosition (SDParams) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
+  transformPosition (STDParams) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
     Nothing -> Just $ Position l c
-    Just (LineInfo leftEnd rightStart hasClosingParen)
-      | l <= leftEnd -> Just $ Position l c
+    Just (LineInfo leftEnd hasClosingParen)
+      | c <= leftEnd + 1 -> Just $ Position l c
       | otherwise -> Just $ Position l (c + insertedLen)
 
   untransformPosition :: Params StatementToDeclaration -> StatementToDeclaration -> Position -> Position
-  untransformPosition (SDParams) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
+  untransformPosition (STDParams) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
     Nothing -> Position l c
-    Just (LineInfo leftEnd rightStart hasClosingParen)
-      | l <= leftEnd -> Position l c
-      | l >= rightStart -> Position l (c - insertedLen)
+    Just (LineInfo leftEnd hasClosingParen)
+      | c <= leftEnd + 1 -> Position l c
+      | c >= leftEnd + insertedLen -> Position l (c - insertedLen)
       | otherwise -> Position l leftEnd
 
 insertedLen :: UInt

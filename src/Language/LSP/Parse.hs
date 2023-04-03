@@ -3,6 +3,7 @@ module Language.LSP.Parse (
   parseCodeString
   ) where
 
+import Data.String.Interpolate
 import GHC
 import qualified GHC.Paths
 import IHaskell.Eval.Parser
@@ -12,3 +13,15 @@ import System.IO.Unsafe (unsafePerformIO)
 
 parseCodeString :: String -> [GHCParser.Located CodeBlock]
 parseCodeString = unsafePerformIO . runGhc (Just GHC.Paths.libdir) . parseString
+
+
+code :: String
+code =  [__i|putStrLn "hi"
+
+             input <- readLine
+            |]
+
+doRead :: IO String
+doRead = undefined
+
+input :: String = unsafePerformIO (doRead)

@@ -83,6 +83,7 @@ tests:
     - -O2
     - -W
     dependencies:
+    - exceptions
     - haskell-notebook-language-server
     - QuickCheck
     - sandwich

@@ -19,6 +19,7 @@ library
       Language.LSP.Notebook.DirectiveToPragma
       Language.LSP.Notebook.ExpressionToDeclaration
       Language.LSP.Notebook.FrontSifter
+      Language.LSP.Notebook.StatementToDeclaration
       Language.LSP.Notebook.StripDirective
       Language.LSP.Notebook.Util
       Language.LSP.Parse
@@ -158,6 +159,7 @@ test-suite haskell-notebook-language-server-test
       Test.Transformer.ExpressionToDeclaration
       Test.Transformer.ImportSifter
       Test.Transformer.PragmaSifter
+      Test.Transformer.StatementToDeclaration
       Test.Transformer.StripDirective
       TestLib.Generators
       Paths_haskell_notebook_language_server
@@ -185,6 +187,7 @@ test-suite haskell-notebook-language-server-test
     , base >=4.7 && <5
     , bytestring
     , containers
+    , exceptions
     , filepath
     , ghc
     , ghc-parser

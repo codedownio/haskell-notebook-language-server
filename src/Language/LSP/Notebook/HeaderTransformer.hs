@@ -13,6 +13,7 @@ import Language.LSP.Types
 
 
 newtype HeaderTransformer = HeaderTransformer UInt
+  deriving (Show)
 
 instance Transformer HeaderTransformer where
   type Params HeaderTransformer = [Text]

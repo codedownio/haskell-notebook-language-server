@@ -48,16 +48,13 @@ fixupDocumentReferences docRegex transformer _curLines (HoverContentsMS mss) = H
     transformMarkedString (CodeString (LanguageString l t)) = (CodeString . LanguageString l) <$> (fixupDocumentReferences' docRegex transformer t)
 
 fixupDocumentReferences' :: forall n. MonadLogger n => Regex -> HaskellNotebookTransformer -> Text -> n Text
-fixupDocumentReferences' docRegex transformer t = do
-  logErrorN [i|REGEXING with regex '#{docRegex}': #{(t ^. ((regexing docRegex) . groups)) :: [Text]}|]
+fixupDocumentReferences' docRegex transformer t =
   traverseOf ((regexing docRegex) . groups) (transformGroup transformer) t
 
   where
     transformGroup :: HaskellNotebookTransformer -> [Text] -> n [Text]
     transformGroup transformer [(readMay . T.unpack) -> Just line, (readMay . T.unpack) -> Just ch] = do
-      logErrorN [i|REGEX GROUP FOUND (line, ch) = (#{line}, #{ch})|]
       let (Position line' ch') = untransformPosition transformerParams transformer (Position (line - 1) (ch - 1))
-      logErrorN [i|TRANSFORMED (#{line - 1}, #{ch - 1}) -> (#{line'}, #{ch'}) (restoring as (#{line' + 1}, #{ch' + 1}))|]
       return [T.pack $ show (line' + 1), T.pack $ show (ch' + 1)]
 
     transformGroup _ matches = return matches

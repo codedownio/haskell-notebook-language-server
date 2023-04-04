@@ -49,7 +49,7 @@ fixupDocumentReferences docRegex transformer _curLines (HoverContentsMS mss) = H
 
 fixupDocumentReferences' :: forall n. MonadLogger n => Regex -> HaskellNotebookTransformer -> Text -> n Text
 fixupDocumentReferences' docRegex transformer t = do
-  logErrorN [i|REGEXING: #{(t ^. ((regexing docRegex) . groups)) :: [Text]}|]
+  logErrorN [i|REGEXING with regex '#{docRegex}': #{(t ^. ((regexing docRegex) . groups)) :: [Text]}|]
   traverseOf ((regexing docRegex) . groups) (transformGroup transformer) t
 
   where

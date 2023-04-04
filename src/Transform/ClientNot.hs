@@ -40,7 +40,13 @@ transformClientNot' STextDocumentDidOpen params = whenNotebook params $ \u -> do
   let (ls', transformer' :: HaskellNotebookTransformer) = project transformerParams ls
   TransformerState {..} <- ask
   Uri newUri <- addExtensionToUri ".hs" u
-  modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri u) (DocumentState transformer' ls u (Uri newUri) (mkDocRegex newUri)) x)
+  modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri u) (DocumentState {
+                                                                            transformer = transformer'
+                                                                            , curLines = ls
+                                                                            , origUri = u
+                                                                            , newUri = Uri newUri
+                                                                            , referenceRegex = mkDocRegex newUri
+                                                                            }) x)
   return $ params
          & set (textDocument . text) (Rope.toText ls')
          & set (textDocument . uri) (Uri newUri)

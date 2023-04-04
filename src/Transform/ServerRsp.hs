@@ -47,13 +47,16 @@ transformServerRsp' STextDocumentHover initialParams result = whenNotebookByInit
 
 transformServerRsp' STextDocumentDocumentSymbol initialParams result = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) ->
   case result of
-    InL (List documentSymbols) -> return $ InL $ List (documentSymbols & filter (not . isInternalSymbol)
+    InL (List documentSymbols) -> return $ InL $ List (documentSymbols & filter (not . ignoreSymbol)
                                                                        & fmap (over range (untransformRange tx)
                                                                               . over selectionRange (untransformRange tx)))
-    InR (List symbolInformations) -> return $ InR $ List (symbolInformations & filter (not . isInternalSymbol)
+    InR (List symbolInformations) -> return $ InR $ List (symbolInformations & filter (not . ignoreSymbol)
                                                                              & fmap (over (location . range) (untransformRange tx)))
   where
-    isInternalSymbol x = isExpressionVariable expressionToDeclarationParams (x ^. name)
+    ignoreSymbol x = isExpressionVariable expressionToDeclarationParams (x ^. name)
+                     -- Ignore imports symbol as it doesn't make much sense in notebooks, where imports can appear anywhere.
+                     -- Also, it gives away our hidden unsafePerformIO import at the top of the file (for statement handling)
+                     || (x ^. name) == "imports"
 
 transformServerRsp' STextDocumentCodeAction initialParams result@(List xs) = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {}) -> do
   List <$> filterM (fmap not . isInternalReferringCodeAction) xs

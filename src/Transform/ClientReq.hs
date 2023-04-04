@@ -16,6 +16,7 @@ import Language.LSP.Notebook
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
+import Transform.Common
 import Transform.Util
 
 
@@ -32,32 +33,39 @@ transformClientReq meth msg = do
   return msg'
 
 transformClientReq' :: forall m n. (TransformerMonad n) => ClientReqMethod m -> MessageParams m -> n (MessageParams m)
-transformClientReq' STextDocumentCompletion params = whenNotebook params $ withTransformer params $ doTransformPositionAndUri @m params
-transformClientReq' STextDocumentDocumentHighlight params = whenNotebook params $ withTransformer params $ doTransformPositionAndUri @m params
-transformClientReq' STextDocumentHover params = whenNotebook params $ withTransformer params $ doTransformPositionAndUri @m params
-
-transformClientReq' STextDocumentDefinition params = whenNotebook params $ withTransformer params $ doTransformPositionAndUri @m params
-transformClientReq' STextDocumentTypeDefinition params = whenNotebook params $ withTransformer params $ doTransformPositionAndUri @m params
-transformClientReq' STextDocumentImplementation params = whenNotebook params $ withTransformer params $ doTransformPositionAndUri @m params
-
-transformClientReq' STextDocumentDocumentSymbol params = whenNotebook params $ withTransformer params $ doTransformUri @m params
-transformClientReq' STextDocumentCodeAction params = whenNotebook params $ withTransformer params $ doTransformUri @m params
+transformClientReq' STextDocumentCodeAction params = whenNotebook params $ withTransformer params $ doTransformUriAndRange @m params
 transformClientReq' STextDocumentCodeLens params = whenNotebook params $ withTransformer params $ doTransformUri @m params
-
+transformClientReq' STextDocumentCompletion params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
+transformClientReq' STextDocumentDefinition params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
+transformClientReq' STextDocumentDocumentHighlight params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
+transformClientReq' STextDocumentDocumentSymbol params = whenNotebook params $ withTransformer params $ doTransformUri @m params
+transformClientReq' STextDocumentHover params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
+transformClientReq' STextDocumentImplementation params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
+transformClientReq' STextDocumentTypeDefinition params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
 transformClientReq' _ params = return params
 
 
-
-doTransformPositionAndUri :: forall m n a. (
+doTransformUriAndPosition :: forall m n a. (
   TransformerMonad n, HasPosition (MessageParams m) Position, HasTextDocument (MessageParams m) a, HasUri a Uri
   ) => MessageParams m -> DocumentState -> n (MessageParams m)
-doTransformPositionAndUri params' (DocumentState {transformer=tx, newUri}) = do
+doTransformUriAndPosition params' (DocumentState {transformer=tx, newUri}) = do
   let params = params' & set (textDocument . uri) newUri
   case transformPosition transformerParams tx (params ^. position) of
     Nothing -> do
       logWarnN [i|Couldn't transform position #{params ^. position}|]
       return params
     Just pos' -> return $ set position pos' params
+
+doTransformUriAndRange :: forall m n a. (
+  TransformerMonad n, HasRange (MessageParams m) Range, HasTextDocument (MessageParams m) a, HasUri a Uri
+  ) => MessageParams m -> DocumentState -> n (MessageParams m)
+doTransformUriAndRange params' (DocumentState {transformer=tx, newUri}) = do
+  let params = params' & set (textDocument . uri) newUri
+  case transformRange tx (params ^. range) of
+    Nothing -> do
+      logWarnN [i|Couldn't transform range #{params ^. range}|]
+      return params
+    Just pos' -> return $ set range pos' params
 
 doTransformUri :: forall m n a. (
   TransformerMonad n, HasTextDocument (MessageParams m) a, HasUri a Uri

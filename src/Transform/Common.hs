@@ -8,6 +8,15 @@ import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
 
 
+-- * Transform
+
+transformRange :: HaskellNotebookTransformer -> Range -> Maybe Range
+transformRange tx x = case (transformPosition transformerParams tx (x ^. start), transformPosition transformerParams tx (x ^. end)) of
+  (Just start', Just end') -> Just (Range start' end')
+  _ -> Nothing
+
+-- * Untransform
+
 untransformRange :: HaskellNotebookTransformer -> Range -> Range
 untransformRange tx x = x
   & over start (untransformPosition transformerParams tx)

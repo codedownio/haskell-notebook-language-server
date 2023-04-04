@@ -25,8 +25,8 @@ type HaskellNotebookTransformer =
   :> ExpressionToDeclaration -- Convert naked expressions to declarations
   :> StatementToDeclaration -- Convert naked statements to declarations
   :> ImportSifter -- Sift imports to the top
-  :> PragmaSifter -- Sift pragmas to the top (above imports)
   :> HeaderTransformer -- Add unsafePerformIO import at top
+  :> PragmaSifter -- Sift pragmas to the top (above imports)
 
 expressionToDeclarationParams :: Params ExpressionToDeclaration
 expressionToDeclarationParams = EDParams 10
@@ -38,5 +38,5 @@ transformerParams =
   :> expressionToDeclarationParams
   :> STDParams
   :> ()
-  :> ()
   :> ["import System.IO.Unsafe (unsafePerformIO)"]
+  :> ()

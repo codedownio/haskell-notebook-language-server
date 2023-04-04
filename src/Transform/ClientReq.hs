@@ -28,7 +28,7 @@ transformClientReq meth msg = do
   p' <- transformClientReq' meth (msg ^. params)
   stop <- liftIO getCurrentTime
   let msg' = set params p' msg
-  when (msg' /= msg) $ logInfoN [i|Transforming client req #{meth} in #{diffUTCTime stop start}: (#{A.encode msg} --> #{A.encode msg'})|]
+  when (msg' /= msg) $ logDebugN [i|Transforming client req #{meth} in #{diffUTCTime stop start}: (#{A.encode msg} --> #{A.encode msg'})|]
   return msg'
 
 transformClientReq' :: forall m n. (TransformerMonad n) => ClientReqMethod m -> MessageParams m -> n (MessageParams m)

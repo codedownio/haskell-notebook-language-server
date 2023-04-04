@@ -31,7 +31,7 @@ transformClientNot meth msg = do
   p' <- transformClientNot' meth (msg ^. params)
   stop <- liftIO getCurrentTime
   let msg' = set params p' msg
-  when (msg' /= msg) $ logInfoN [i|Transforming client not #{meth} in #{diffUTCTime stop start}: (#{A.encode msg} --> #{A.encode msg'})|]
+  when (msg' /= msg) $ logDebugN [i|Transforming client not #{meth} in #{diffUTCTime stop start}: (#{A.encode msg} --> #{A.encode msg'})|]
   return msg'
 
 transformClientNot' :: (TransformerMonad n) => ClientNotMethod m -> MessageParams m -> n (MessageParams m)

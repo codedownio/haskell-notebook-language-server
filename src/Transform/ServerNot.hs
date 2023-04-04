@@ -22,7 +22,7 @@ transformServerNot meth msg = do
   p' <- transformServerNot' meth (msg ^. params)
   stop <- liftIO getCurrentTime
   let msg' = set params p' msg
-  when (msg' /= msg) $ logInfoN [i|Transforming server not #{meth} in #{diffUTCTime stop start}: (#{A.encode msg} --> #{A.encode msg'})|]
+  when (msg' /= msg) $ logDebugN [i|Transforming server not #{meth} in #{diffUTCTime stop start}: (#{A.encode msg} --> #{A.encode msg'})|]
   return msg'
 
 

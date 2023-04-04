@@ -30,7 +30,7 @@ transformServerRsp meth initialParams msg = do
       p' <- transformServerRsp' meth initialParams ret
       stop <- liftIO getCurrentTime
       let msg' = set result (Right p') msg
-      when (msg' /= msg) $ logInfoN [i|Transforming server rsp #{meth} in #{diffUTCTime stop start}: (#{A.encode msg} --> #{A.encode msg'})|]
+      when (msg' /= msg) $ logDebugN [i|Transforming server rsp #{meth} in #{diffUTCTime stop start}: (#{A.encode msg} --> #{A.encode msg'})|]
       return $ set result (Right p') msg
 
 transformServerRsp' :: (TransformerMonad n) => ServerRspMethod m -> MessageParams m -> ResponseResult m -> n (ResponseResult m)

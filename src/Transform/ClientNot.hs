@@ -11,6 +11,7 @@ import Control.Monad.Reader
 import Data.Aeson as A
 import Data.Map as M
 import Data.String.Interpolate
+import Data.Text as T
 import qualified Data.Text.Rope as Rope
 import Data.Time
 import Language.LSP.Notebook
@@ -39,17 +40,26 @@ transformClientNot' STextDocumentDidOpen params = whenNotebook params $ \u -> do
   let ls = Rope.fromText (params ^. (textDocument . text))
   let (ls', transformer' :: HaskellNotebookTransformer) = project transformerParams ls
   TransformerState {..} <- ask
-  Uri newUri <- addExtensionToUri ".hs" u
-  modifyMVar_ transformerDocuments (\x -> return $! M.insert (getUri u) (DocumentState {
-                                                                            transformer = transformer'
-                                                                            , curLines = ls
-                                                                            , origUri = u
-                                                                            , newUri = Uri newUri
-                                                                            , referenceRegex = mkDocRegex newUri
-                                                                            }) x)
+  newUri <- addExtensionToUri ".hs" u
+  referenceRegex <- case uriToFilePath newUri of
+    Just s -> pure $ mkDocRegex (T.pack s)
+    Nothing -> do
+      logWarnN [i|Couldn't convert URI to file path: '#{newUri}'|]
+      pure $ mkDocRegex (getUri newUri)
+
+  modifyMVar_ transformerDocuments $ \x -> return $! M.insert (getUri u) (
+    DocumentState {
+        transformer = transformer',
+        curLines = ls,
+        origUri = u,
+        newUri = newUri,
+        referenceRegex = referenceRegex
+        }) x
+
   return $ params
          & set (textDocument . text) (Rope.toText ls')
-         & set (textDocument . uri) (Uri newUri)
+         & set (textDocument . uri) newUri
+
 transformClientNot' STextDocumentDidChange params = whenNotebook params $ modifyTransformer params $ \ds@(DocumentState {transformer=tx, curLines=before, newUri}) -> do
   let (List changeEvents) = params ^. contentChanges
   let (changeEvents', tx') = handleDiffMulti transformerParams before changeEvents tx

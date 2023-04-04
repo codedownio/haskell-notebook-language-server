@@ -48,9 +48,9 @@ fixupDocumentReferences' :: Regex -> HaskellNotebookTransformer -> Text -> Text
 fixupDocumentReferences' docRegex transformer t = t & (regexing docRegex) . groups %~ transformGroup transformer
   where
     transformGroup :: HaskellNotebookTransformer -> [Text] -> [Text]
-    transformGroup transformer [(readMay . T.unpack) -> Just line, (readMay . T.unpack) -> Just ch] = [T.pack $ show line', T.pack $ show ch']
+    transformGroup transformer [(readMay . T.unpack) -> Just line, (readMay . T.unpack) -> Just ch] = [T.pack $ show (line' + 1), T.pack $ show (ch' + 1)]
       where
-        (Position line' ch') = untransformPosition transformerParams transformer (Position line ch)
+        (Position line' ch') = untransformPosition transformerParams transformer (Position (line - 1) (ch - 1))
 
     transformGroup _ matches = matches
 

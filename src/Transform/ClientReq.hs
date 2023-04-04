@@ -32,6 +32,7 @@ transformClientReq meth msg = do
   return msg'
 
 transformClientReq' :: forall m n. (TransformerMonad n) => ClientReqMethod m -> MessageParams m -> n (MessageParams m)
+transformClientReq' STextDocumentCompletion params = whenNotebook params $ withTransformer params $ doTransformPositionAndUri @m params
 transformClientReq' STextDocumentDocumentHighlight params = whenNotebook params $ withTransformer params $ doTransformPositionAndUri @m params
 transformClientReq' STextDocumentHover params = whenNotebook params $ withTransformer params $ doTransformPositionAndUri @m params
 
@@ -41,6 +42,7 @@ transformClientReq' STextDocumentImplementation params = whenNotebook params $ w
 
 transformClientReq' STextDocumentDocumentSymbol params = whenNotebook params $ withTransformer params $ doTransformUri @m params
 transformClientReq' STextDocumentCodeAction params = whenNotebook params $ withTransformer params $ doTransformUri @m params
+transformClientReq' STextDocumentCodeLens params = whenNotebook params $ withTransformer params $ doTransformUri @m params
 
 transformClientReq' _ params = return params
 

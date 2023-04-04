@@ -3,7 +3,6 @@ module Language.LSP.Parse (
   parseCodeString
   ) where
 
-import Data.String.Interpolate
 import GHC
 import qualified GHC.Paths
 import IHaskell.Eval.Parser

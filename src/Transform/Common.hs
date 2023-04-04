@@ -6,7 +6,6 @@ import Language.LSP.Notebook
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
-import Transform.Util
 
 
 untransformRange :: HaskellNotebookTransformer -> Range -> Range

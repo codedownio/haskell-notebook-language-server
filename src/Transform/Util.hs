@@ -18,8 +18,6 @@ import Data.String.Interpolate
 import Data.Text
 import qualified Data.Text as T
 import Language.LSP.Notebook
-import Language.LSP.Notebook.DirectiveToPragma
-import Language.LSP.Notebook.StripDirective
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens

@@ -28,11 +28,11 @@ library
       Transform.ClientNot
       Transform.ClientReq
       Transform.ClientRsp
-      Transform.ClientRsp.Hover
       Transform.Common
       Transform.ServerNot
       Transform.ServerReq
       Transform.ServerRsp
+      Transform.ServerRsp.Hover
       Transform.Util
   other-modules:
       Paths_haskell_notebook_language_server

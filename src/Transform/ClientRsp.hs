@@ -1,9 +1,9 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 
 module Transform.ClientRsp where
 
-import Control.Lens hiding (List)
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Logger
@@ -11,12 +11,12 @@ import Data.Aeson as A
 import Data.String.Interpolate
 import Data.Time
 import Language.LSP.Types
-import Language.LSP.Types.Lens hiding (trace)
-import Transform.ClientRsp.Hover
 import Transform.Util
 
 
-transformClientRsp :: (TransformerMonad n, HasJSON (ResponseMessage m)) => SMethod m -> ResponseMessage m -> n (ResponseMessage m)
+type ClientRspMethod m = SMethod (m :: Method FromServer Request)
+
+transformClientRsp :: (TransformerMonad n, HasJSON (ResponseMessage m)) => ClientRspMethod m -> ResponseMessage m -> n (ResponseMessage m)
 transformClientRsp meth msg = do
   start <- liftIO getCurrentTime
   msg' <- transformClientRsp' meth msg
@@ -25,6 +25,5 @@ transformClientRsp meth msg = do
   return msg'
 
 
-transformClientRsp' :: (TransformerMonad n) => SMethod m -> ResponseMessage m -> n (ResponseMessage m)
-transformClientRsp' STextDocumentHover msg = traverseOf (result . _Right . _Just) fixupHoverText msg
+transformClientRsp' :: (TransformerMonad n) => ClientRspMethod m -> ResponseMessage m -> n (ResponseMessage m)
 transformClientRsp' _meth msg = pure msg

@@ -17,13 +17,12 @@ import Language.LSP.Notebook
 import Language.LSP.Transformer
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
-import Transform.ClientRsp.Hover (mkDocRegex)
+import Transform.ServerRsp.Hover (mkDocRegex)
 import Transform.Util
 import UnliftIO.MVar
 
 
 type ClientNotMethod m = SMethod (m :: Method FromClient Notification)
-
 
 transformClientNot :: (TransformerMonad n, HasJSON (NotificationMessage m)) => ClientNotMethod m -> NotificationMessage m -> n (NotificationMessage m)
 transformClientNot meth msg = do

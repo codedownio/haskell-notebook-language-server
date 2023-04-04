@@ -12,10 +12,10 @@ import Data.Aeson as A
 import Data.String.Interpolate
 import Data.Time
 import Language.LSP.Notebook
-import Language.LSP.Notebook.ExpressionToDeclaration (containsExpressionVariable, isExpressionVariable)
 import Language.LSP.Types
 import Language.LSP.Types.Lens as Lens
 import Transform.Common
+import Transform.ServerRsp.Hover
 import Transform.Util
 
 
@@ -34,10 +34,17 @@ transformServerRsp meth initialParams msg = do
       return $ set result (Right p') msg
 
 transformServerRsp' :: (TransformerMonad n) => ServerRspMethod m -> MessageParams m -> ResponseResult m -> n (ResponseResult m)
+
 transformServerRsp' STextDocumentDocumentHighlight initialParams result = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) -> do
   return $ fmap (untransformRanged tx) result
-transformServerRsp' STextDocumentHover initialParams result = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) -> do
-  return (untransformRangedMaybe tx <$> result)
+
+transformServerRsp' STextDocumentHover initialParams result = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) ->
+  case result of
+    Nothing -> return Nothing
+    Just hov -> do
+      hov' <- fixupHoverText hov
+      return $ Just $ untransformRangedMaybe tx hov'
+
 transformServerRsp' STextDocumentDocumentSymbol initialParams result = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) ->
   case result of
     InL (List documentSymbols) -> return $ InL $ List (documentSymbols & filter (not . isInternalSymbol)
@@ -47,9 +54,14 @@ transformServerRsp' STextDocumentDocumentSymbol initialParams result = whenNoteb
                                                                              & fmap (over (location . range) (untransformRange tx)))
   where
     isInternalSymbol x = isExpressionVariable expressionToDeclarationParams (x ^. name)
+
 transformServerRsp' STextDocumentCodeAction initialParams result@(List xs) = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {}) -> do
   List <$> filterM (fmap not . isInternalReferringCodeAction) xs
   where
     isInternalReferringCodeAction (InL command) = containsExpressionVariable expressionToDeclarationParams (command ^. title)
     isInternalReferringCodeAction (InR codeAction) = containsExpressionVariable expressionToDeclarationParams (codeAction ^. title)
+
+transformServerRsp' STextDocumentCodeLens initialParams result@(List xs) = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) -> do
+  return $ List $ fmap (untransformRanged tx) xs
+
 transformServerRsp' _ _ result = return result

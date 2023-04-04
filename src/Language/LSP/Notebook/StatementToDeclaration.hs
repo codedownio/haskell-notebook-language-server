@@ -6,13 +6,9 @@
 
 module Language.LSP.Notebook.StatementToDeclaration where
 
-import Control.Monad.IO.Class
 import Data.Bifunctor
-import Data.Char (isDigit)
 import qualified Data.List as L
 import Data.Map as M
-import Data.Set as Set
-import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
 import IHaskell.Eval.Parser
@@ -21,9 +17,6 @@ import Language.LSP.Notebook.Util
 import Language.LSP.Parse
 import Language.LSP.Transformer
 import Language.LSP.Types
-import Safe
-import Text.Regex.Base (defaultExecOpt)
-import Text.Regex.PCRE.Text (compile, compBlank, execute)
 
 
 data LineInfo = LineInfo {
@@ -75,14 +68,14 @@ instance Transformer StatementToDeclaration where
   transformPosition :: Params StatementToDeclaration -> StatementToDeclaration -> Position -> Maybe Position
   transformPosition (STDParams) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
     Nothing -> Just $ Position l c
-    Just (LineInfo leftEnd hasClosingParen)
+    Just (LineInfo leftEnd _hasClosingParen)
       | c <= leftEnd + 1 -> Just $ Position l c
       | otherwise -> Just $ Position l (c + insertedLen)
 
   untransformPosition :: Params StatementToDeclaration -> StatementToDeclaration -> Position -> Position
   untransformPosition (STDParams) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
     Nothing -> Position l c
-    Just (LineInfo leftEnd hasClosingParen)
+    Just (LineInfo leftEnd _hasClosingParen)
       | c <= leftEnd + 1 -> Position l c
       | c >= leftEnd + insertedLen -> Position l (c - insertedLen)
       | otherwise -> Position l leftEnd

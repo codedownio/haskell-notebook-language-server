@@ -1,5 +1,4 @@
 {-# LANGUAGE GADTs #-}
-{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE RankNTypes #-}

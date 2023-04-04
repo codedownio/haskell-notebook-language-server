@@ -2,7 +2,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -fno-warn-deprecations #-}
 
-module Transform.ClientRsp.Hover (
+module Transform.ServerRsp.Hover (
   fixupHoverText
 
   , mkDocRegex

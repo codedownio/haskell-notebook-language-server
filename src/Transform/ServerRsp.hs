@@ -46,6 +46,7 @@ transformServerRsp' STextDocumentHover initialParams result = whenNotebookByInit
       logErrorN [i|fixupHoverText before: #{hov}|]
       hov' <- fixupHoverText hov
       logErrorN [i|fixupHoverText after: #{hov'}|]
+      logErrorN [i|fixupHoverText after untransformed: #{untransformRangedMaybe tx hov'}|]
       return $ Just $ untransformRangedMaybe tx hov'
 
 transformServerRsp' STextDocumentDocumentSymbol initialParams result = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) ->

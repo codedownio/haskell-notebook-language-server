@@ -26,7 +26,7 @@ type HaskellNotebookTransformer =
   :> StatementToDeclaration -- Convert naked statements to declarations
   :> ImportSifter -- Sift imports to the top
   :> PragmaSifter -- Sift pragmas to the top (above imports)
-  :> HeaderTransformer -- Add unsafePerformIO import
+  :> HeaderTransformer -- Add unsafePerformIO import at top
 
 expressionToDeclarationParams :: Params ExpressionToDeclaration
 expressionToDeclarationParams = EDParams 10

@@ -3,11 +3,12 @@
 
 module Transform.ServerNot where
 
-import Control.Lens
+import Control.Lens hiding (List)
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Logger
 import Data.Aeson as A
+import Data.Maybe
 import Data.String.Interpolate
 import Data.Time
 import Language.LSP.Types
@@ -31,6 +32,6 @@ transformServerNot' :: (TransformerMonad n) => SMethod m -> MessageParams m -> n
 transformServerNot' STextDocumentPublishDiagnostics params = whenNotebookResultUri params $ withTransformer params $ \(DocumentState {transformer=tx, ..}) -> do
   return $ params
          & set uri origUri
-         & over diagnostics (fmap (over range (untransformRange tx)))
+         & over diagnostics (\(List xs) -> List $ mapMaybe (traverseOf range (untransformRange tx)) xs)
 
 transformServerNot' _meth msg = pure msg

@@ -1,3 +1,4 @@
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 module Transform.Common where
 
@@ -11,23 +12,29 @@ import Language.LSP.Types.Lens as Lens
 -- * Transform
 
 transformRange :: HaskellNotebookTransformer -> Range -> Maybe Range
-transformRange tx x = case (transformPosition transformerParams tx (x ^. start), transformPosition transformerParams tx (x ^. end)) of
-  (Just start', Just end') -> Just (Range start' end')
-  _ -> Nothing
+transformRange = transformRanged
+
+transformRanged :: (HasRange a Range) => HaskellNotebookTransformer -> a -> Maybe a
+transformRanged tx x = x
+  & traverseOf (range . start) (transformPosition transformerParams tx)
+  >>= traverseOf (range . end) (transformPosition transformerParams tx)
 
 -- * Untransform
 
-untransformRange :: HaskellNotebookTransformer -> Range -> Range
-untransformRange tx x = x
-  & over start (untransformPosition transformerParams tx)
-  & over end (untransformPosition transformerParams tx)
+untransformRange :: HaskellNotebookTransformer -> Range -> Maybe Range
+untransformRange = untransformRanged
 
-untransformRanged :: (HasRange a Range) => HaskellNotebookTransformer -> a -> a
+untransformRanged :: (HasRange a Range) => HaskellNotebookTransformer -> a -> Maybe a
 untransformRanged tx x = x
-  & over (range . start) (untransformPosition transformerParams tx)
-  & over (range . end) (untransformPosition transformerParams tx)
+  & traverseOf (range . start) (untransformPosition transformerParams tx)
+  >>= traverseOf (range . end) (untransformPosition transformerParams tx)
 
-untransformRangedMaybe :: (HasRange a (Maybe Range)) => HaskellNotebookTransformer -> a -> a
+untransformRangedMaybe :: (HasRange a (Maybe Range)) => HaskellNotebookTransformer -> a -> Maybe a
 untransformRangedMaybe tx x = x
-  & over (range . _Just . start) (untransformPosition transformerParams tx)
-  & over (range . _Just . end) (untransformPosition transformerParams tx)
+  & traverseOf (range . _Just . start) (untransformPosition transformerParams tx)
+  >>= traverseOf (range . _Just . end) (untransformPosition transformerParams tx)
+
+-- * Orphan (wish this was in lsp-types)
+
+instance HasRange Range Range where
+  range = Prelude.id

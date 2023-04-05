@@ -44,7 +44,7 @@ instance Transformer StatementToDeclaration where
 
             (extraLines, remainingLines) = L.splitAt (L.length is) xs
 
-            newFirstLine = lhs <> "= unsafePerformIO $" <> rhs
+            newFirstLine = lhs <> "= unsafePerformIO $ " <> rhs
             newLines = newFirstLine : fmap fst extraLines
 
             params = StatementToDeclaration $ M.fromList [(fromIntegral i, LineInfo (fromIntegral (T.length lhs)))]
@@ -69,13 +69,13 @@ instance Transformer StatementToDeclaration where
       | c <= leftEnd + 1 -> Just $ Position l c
       | otherwise -> Just $ Position l (c + insertedLen)
 
-  untransformPosition :: Params StatementToDeclaration -> StatementToDeclaration -> Position -> Position
+  untransformPosition :: Params StatementToDeclaration -> StatementToDeclaration -> Position -> Maybe Position
   untransformPosition (STDParams) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
-    Nothing -> Position l c
+    Nothing -> Just $ Position l c
     Just (LineInfo leftEnd)
-      | c <= leftEnd + 1 -> Position l c
-      | c >= leftEnd + insertedLen -> Position l (c - insertedLen)
-      | otherwise -> Position l leftEnd
+      | c <= leftEnd + 1 -> Just $ Position l c
+      | c >= leftEnd + insertedLen -> Just $ Position l (c - insertedLen)
+      | otherwise -> Nothing
 
 insertedLen :: UInt
-insertedLen = 19 -- Length of "= unsafePerformIO ("
+insertedLen = 20 -- Length of "= unsafePerformIO $ "

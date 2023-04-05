@@ -29,7 +29,7 @@ instance Transformer ImportSifter where
   type Params ImportSifter = ()
   project () = second ImportSifter . projectChosenLines isImportCodeBlock
   transformPosition () (ImportSifter indices) = transformUsingIndices indices
-  untransformPosition () (ImportSifter indices) = untransformUsingIndices indices
+  untransformPosition () (ImportSifter indices) = Just . untransformUsingIndices indices
 
 newtype PragmaSifter = PragmaSifter (Vector Int)
   deriving Show
@@ -37,7 +37,7 @@ instance Transformer PragmaSifter where
   type Params PragmaSifter = ()
   project () = second PragmaSifter . projectChosenLines isLanguagePragmaCodeBlock
   transformPosition () (PragmaSifter indices) = transformUsingIndices indices
-  untransformPosition () (PragmaSifter indices) = untransformUsingIndices indices
+  untransformPosition () (PragmaSifter indices) = Just . untransformUsingIndices indices
 
 -- * Generic transformer functions
 

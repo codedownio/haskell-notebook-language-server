@@ -22,4 +22,4 @@ instance Transformer HeaderTransformer where
   project initialLines ls = ((Rope.fromText $ T.intercalate "\n" initialLines) <> "\n" <> ls, HeaderTransformer (fromIntegral (L.length initialLines)))
 
   transformPosition _ (HeaderTransformer n) (Position l c) = Just $ Position (l + n) c
-  untransformPosition _ (HeaderTransformer n) (Position l c) = Position (l - n) c
+  untransformPosition _ (HeaderTransformer n) (Position l c) = Just $ Position (l - n) c

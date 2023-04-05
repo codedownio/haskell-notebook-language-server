@@ -49,8 +49,7 @@ class Transformer a where
 
   transformPosition :: Params a -> a -> Position -> Maybe Position
 
-  untransformPosition :: Params a -> a -> Position -> Position
-  -- untransformPosition :: Params a -> a -> Position -> Maybe Position
+  untransformPosition :: Params a -> a -> Position -> Maybe Position
 
 data (a :: Type) :> (b :: Type) = a :> b
   deriving Show
@@ -67,7 +66,7 @@ instance (Transformer a, Transformer b) => Transformer (a :> b) where
       (change', x') = handleDiff xParams before change x
       (change'', y') = handleDiffMulti yParams (fst (project @a xParams before)) change' y
   transformPosition (xParams :> yParams) (x :> y) p = transformPosition xParams x p >>= transformPosition yParams y
-  untransformPosition (xParams :> yParams) (x :> y) p = untransformPosition xParams x (untransformPosition yParams y p)
+  untransformPosition (xParams :> yParams) (x :> y) p = untransformPosition yParams y p >>= untransformPosition xParams x
   -- untransformPosition (xParams :> yParams) (x :> y) p = untransformPosition yParams y p >>= untransformPosition xParams x
 
 -- Default implementation uses diff.

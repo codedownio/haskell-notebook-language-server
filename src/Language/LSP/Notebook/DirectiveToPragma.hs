@@ -58,10 +58,10 @@ instance Transformer DirectiveToPragma where
     | otherwise = Just $ Position l c
 
   -- TODO: do better here
-  untransformPosition :: Params DirectiveToPragma -> DirectiveToPragma -> Position -> Position
+  untransformPosition :: Params DirectiveToPragma -> DirectiveToPragma -> Position -> Maybe Position
   untransformPosition DTPParams (DirectiveToPragma affectedLines) (Position l c)
-    | l `Set.member` affectedLines = Position l 0
-    | otherwise = Position l c
+    | l `Set.member` affectedLines = Just $ Position l 0
+    | otherwise = Just $ Position l c
 
   -- handleDiff :: Params DirectiveToPragma -> Doc -> TextDocumentContentChangeEvent -> DirectiveToPragma -> ([TextDocumentContentChangeEvent], DirectiveToPragma)
   -- handleDiff params before (TextDocumentContentChangeEvent Nothing _ t) (DirectiveToPragma affectedLines) = ([TextDocumentContentChangeEvent Nothing Nothing (Rope.toText doc')], tx)

@@ -9,6 +9,7 @@ import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Logger
 import Data.Aeson as A
+import Data.Maybe
 import Data.String.Interpolate
 import Data.Time
 import Language.LSP.Notebook
@@ -35,23 +36,23 @@ transformServerRsp meth initialParams msg = do
 
 transformServerRsp' :: (TransformerMonad n) => ServerRspMethod m -> MessageParams m -> ResponseResult m -> n (ResponseResult m)
 
-transformServerRsp' STextDocumentDocumentHighlight initialParams result = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) -> do
-  return $ fmap (untransformRanged tx) result
+transformServerRsp' STextDocumentDocumentHighlight initialParams result@(List inner) = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) -> do
+  return $ List $ mapMaybe (untransformRanged tx) inner
 
 transformServerRsp' STextDocumentHover initialParams result = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) ->
   case result of
     Nothing -> return Nothing
     Just hov -> do
       hov' <- fixupHoverText hov
-      return $ Just $ untransformRangedMaybe tx hov'
+      return $ untransformRangedMaybe tx hov'
 
 transformServerRsp' STextDocumentDocumentSymbol initialParams result = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) ->
   case result of
     InL (List documentSymbols) -> return $ InL $ List (documentSymbols & filter (not . ignoreSymbol)
-                                                                       & fmap (over range (untransformRange tx)
-                                                                              . over selectionRange (untransformRange tx)))
+                                                                       & mapMaybe (traverseOf range (untransformRange tx))
+                                                                       & mapMaybe (traverseOf selectionRange (untransformRange tx)))
     InR (List symbolInformations) -> return $ InR $ List (symbolInformations & filter (not . ignoreSymbol)
-                                                                             & fmap (over (location . range) (untransformRange tx)))
+                                                                             & mapMaybe (traverseOf (location . range) (untransformRange tx)))
   where
     ignoreSymbol x = isExpressionVariable expressionToDeclarationParams (x ^. name)
                      -- Ignore imports symbol as it doesn't make much sense in notebooks, where imports can appear anywhere.
@@ -65,6 +66,6 @@ transformServerRsp' STextDocumentCodeAction initialParams result@(List xs) = whe
     isInternalReferringCodeAction (InR codeAction) = containsExpressionVariable expressionToDeclarationParams (codeAction ^. title)
 
 transformServerRsp' STextDocumentCodeLens initialParams result@(List xs) = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) -> do
-  return $ List $ fmap (untransformRanged tx) xs
+  return $ List $ mapMaybe (untransformRanged tx) xs
 
 transformServerRsp' _ _ result = return result

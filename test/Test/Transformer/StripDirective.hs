@@ -16,7 +16,7 @@ spec = describe "StripDirective" $ do
     affectedLines `shouldBe` [1]
 
     transformPosition SDParams ed (Position 1 3) `shouldBe` (Just (Position 1 0))
-    untransformPosition SDParams ed (Position 1 0) `shouldBe` (Position 1 0)
+    untransformPosition SDParams ed (Position 1 0) `shouldBe` (Just (Position 1 0))
 
 
 main :: IO ()

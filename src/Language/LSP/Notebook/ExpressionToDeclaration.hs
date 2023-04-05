@@ -77,10 +77,10 @@ instance Transformer ExpressionToDeclaration where
     | l `Set.member` affectedLines = Just $ Position l (fromIntegral (fromIntegral c + numberPadding + 7))
     | otherwise = Just $ Position l c
 
-  untransformPosition :: Params ExpressionToDeclaration -> ExpressionToDeclaration -> Position -> Position
+  untransformPosition :: Params ExpressionToDeclaration -> ExpressionToDeclaration -> Position -> Maybe Position
   untransformPosition (EDParams {..}) (ExpressionToDeclaration affectedLines) (Position l c)
-    | l `Set.member` affectedLines = Position l (fromIntegral (fromIntegral c - numberPadding - 7))
-    | otherwise = Position l c
+    | l `Set.member` affectedLines = Just $ Position l (fromIntegral (fromIntegral c - numberPadding - 7))
+    | otherwise = Just $ Position l c
 
 
 -- | This is a hack to deal with the fact that a top-level TH splice can look like either

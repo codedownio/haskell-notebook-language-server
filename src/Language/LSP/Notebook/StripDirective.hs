@@ -45,7 +45,7 @@ instance Transformer StripDirective where
     | l `Set.member` affectedLines = Just $ Position l 0
     | otherwise = Just $ Position l c
 
-  untransformPosition :: Params StripDirective -> StripDirective -> Position -> Position
+  untransformPosition :: Params StripDirective -> StripDirective -> Position -> Maybe Position
   untransformPosition SDParams (StripDirective affectedLines) (Position l c)
-    | l `Set.member` affectedLines = Position l 0
-    | otherwise = Position l c
+    | l `Set.member` affectedLines = Just $ Position l 0
+    | otherwise = Just $ Position l c

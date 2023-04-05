@@ -21,7 +21,6 @@ import Language.LSP.Types
 
 data LineInfo = LineInfo {
   lineInfoDivideAt :: UInt
-  , lineInfoHasClosingParen :: Bool
   } deriving (Show, Eq)
 
 newtype StatementToDeclaration = StatementToDeclaration (Map UInt LineInfo)
@@ -45,12 +44,10 @@ instance Transformer StatementToDeclaration where
 
             (extraLines, remainingLines) = L.splitAt (L.length is) xs
 
-            hasExtraLines = not $ L.null extraLines
-
-            newFirstLine = lhs <> "= unsafePerformIO (" <> rhs <> (if not hasExtraLines then ")" else "")
+            newFirstLine = lhs <> "= unsafePerformIO $" <> rhs
             newLines = newFirstLine : fmap fst extraLines
 
-            params = StatementToDeclaration $ M.fromList [(fromIntegral i, LineInfo (fromIntegral (T.length lhs)) (not hasExtraLines))]
+            params = StatementToDeclaration $ M.fromList [(fromIntegral i, LineInfo (fromIntegral (T.length lhs)))]
 
             (restLines, restParams) = go (counter + 1) remainingLines remainingGroups
 
@@ -68,14 +65,14 @@ instance Transformer StatementToDeclaration where
   transformPosition :: Params StatementToDeclaration -> StatementToDeclaration -> Position -> Maybe Position
   transformPosition (STDParams) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
     Nothing -> Just $ Position l c
-    Just (LineInfo leftEnd _hasClosingParen)
+    Just (LineInfo leftEnd)
       | c <= leftEnd + 1 -> Just $ Position l c
       | otherwise -> Just $ Position l (c + insertedLen)
 
   untransformPosition :: Params StatementToDeclaration -> StatementToDeclaration -> Position -> Position
   untransformPosition (STDParams) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
     Nothing -> Position l c
-    Just (LineInfo leftEnd _hasClosingParen)
+    Just (LineInfo leftEnd)
       | c <= leftEnd + 1 -> Position l c
       | c >= leftEnd + insertedLen -> Position l (c - insertedLen)
       | otherwise -> Position l leftEnd

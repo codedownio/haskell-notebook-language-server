@@ -14,11 +14,11 @@ spec :: TopSpec
 spec = describe "StatementToDeclaration" $ do
   it "projects and transforms a single expression" $ do
     let (ls, sd@(StatementToDeclaration affectedLines)) = project STDParams (listToDoc ["foo <- readLn", "foo = 42"])
-    ls `shouldBe` (listToDoc ["foo = unsafePerformIO ( readLn)", "foo = 42"])
+    ls `shouldBe` (listToDoc ["foo = unsafePerformIO $  readLn", "foo = 42"])
     affectedLines `shouldBe` (M.fromList [(0, LineInfo 4)])
 
     transformAndUntransform STDParams (Position 0 0) (Position 0 0) sd
-    transformAndUntransform STDParams (Position 0 8) (Position 0 27) sd
+    transformAndUntransform STDParams (Position 0 8) (Position 0 28) sd
     transformAndUntransform STDParams (Position 0 5) (Position 0 5) sd
 
   -- it "projects and transforms a multiline expression" $ do

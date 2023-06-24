@@ -36,6 +36,25 @@ transformServerRsp meth initialParams msg = do
 
 transformServerRsp' :: (TransformerMonad n) => ServerRspMethod m -> MessageParams m -> ResponseResult m -> n (ResponseResult m)
 
+transformServerRsp' STextDocumentCompletion initialParams result =
+  whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) -> do
+    let fixupCompletionEdit Nothing = Nothing
+        fixupCompletionEdit (Just (CompletionEditText edit)) = CompletionEditText <$> (untransformRanged tx edit)
+        fixupCompletionEdit (Just (CompletionEditInsertReplace (InsertReplaceEdit newText insert replace))) =
+          CompletionEditInsertReplace <$> (InsertReplaceEdit newText <$> untransformRanged tx insert <*> untransformRanged tx replace)
+
+    let fixupItem :: CompletionItem -> CompletionItem
+        fixupItem item = item
+         & over textEdit fixupCompletionEdit
+         & over (additionalTextEdits . _Just) (mapMaybeList (untransformRanged tx))
+
+    let fixupItems :: List CompletionItem -> List CompletionItem
+        fixupItems (List xs) = List (fmap fixupItem xs)
+
+    case result of
+      (InL items) -> return (InL (fixupItems items))
+      (InR completionList) -> return (InR (completionList & over items fixupItems))
+
 transformServerRsp' STextDocumentDocumentHighlight initialParams result@(List inner) = whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) -> do
   return $ List $ mapMaybe (untransformRanged tx) inner
 

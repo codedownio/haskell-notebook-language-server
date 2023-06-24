@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-orphans #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 
 module Transform.Common where

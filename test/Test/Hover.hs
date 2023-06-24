@@ -3,6 +3,7 @@
 module Test.Hover where
 
 import Data.String.Interpolate
+import qualified Data.Text as T
 import Language.LSP.Notebook
 import Language.LSP.Transformer
 import Test.Sandwich
@@ -28,6 +29,7 @@ spec = describe "Hover" $ do
       fixupDocumentReferences' (mkDocRegex "ma$in.i?pynb") transformer "Defined at: ma$in.i?pynb:3:1"
         >>= (`shouldBe` "Defined at: ma$in.i?pynb:1:1")
 
+hoverLines :: [T.Text]
 hoverLines = [
   "foo = 42"
   , "putStrLn foo"

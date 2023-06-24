@@ -20,7 +20,7 @@ import Transform.Common
 import Transform.Util
 
 
-type ClientReqMethod m = SMethod (m :: Method FromClient Request)
+type ClientReqMethod m = SMethod (m :: Method 'FromClient 'Request)
 
 
 transformClientReq :: (TransformerMonad n, HasJSON (RequestMessage m)) => ClientReqMethod m -> RequestMessage m -> n (RequestMessage m)

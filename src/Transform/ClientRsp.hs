@@ -14,7 +14,7 @@ import Language.LSP.Types
 import Transform.Util
 
 
-type ClientRspMethod m = SMethod (m :: Method FromServer Request)
+type ClientRspMethod m = SMethod (m :: Method 'FromServer 'Request)
 
 transformClientRsp :: (TransformerMonad n, HasJSON (ResponseMessage m)) => ClientRspMethod m -> ResponseMessage m -> n (ResponseMessage m)
 transformClientRsp meth msg = do

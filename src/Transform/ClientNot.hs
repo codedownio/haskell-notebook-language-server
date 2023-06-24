@@ -23,7 +23,7 @@ import Transform.Util
 import UnliftIO.MVar
 
 
-type ClientNotMethod m = SMethod (m :: Method FromClient Notification)
+type ClientNotMethod m = SMethod (m :: Method 'FromClient 'Notification)
 
 transformClientNot :: (TransformerMonad n, HasJSON (NotificationMessage m)) => ClientNotMethod m -> NotificationMessage m -> n (NotificationMessage m)
 transformClientNot meth msg = do

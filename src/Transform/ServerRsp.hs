@@ -20,7 +20,7 @@ import Transform.ServerRsp.Hover
 import Transform.Util
 
 
-type ServerRspMethod m = SMethod (m :: Method FromClient Request)
+type ServerRspMethod m = SMethod (m :: Method 'FromClient 'Request)
 
 transformServerRsp :: (TransformerMonad n, HasJSON (ResponseMessage m)) => ServerRspMethod m -> MessageParams m -> ResponseMessage m -> n (ResponseMessage m)
 transformServerRsp meth initialParams msg = do

@@ -191,13 +191,13 @@ readHlsErr hlsErr = forever $ do
   line <- liftIO (hGetLine hlsErr)
   logErrorN [i|(HLS stderr) #{line}|]
 
-lookupServerId :: ServerRequestMap -> LookupFunc FromServer
+lookupServerId :: ServerRequestMap -> LookupFunc 'FromServer
 lookupServerId serverReqMap sid = do
   case lookupServerRequestMap serverReqMap sid of
     Nothing -> Nothing
     Just (SMethodAndParams meth initialParams) -> Just (meth, initialParams)
 
-lookupClientId :: ClientRequestMap -> LookupFunc FromClient
+lookupClientId :: ClientRequestMap -> LookupFunc 'FromClient
 lookupClientId clientReqMap sid = do
   case lookupClientRequestMap clientReqMap sid of
     Nothing -> Nothing

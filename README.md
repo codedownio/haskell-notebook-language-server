@@ -1,1 +1,1 @@
-# lib-parser-test
+# haskell-notebook-language-server

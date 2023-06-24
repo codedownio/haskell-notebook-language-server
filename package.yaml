@@ -3,18 +3,14 @@ version:             0.1.0.0
 
 extra-source-files:
 - README.md
-- ChangeLog.md
+- CHANGELOG.md
 
 dependencies:
 - aeson
-- attoparsec
 - base >= 4.7 && < 5
 - bytestring
 - containers
 - filepath
-- ghc
-- ghc-parser
-- ghc-paths
 - ihaskell
 - lens
 - lens-regex-pcre
@@ -23,21 +19,15 @@ dependencies:
 - mtl
 - myers-diff
 - network-uri
-- optparse-applicative
 - pcre-light
-- process
 - regex-base
-- regex-pcre-builtin
-- retry
 - safe
 - string-interpolate
 - text
 - text-rope
 - time
-- unix
 - unliftio
 - unliftio-core
-- vector
 
 default-extensions:
 - OverloadedStrings
@@ -54,8 +44,19 @@ default-extensions:
 - NumericUnderscores
 - TypeApplications
 
+ghc-options:
+- -Wunused-packages
+- -Wall
+- -fno-warn-name-shadowing
+
 library:
   source-dirs: src
+  dependencies:
+  - ghc
+  - ghc-parser
+  - ghc-paths
+  - regex-pcre-builtin
+  - vector
 
 executables:
   haskell-notebook-language-server:
@@ -69,7 +70,13 @@ executables:
     - -O2
     - -W
     dependencies:
+    - ghc
+    - ghc-paths
     - haskell-notebook-language-server
+    - optparse-applicative
+    - process
+    - retry
+    - unix
 
 tests:
   haskell-notebook-language-server-test:

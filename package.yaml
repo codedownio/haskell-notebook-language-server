@@ -6,28 +6,12 @@ extra-source-files:
 - CHANGELOG.md
 
 dependencies:
-- aeson
 - base >= 4.7 && < 5
-- bytestring
-- containers
-- filepath
-- ihaskell
-- lens
-- lens-regex-pcre
 - lsp-types
 - monad-logger
-- mtl
-- myers-diff
-- network-uri
-- pcre-light
-- regex-base
-- safe
 - string-interpolate
 - text
-- text-rope
-- time
 - unliftio
-- unliftio-core
 
 default-extensions:
 - OverloadedStrings
@@ -52,10 +36,25 @@ ghc-options:
 library:
   source-dirs: src
   dependencies:
+  - aeson
+  - containers
+  - filepath
   - ghc
   - ghc-parser
   - ghc-paths
+  - ihaskell
+  - lens
+  - lens-regex-pcre
+  - pcre-light
+  - mtl
+  - myers-diff
+  - network-uri
+  - regex-base
   - regex-pcre-builtin
+  - safe
+  - text-rope
+  - time
+  - unliftio-core
   - vector
 
 executables:
@@ -70,13 +69,20 @@ executables:
     - -O2
     - -W
     dependencies:
+    - aeson
+    - bytestring
     - ghc
     - ghc-paths
     - haskell-notebook-language-server
+    - ihaskell
+    - lens
+    - mtl
     - optparse-applicative
     - process
     - retry
+    - safe
     - unix
+    - unliftio-core
 
 tests:
   haskell-notebook-language-server-test:
@@ -90,8 +96,10 @@ tests:
     - -O2
     - -W
     dependencies:
+    - containers
     - exceptions
     - haskell-notebook-language-server
     - QuickCheck
     - sandwich
     - sandwich-quickcheck
+    - text-rope

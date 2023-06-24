@@ -89,6 +89,7 @@ isLanguagePragmaCodeBlock _ = Nothing
 
 -- * Binary search
 
+binarySearchVec :: Vector Int -> Int -> (Int, Bool)
 binarySearchVec = binarySearchVec' @Int
 
 {-# SPECIALISE binarySearchVec' :: Vector Int -> Int -> (Int, Bool) #-}

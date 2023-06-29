@@ -1,5 +1,5 @@
 {
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/ce6aa13369b667ac2542593170993504932eb836";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-23.05";
 
   inputs.flake-utils.url = "github:numtide/flake-utils";
 
@@ -8,15 +8,16 @@
     flake-utils.lib.eachSystem ["x86_64-linux"] (system:
       let
         pkgs = import nixpkgs { inherit system; };
-        myers-diff = pkgs.haskell.packages.ghc8107.callPackage ./myers-diff.nix {};
+        lsp-types = pkgs.haskell.packages.ghc8107.callPackage ./lsp-types.nix {};
         default = pkgs.haskell.packages.ghc8107.callPackage ./default.nix {
-          inherit myers-diff;
+          inherit lsp-types;
         };
       in
         rec {
           packages = rec {
-            inherit default myers-diff;
             inherit (pkgs) cabal2nix;
+            inherit lsp-types;
+            inherit default;
           };
 
           defaultPackage = packages.default;

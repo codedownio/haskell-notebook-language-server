@@ -13,6 +13,8 @@ import Data.Aeson as A
 import Data.Maybe
 import Data.String.Interpolate
 import Data.Time
+import Language.LSP.Notebook (expressionToDeclarationParams)
+import Language.LSP.Notebook.ExpressionToDeclaration
 import Language.LSP.Protocol.Lens as Lens
 import Language.LSP.Protocol.Message
 import Language.LSP.Protocol.Types as LSP
@@ -82,12 +84,16 @@ transformServerRsp' SMethod_TextDocumentDocumentSymbol initialParams result =
     case result of
       InL symbolInformations -> return $ InL (symbolInformations & filter (not . ignoreSymbol)
                                                                  & mapMaybe (traverseOf (location . range) (untransformRange tx)))
-      InR (InL documentSymbols) -> return $ InR $ InL $ (documentSymbols & filter (not . ignoreSymbol)
-                                                                         & mapMaybe (traverseOf range (untransformRange tx))
-                                                                         & mapMaybe (traverseOf selectionRange (untransformRange tx)))
+      InR (InL documentSymbols) -> return $ InR $ InL (documentSymbols & filter (not . ignoreSymbol)
+                                                                       & mapMaybe (traverseOf range (untransformRange tx))
+                                                                       & mapMaybe (traverseOf selectionRange (untransformRange tx)))
       InR (InR LSP.Null) -> return $ InR $ InR LSP.Null
   where
-    ignoreSymbol _ = False
+    ignoreSymbol x = isExpressionVariable expressionToDeclarationParams (x ^. name)
+                     -- Ignore imports symbol as it doesn't make much sense in notebooks, where imports can appear anywhere.
+                     -- Also, it gives away our hidden unsafePerformIO import at the top of the file (for statement handling)
+                     || (x ^. name) == "imports"
+
 
 transformServerRsp' SMethod_TextDocumentCodeAction _initialParams (InR null) = return $ InR null
 transformServerRsp' SMethod_TextDocumentCodeAction initialParams (InL result) = (InL <$>) $

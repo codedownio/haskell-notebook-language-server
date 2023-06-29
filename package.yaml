@@ -7,7 +7,7 @@ extra-source-files:
 
 dependencies:
 - base >= 4.7 && < 5
-- lsp-types
+- lsp-types >= 2.0.0.1
 - monad-logger
 - string-interpolate
 - text
@@ -51,6 +51,7 @@ library:
   - network-uri
   - regex-base
   - regex-pcre-builtin
+  - row-types
   - safe
   - text-rope
   - time
@@ -100,6 +101,7 @@ tests:
     - exceptions
     - haskell-notebook-language-server
     - QuickCheck
+    - row-types
     - sandwich
     - sandwich-quickcheck
     - text-rope

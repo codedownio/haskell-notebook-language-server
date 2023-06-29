@@ -15,6 +15,20 @@ packages:
   original:
     commit: 600d2c4614266e8412cd3aa64e08f47b7060d4c2
     git: https://github.com/codedownio/myers-diff.git
+- completed:
+    hackage: lsp-types-2.0.0.1@sha256:259442a8d499b3a959cb6b12de331e586c6b37e2c4e1f9d82a542976ea728f41,29290
+    pantry-tree:
+      sha256: f8617d8aaa142ecc8ce62e0b2d930669d4969b6b9143368d20b1680874b8077c
+      size: 45522
+  original:
+    hackage: lsp-types-2.0.0.1
+- completed:
+    hackage: row-types-1.0.1.2@sha256:4d4c7cb95d06a32b28ba977852d52a26b4c1f695ef083a6fd874ab6d79933b64,3071
+    pantry-tree:
+      sha256: 6a3617038d3970095100d14d026c396002a115700500cf3004ffb67ae5a75611
+      size: 1060
+  original:
+    hackage: row-types-1.0.1.2
 snapshots:
 - completed:
     sha256: 6d1532d40621957a25bad5195bfca7938e8a06d923c91bc52aa0f3c41181f2d4

@@ -9,21 +9,24 @@ import Control.Lens hiding ((:>))
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Logger
+import Control.Monad.Reader
 import Data.Aeson as A
 import Data.String.Interpolate
 import Data.Time
 import Language.LSP.Notebook
+import Language.LSP.Protocol.Lens as Lens
+import Language.LSP.Protocol.Message
+import Language.LSP.Protocol.Types
 import Language.LSP.Transformer
-import Language.LSP.Types
-import Language.LSP.Types.Lens as Lens
 import Transform.Common
 import Transform.Util
+import UnliftIO.Concurrent
 
 
-type ClientReqMethod m = SMethod (m :: Method 'FromClient 'Request)
+type ClientReqMethod m = SMethod (m :: Method 'ClientToServer 'Request)
 
 
-transformClientReq :: (TransformerMonad n, HasJSON (RequestMessage m)) => ClientReqMethod m -> RequestMessage m -> n (RequestMessage m)
+transformClientReq :: (TransformerMonad n, HasJSON (TRequestMessage m)) => ClientReqMethod m -> TRequestMessage m -> n (TRequestMessage m)
 transformClientReq meth msg = do
   start <- liftIO getCurrentTime
   p' <- transformClientReq' meth (msg ^. params)
@@ -33,15 +36,21 @@ transformClientReq meth msg = do
   return msg'
 
 transformClientReq' :: forall m n. (TransformerMonad n) => ClientReqMethod m -> MessageParams m -> n (MessageParams m)
-transformClientReq' STextDocumentCodeAction params = whenNotebook params $ withTransformer params $ doTransformUriAndRange @m params
-transformClientReq' STextDocumentCodeLens params = whenNotebook params $ withTransformer params $ doTransformUri @m params
-transformClientReq' STextDocumentCompletion params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
-transformClientReq' STextDocumentDefinition params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
-transformClientReq' STextDocumentDocumentHighlight params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
-transformClientReq' STextDocumentDocumentSymbol params = whenNotebook params $ withTransformer params $ doTransformUri @m params
-transformClientReq' STextDocumentHover params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
-transformClientReq' STextDocumentImplementation params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
-transformClientReq' STextDocumentTypeDefinition params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
+
+transformClientReq' SMethod_Initialize params = do
+  -- Store the non-modified params, so we can access the unmodified rootUri
+  asks transformerInitializeParams >>= flip modifyMVar_ (\_ -> return $ Just params)
+  pure params
+
+transformClientReq' SMethod_TextDocumentCodeAction params = whenNotebook params $ withTransformer params $ doTransformUriAndRange @m params
+transformClientReq' SMethod_TextDocumentCodeLens params = whenNotebook params $ withTransformer params $ doTransformUri @m params
+transformClientReq' SMethod_TextDocumentCompletion params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
+transformClientReq' SMethod_TextDocumentDefinition params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
+transformClientReq' SMethod_TextDocumentDocumentHighlight params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
+transformClientReq' SMethod_TextDocumentDocumentSymbol params = whenNotebook params $ withTransformer params $ doTransformUri @m params
+transformClientReq' SMethod_TextDocumentHover params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
+transformClientReq' SMethod_TextDocumentImplementation params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
+transformClientReq' SMethod_TextDocumentTypeDefinition params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
 transformClientReq' _ params = return params
 
 

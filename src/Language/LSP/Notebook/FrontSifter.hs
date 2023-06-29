@@ -20,7 +20,7 @@ import Language.Haskell.GHC.Parser as GHCParser
 import Language.LSP.Notebook.Util
 import Language.LSP.Parse
 import Language.LSP.Transformer
-import Language.LSP.Types
+import Language.LSP.Protocol.Types
 
 
 newtype ImportSifter = ImportSifter (Vector Int)

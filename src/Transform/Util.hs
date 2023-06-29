@@ -14,14 +14,13 @@ import Control.Monad.Reader
 import qualified Data.Char as C
 import qualified Data.List as L
 import qualified Data.Map as M
-import Data.Maybe
 import Data.String.Interpolate
 import Data.Text
 import qualified Data.Text as T
 import Language.LSP.Notebook
+import Language.LSP.Protocol.Lens as Lens
+import Language.LSP.Protocol.Types as LSP
 import Language.LSP.Transformer
-import Language.LSP.Types as LSP
-import Language.LSP.Types.Lens as Lens
 import Network.URI
 import System.FilePath
 import UnliftIO.MVar
@@ -75,16 +74,23 @@ data DocumentState = DocumentState {
   , curLines :: Doc
   , origUri :: Uri
   , newUri :: Uri
+  , newPath :: FilePath
   , referenceRegex :: Regex
   }
 
 data TransformerState = TransformerState {
   transformerDocuments :: MVar (M.Map Text DocumentState)
+  , transformerInitializeParams :: MVar (Maybe InitializeParams)
+  , transformerInitializeResult :: MVar (Maybe InitializeResult)
   }
+
+-- * Transformers
 
 newTransformerState :: (MonadIO m) => m TransformerState
 newTransformerState = TransformerState
   <$> newMVar mempty
+  <*> newMVar Nothing
+  <*> newMVar Nothing
 
 lookupTransformer :: TransformerMonad m => Uri -> m (Maybe DocumentState)
 lookupTransformer uri = do
@@ -108,6 +114,28 @@ modifyTransformer def cb uri = do
       (tx', ret) <- cb tx
       return (M.insert (getUri uri) tx' m, ret)
 
+-- * Checking server capabilities
+
+whenServerCapabilitiesSatisfy :: TransformerMonad n => (ServerCapabilities -> (Bool, a)) -> (a -> n ()) -> n ()
+whenServerCapabilitiesSatisfy cb action = do
+  initializeResultVar <- asks transformerInitializeResult
+  readMVar initializeResultVar >>= \case
+    Just ((cb . (^. capabilities)) -> (True, sideValue)) -> action sideValue
+    _ -> return ()
+
+supportsWillSave :: ServerCapabilities -> (Bool, ())
+supportsWillSave (ServerCapabilities { _textDocumentSync=(Just (InL (TextDocumentSyncOptions {_willSave=(Just True)}))) }) = (True, ())
+supportsWillSave _ = (False, ())
+
+supportsSave :: ServerCapabilities -> (Bool, Maybe SaveOptions)
+supportsSave (ServerCapabilities { _textDocumentSync=(Just (InL (TextDocumentSyncOptions {_save}))) }) = case _save of
+  Nothing -> (False, Nothing)
+  Just (InL x) -> (x, Nothing)
+  Just (InR saveOptions) -> (True, Just saveOptions)
+supportsSave _ = (False, Nothing)
+
+-- * Misc
+
 addExtensionToUri :: (MonadLogger m) => String -> Uri -> m Uri
 addExtensionToUri ext u@(Uri t) = case parseURIReference (T.unpack t) of
   Nothing -> do
@@ -117,6 +145,3 @@ addExtensionToUri ext u@(Uri t) = case parseURIReference (T.unpack t) of
 
 flipTuple :: (b, a) -> (a, b)
 flipTuple (x, y) = (y, x)
-
-mapMaybeList :: (a -> Maybe b) -> List a -> List b
-mapMaybeList f (LSP.List xs) = LSP.List (mapMaybe f xs)

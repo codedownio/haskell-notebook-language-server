@@ -16,7 +16,7 @@ import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
 import Language.LSP.Parse
 import Language.LSP.Transformer
-import Language.LSP.Types
+import Language.LSP.Protocol.Types
 
 
 newtype DirectiveToPragma = DirectiveToPragma (Set UInt)

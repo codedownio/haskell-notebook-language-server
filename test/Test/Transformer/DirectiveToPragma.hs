@@ -8,7 +8,7 @@ import Data.Text.Rope (Rope)
 import qualified Data.Text.Rope as Rope
 import Language.LSP.Notebook.DirectiveToPragma
 import Language.LSP.Transformer
-import Language.LSP.Types hiding (line)
+import Language.LSP.Protocol.Types
 import Test.Sandwich
 import Test.Sandwich.QuickCheck
 import TestLib.Generators

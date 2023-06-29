@@ -4,7 +4,7 @@ module Test.Transformer.PragmaSifter where
 
 import Language.LSP.Notebook.FrontSifter
 import Language.LSP.Transformer
-import Language.LSP.Types hiding (line)
+import Language.LSP.Protocol.Types
 import Test.Common
 import Test.Sandwich
 

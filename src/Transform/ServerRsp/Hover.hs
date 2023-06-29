@@ -1,5 +1,7 @@
+{-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -fno-warn-deprecations #-}
 
 module Transform.ServerRsp.Hover (
@@ -17,13 +19,14 @@ import Control.Monad.Logger
 import Control.Monad.Reader
 import qualified Data.List as L
 import qualified Data.Map as M
+import Data.Row.Records
 import Data.String.Interpolate
 import Data.Text as T
 import Data.Text.Rope (Rope)
 import Language.LSP.Notebook
+import Language.LSP.Protocol.Lens hiding (id, trace)
+import Language.LSP.Protocol.Types
 import Language.LSP.Transformer
-import Language.LSP.Types
-import Language.LSP.Types.Lens hiding (id, trace)
 import Safe
 import Text.Regex.PCRE.Light
 import Transform.Util
@@ -39,13 +42,19 @@ fixupHoverText initialHover = do
       newParams <- traverseOf contents (fixupDocumentReferences referenceRegex transformer curLines) paramsInProgress
       loop (newParams, xs)
 
+type HoverContents = MarkupContent |? (MarkedString |? [MarkedString])
+
 fixupDocumentReferences :: forall n. MonadLogger n => Regex -> HaskellNotebookTransformer -> Rope -> HoverContents -> n HoverContents
-fixupDocumentReferences docRegex transformer _curLines (HoverContents (MarkupContent k t)) = (HoverContents . MarkupContent k) <$> (fixupDocumentReferences' docRegex transformer t)
-fixupDocumentReferences docRegex transformer _curLines (HoverContentsMS mss) = HoverContentsMS <$> (mapM transformMarkedString mss)
+fixupDocumentReferences docRegex transformer _curLines (InL (MarkupContent k t)) = (InL . MarkupContent k) <$> (fixupDocumentReferences' docRegex transformer t)
+fixupDocumentReferences docRegex transformer _curLines (InR markedStrings) = (InR <$>) $ case markedStrings of
+  InL ms -> InL <$> transformMarkedString ms
+  InR mss -> InR <$> (mapM transformMarkedString mss)
   where
     transformMarkedString :: MarkedString -> n MarkedString
-    transformMarkedString (PlainString t) = PlainString <$> (fixupDocumentReferences' docRegex transformer t)
-    transformMarkedString (CodeString (LanguageString l t)) = (CodeString . LanguageString l) <$> (fixupDocumentReferences' docRegex transformer t)
+    transformMarkedString (MarkedString (InL t)) = (MarkedString . InL) <$> (fixupDocumentReferences' docRegex transformer t)
+    transformMarkedString (MarkedString (InR thing)) = do
+      t' <- fixupDocumentReferences' docRegex transformer (thing .! #value)
+      return $ MarkedString $ InR (thing & update #value t')
 
 fixupDocumentReferences' :: forall n. MonadLogger n => Regex -> HaskellNotebookTransformer -> Text -> n Text
 fixupDocumentReferences' docRegex transformer t =

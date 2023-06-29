@@ -5,7 +5,7 @@ module Test.Transformer.StatementToDeclaration where
 import Data.Map as M
 import Language.LSP.Notebook.StatementToDeclaration
 import Language.LSP.Transformer
-import Language.LSP.Types hiding (line)
+import Language.LSP.Protocol.Types
 import Test.Common
 import Test.Sandwich
 

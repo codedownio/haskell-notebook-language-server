@@ -28,6 +28,7 @@ library
       Transform.ClientNot
       Transform.ClientReq
       Transform.ClientRsp
+      Transform.ClientRsp.Hover
       Transform.Common
       Transform.ServerNot
       Transform.ServerReq
@@ -64,7 +65,7 @@ library
     , ihaskell
     , lens
     , lens-regex-pcre
-    , lsp-types
+    , lsp-types >=2.0.0.1
     , monad-logger
     , mtl
     , myers-diff
@@ -72,6 +73,7 @@ library
     , pcre-light
     , regex-base
     , regex-pcre-builtin
+    , row-types
     , safe
     , string-interpolate
     , text
@@ -117,7 +119,7 @@ executable haskell-notebook-language-server
     , haskell-notebook-language-server
     , ihaskell
     , lens
-    , lsp-types
+    , lsp-types >=2.0.0.1
     , monad-logger
     , mtl
     , optparse-applicative
@@ -169,8 +171,9 @@ test-suite haskell-notebook-language-server-test
     , containers
     , exceptions
     , haskell-notebook-language-server
-    , lsp-types
+    , lsp-types >=2.0.0.1
     , monad-logger
+    , row-types
     , sandwich
     , sandwich-quickcheck
     , string-interpolate

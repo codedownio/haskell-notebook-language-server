@@ -10,13 +10,13 @@ import Control.Monad.Logger
 import Data.Aeson as A
 import Data.String.Interpolate
 import Data.Time
-import Language.LSP.Types
+import Language.LSP.Protocol.Message
 import Transform.Util
 
 
-type ClientRspMethod m = SMethod (m :: Method 'FromServer 'Request)
+type ClientRspMethod m = SMethod (m :: Method 'ServerToClient 'Request)
 
-transformClientRsp :: (TransformerMonad n, HasJSON (ResponseMessage m)) => ClientRspMethod m -> ResponseMessage m -> n (ResponseMessage m)
+transformClientRsp :: (TransformerMonad n, HasJSON (TResponseMessage m)) => ClientRspMethod m -> TResponseMessage m -> n (TResponseMessage m)
 transformClientRsp meth msg = do
   start <- liftIO getCurrentTime
   msg' <- transformClientRsp' meth msg
@@ -25,5 +25,5 @@ transformClientRsp meth msg = do
   return msg'
 
 
-transformClientRsp' :: (TransformerMonad n) => ClientRspMethod m -> ResponseMessage m -> n (ResponseMessage m)
+transformClientRsp' :: (TransformerMonad n) => ClientRspMethod m -> TResponseMessage m -> n (TResponseMessage m)
 transformClientRsp' _meth msg = pure msg

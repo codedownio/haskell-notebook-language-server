@@ -2,8 +2,8 @@
 module Test.Common where
 
 import Control.Monad.Catch
+import Language.LSP.Protocol.Types
 import Language.LSP.Transformer
-import Language.LSP.Types
 import Test.Sandwich
 
 

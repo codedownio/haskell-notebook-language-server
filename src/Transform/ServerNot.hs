@@ -11,13 +11,13 @@ import Data.Aeson as A
 import Data.Maybe
 import Data.String.Interpolate
 import Data.Time
-import Language.LSP.Types
-import Language.LSP.Types.Lens
+import Language.LSP.Protocol.Lens
+import Language.LSP.Protocol.Message
 import Transform.Common
 import Transform.Util
 
 
-transformServerNot :: (TransformerMonad n, HasJSON (NotificationMessage m)) => SMethod m -> NotificationMessage m -> n (NotificationMessage m)
+transformServerNot :: (TransformerMonad n, HasJSON (TNotificationMessage m)) => SMethod m -> TNotificationMessage m -> n (TNotificationMessage m)
 transformServerNot meth msg = do
   start <- liftIO getCurrentTime
   p' <- transformServerNot' meth (msg ^. params)
@@ -29,9 +29,9 @@ transformServerNot meth msg = do
 
 transformServerNot' :: (TransformerMonad n) => SMethod m -> MessageParams m -> n (MessageParams m)
 
-transformServerNot' STextDocumentPublishDiagnostics params = whenNotebookResultUri params $ withTransformer params $ \(DocumentState {transformer=tx, ..}) -> do
+transformServerNot' SMethod_TextDocumentPublishDiagnostics params = whenNotebookResultUri params $ withTransformer params $ \(DocumentState {transformer=tx, ..}) -> do
   return $ params
          & set uri origUri
-         & over diagnostics (\(List xs) -> List $ mapMaybe (traverseOf range (untransformRange tx)) xs)
+         & over diagnostics (mapMaybe (traverseOf range (untransformRange tx)))
 
 transformServerNot' _meth msg = pure msg

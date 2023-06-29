@@ -6,8 +6,8 @@ module Transform.Common where
 import Control.Lens hiding (List)
 import Language.LSP.Notebook
 import Language.LSP.Transformer
-import Language.LSP.Types
-import Language.LSP.Types.Lens as Lens
+import Language.LSP.Protocol.Types
+import Language.LSP.Protocol.Lens as Lens
 
 
 -- * Transform

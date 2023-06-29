@@ -17,7 +17,7 @@ import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
 import Language.LSP.Parse
 import Language.LSP.Transformer
-import Language.LSP.Types
+import Language.LSP.Protocol.Types
 import Safe
 import Text.Regex.Base (defaultExecOpt)
 import Text.Regex.PCRE.Text (compile, compBlank, execute)

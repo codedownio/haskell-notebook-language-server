@@ -1,6 +1,6 @@
-{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RankNTypes #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# OPTIONS_GHC -Wno-unrecognised-pragmas #-}
 {-# HLINT ignore "Redundant <$>" #-}
 
@@ -18,8 +18,9 @@ import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
-import Language.LSP.Types hiding (FromServerMessage'(..), FromServerMessage, FromClientMessage'(..), FromClientMessage, parseClientMessage, parseServerMessage, LookupFunc)
-import qualified Language.LSP.Types.Lens as Lens
+import qualified Language.LSP.Protocol.Lens as Lens
+import Language.LSP.Protocol.Message hiding (LookupFunc, parseClientMessage, parseServerMessage)
+import Language.LSP.Protocol.Types
 import Options.Applicative
 import System.IO
 import System.Posix.Signals
@@ -126,14 +127,14 @@ main = do
           liftIO $ writeToHandle stdout $ A.encode x
 
   let logFn :: Loc -> LogSource -> LogLevel -> LogStr -> IO ()
-      logFn _loc _src level msg = sendToStdout $ NotificationMessage "2.0" SWindowLogMessage $ LogMessageParams {
-        _xtype = levelToType level
+      logFn _loc _src level msg = sendToStdout $ TNotificationMessage "2.0" SMethod_WindowLogMessage $ LogMessageParams {
+        _type_ = levelToType level
         , _message = T.decodeUtf8 $ fromLogStr msg
         }
 
   flip runLoggingT logFn $ filterLogger logFilterFn $ flip runReaderT transformerState $
-    withAsync (readHlsOut clientReqMap serverReqMap hlsOut sendToStdout) $ \_hlsOutAsync ->
-      withAsync (readHlsErr hlsErr) $ \_hlsErrAsync ->
+    withAsync (readWrappedOut clientReqMap serverReqMap hlsOut sendToStdout) $ \_hlsOutAsync ->
+      withAsync (readWrappedErr hlsErr) $ \_hlsErrAsync ->
         withAsync (forever $ handleStdin hlsIn clientReqMap serverReqMap) $ \_stdinAsync -> do
           waitForProcess p >>= \case
             ExitFailure n -> logErrorN [i|haskell-language-server subprocess exited with code #{n}|]
@@ -143,7 +144,7 @@ main = do
 handleStdin :: (
   MonadLoggerIO m, MonadReader TransformerState m, MonadUnliftIO m, MonadFail m
   ) => Handle -> MVar ClientRequestMap -> MVar ServerRequestMap -> m ()
-handleStdin hlsIn clientReqMap serverReqMap = do
+handleStdin wrappedIn clientReqMap serverReqMap = do
   (A.eitherDecode <$> liftIO (parseStream stdin)) >>= \case
     Left err -> logErr [i|Couldn't decode incoming message: #{err}|]
     Right (x :: A.Value) -> do
@@ -151,53 +152,53 @@ handleStdin hlsIn clientReqMap serverReqMap = do
       case A.parseEither (parseClientMessage (lookupServerId m)) x of
         Left err -> do
           logErr [i|Couldn't decode incoming message: #{err}|]
-          liftIO $ writeToHandle hlsIn (A.encode x)
-        Right (FromClientRsp meth msg) -> do
-          transformClientRsp meth msg >>= liftIO . writeToHandle hlsIn . A.encode
-        Right (FromClientReq meth msg) -> do
+          liftIO $ writeToHandle wrappedIn (A.encode x)
+        Right (ClientToServerRsp meth msg) -> do
+          transformClientRsp meth msg >>= liftIO . writeToHandle wrappedIn . A.encode
+        Right (ClientToServerReq meth msg) -> do
           let msgId = msg ^. Lens.id
           modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of
             Just m' -> return m'
             Nothing -> return m
-          transformClientReq meth msg >>= liftIO . writeToHandle hlsIn . A.encode
-        Right (FromClientNot meth msg) ->
-          transformClientNot meth msg >>= liftIO . writeToHandle hlsIn . A.encode
+          transformClientReq meth msg >>= liftIO . writeToHandle wrappedIn . A.encode
+        Right (ClientToServerNot meth msg) ->
+          transformClientNot (liftIO . writeToHandle wrappedIn . A.encode) meth msg >>= (liftIO . writeToHandle wrappedIn . A.encode)
 
-readHlsOut :: (
+readWrappedOut :: (
   MonadUnliftIO m, MonadLoggerIO m, MonadReader TransformerState m, MonadFail m
   ) => MVar ClientRequestMap -> MVar ServerRequestMap -> Handle -> (forall a. ToJSON a => a -> m ()) -> m b
-readHlsOut clientReqMap serverReqMap hlsOut sendToStdout = forever $ do
-  (A.eitherDecode <$> liftIO (parseStream hlsOut)) >>= \case
-    Left err -> logErr [i|Couldn't decode HLS output: #{err}|]
+readWrappedOut clientReqMap serverReqMap wrappedOut sendToStdout = forever $ do
+  (A.eitherDecode <$> liftIO (parseStream wrappedOut)) >>= \case
+    Left err -> logErr [i|Couldn't decode wrapped output: #{err}|]
     Right (x :: A.Value) -> do
       m <- readMVar clientReqMap
       case A.parseEither (parseServerMessage (lookupClientId m)) x of
         Left err -> do
           logErr [i|Couldn't decode server message: #{A.encode x} (#{err})|]
           sendToStdout x
-        Right (FromServerNot meth msg) ->
+        Right (ServerToClientNot meth msg) ->
           transformServerNot meth msg >>= sendToStdout
-        Right (FromServerReq meth msg) -> do
+        Right (ServerToClientReq meth msg) -> do
           let msgId = msg ^. Lens.id
           modifyMVar_ serverReqMap $ \m -> case updateServerRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of
             Just m' -> return m'
             Nothing -> return m
           sendToStdout (transformServerReq meth msg)
-        Right (FromServerRsp meth initialParams msg) ->
+        Right (ServerToClientRsp meth initialParams msg) ->
           transformServerRsp meth initialParams msg >>= sendToStdout
 
-readHlsErr :: MonadLoggerIO m => Handle -> m ()
-readHlsErr hlsErr = forever $ do
-  line <- liftIO (hGetLine hlsErr)
-  logErrorN [i|(HLS stderr) #{line}|]
+readWrappedErr :: MonadLoggerIO m => Handle -> m ()
+readWrappedErr wrappedErr = forever $ do
+  line <- liftIO (hGetLine wrappedErr)
+  logErrorN [i|(wrapped stderr) #{line}|]
 
-lookupServerId :: ServerRequestMap -> LookupFunc 'FromServer
+lookupServerId :: ServerRequestMap -> LookupFunc 'ServerToClient
 lookupServerId serverReqMap sid = do
   case lookupServerRequestMap serverReqMap sid of
     Nothing -> Nothing
     Just (SMethodAndParams meth initialParams) -> Just (meth, initialParams)
 
-lookupClientId :: ClientRequestMap -> LookupFunc 'FromClient
+lookupClientId :: ClientRequestMap -> LookupFunc 'ClientToServer
 lookupClientId clientReqMap sid = do
   case lookupClientRequestMap clientReqMap sid of
     Nothing -> Nothing
@@ -212,8 +213,8 @@ writeToHandle h bytes = do
   hFlush h
 
 levelToType :: LogLevel -> MessageType
-levelToType LevelDebug = MtLog
-levelToType LevelInfo = MtInfo
-levelToType LevelWarn = MtWarning
-levelToType LevelError = MtError
-levelToType (LevelOther _typ) = MtInfo
+levelToType LevelDebug = MessageType_Log
+levelToType LevelInfo = MessageType_Info
+levelToType LevelWarn = MessageType_Warning
+levelToType LevelError = MessageType_Error
+levelToType (LevelOther _typ) = MessageType_Info

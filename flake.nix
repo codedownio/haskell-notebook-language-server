@@ -9,18 +9,20 @@
       let
         pkgs = import nixpkgs { inherit system; };
         lsp-types = pkgs.haskell.packages.ghc8107.callPackage ./lsp-types.nix {};
-        default = pkgs.haskell.packages.ghc8107.callPackage ./default.nix {
-          inherit lsp-types;
-        };
       in
         rec {
           packages = rec {
             inherit (pkgs) cabal2nix;
             inherit lsp-types;
-            inherit default;
+
+            default-810 = pkgs.haskell.packages.ghc810.callPackage ./default.nix { inherit lsp-types; };
+            default-90 = pkgs.haskell.packages.ghc90.callPackage ./default.nix { inherit lsp-types; };
+            default-92 = pkgs.haskell.packages.ghc92.callPackage ./default.nix { inherit lsp-types; };
+            default-94 = pkgs.haskell.packages.ghc94.callPackage ./default.nix { inherit lsp-types; };
+            default-96 = pkgs.haskell.packages.ghc96.callPackage ./default.nix { inherit lsp-types; };
           };
 
-          defaultPackage = packages.default;
+          defaultPackage = packages.default-90;
 
           nixpkgsPath = pkgs.path;
         }

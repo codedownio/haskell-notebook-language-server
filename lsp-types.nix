@@ -28,6 +28,7 @@ mkDerivation {
 
   isLibrary = true;
   isExecutable = true;
+  doCheck = false;
   libraryHaskellDepends = [
     aeson base binary containers data-default deepseq Diff dlist
     exceptions file-embed filepath hashable lens mod mtl network-uri

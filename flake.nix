@@ -1,9 +1,13 @@
 {
   inputs.flake-utils.url = "github:numtide/flake-utils";
   inputs.haskellNix.url = "github:input-output-hk/haskell.nix";
+  inputs.gitignore = {
+    url = "github:hercules-ci/gitignore.nix";
+    inputs.nixpkgs.follows = "nixpkgs";
+  };
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-23.05";
 
-  outputs = { self, flake-utils, haskellNix, nixpkgs }@inputs:
+  outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs }@inputs:
     # flake-utils.lib.eachDefaultSystem (system:
     flake-utils.lib.eachSystem ["x86_64-linux"] (system:
       let
@@ -12,7 +16,7 @@
           (final: prev: {
             hixProject = compiler-nix-name:
               final.haskell-nix.hix.project {
-                src = ./.;
+                src = gitignore.lib.gitignoreSource ./.;
                 evalSystem = "x86_64-linux";
                 inherit compiler-nix-name;
               };

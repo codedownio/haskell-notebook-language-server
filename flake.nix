@@ -30,10 +30,15 @@
           packages = rec {
             inherit (pkgs) cabal2nix;
             # inherit lsp-types;
-
-            ghc902 = (flake "ghc902").packages."haskell-notebook-language-server:exe:haskell-notebook-language-server";
-            ghc902-static = (flakeStatic "ghc902").packages."haskell-notebook-language-server:exe:haskell-notebook-language-server";
-          };
+          } // pkgs.lib.listToAttrs (
+            pkgs.lib.concatMap (name: [{
+              inherit name;
+              value = (flake name).packages."haskell-notebook-language-server:exe:haskell-notebook-language-server";
+            } {
+              name = "${name}-static";
+              value = (flakeStatic name).packages."haskell-notebook-language-server:exe:haskell-notebook-language-server";
+            }]) ["ghc8107" "ghc902" "ghc928" "ghc945" "ghc962"]
+          );
 
           inherit flake;
 

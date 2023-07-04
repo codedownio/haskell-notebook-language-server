@@ -29,20 +29,33 @@
 
         flake = compiler-nix-name: (pkgs.hixProject compiler-nix-name).flake {};
         flakeStatic = compiler-nix-name: (pkgs.pkgsCross.musl64.hixProject compiler-nix-name).flake {};
+
+        allVersions = with pkgs.lib; (
+          concatMap (name: [
+            (nameValuePair name (flake name).packages."haskell-notebook-language-server:exe:haskell-notebook-language-server")
+            (nameValuePair "${name}-static" (flakeStatic name).packages."haskell-notebook-language-server:exe:haskell-notebook-language-server")
+          ]) [
+            # "ghc8107"
+            "ghc902"
+            "ghc928"
+            "ghc945"
+            # "ghc962"
+          ]
+        );
+
       in
         rec {
           packages = rec {
             inherit (pkgs) cabal2nix;
             # inherit lsp-types;
-          } // pkgs.lib.listToAttrs (
-            pkgs.lib.concatMap (name: [{
-              inherit name;
-              value = (flake name).packages."haskell-notebook-language-server:exe:haskell-notebook-language-server";
-            } {
-              name = "${name}-static";
-              value = (flakeStatic name).packages."haskell-notebook-language-server:exe:haskell-notebook-language-server";
-            }]) ["ghc8107" "ghc902" "ghc928" "ghc945" "ghc962"]
-          );
+
+            all = with pkgs.lib; pkgs.linkFarm "haskell-notebook-language-server-all" (
+              map (x: {
+                inherit (x) name;
+                path = x.value;
+              }) allVersions
+            );
+          } // pkgs.lib.listToAttrs allVersions;
 
           inherit flake;
 

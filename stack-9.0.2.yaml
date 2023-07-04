@@ -1,0 +1,12 @@
+
+resolver: lts-19.33
+
+packages:
+- .
+
+extra-deps:
+- git: https://github.com/codedownio/myers-diff.git
+  commit: 600d2c4614266e8412cd3aa64e08f47b7060d4c2
+
+- lsp-types-2.0.0.1
+- row-types-1.0.1.2

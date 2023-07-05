@@ -90,7 +90,7 @@ jobs:
         - ghc: "9.4.5"
           yaml: "stack-9.4.5.yaml"
         - ghc: "9.6.2"
-          yaml: "stack.yaml"
+          yaml: "stack-9.6.2.yaml"
 
     steps:
     - name: Install libraries

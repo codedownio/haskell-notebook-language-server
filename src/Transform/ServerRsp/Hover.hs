@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverloadedLabels #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -31,6 +32,10 @@ import Safe
 import Text.Regex.PCRE.Light
 import Transform.Util
 import UnliftIO.MVar
+
+#if MIN_VERSION_mtl(2,3,0)
+import Data.Function (fix)
+#endif
 
 
 fixupHoverText :: (TransformerMonad n) => Hover -> n Hover

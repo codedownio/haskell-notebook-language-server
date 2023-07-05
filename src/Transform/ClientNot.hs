@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE PolyKinds #-}
@@ -24,6 +25,10 @@ import Language.LSP.Transformer
 import Transform.ServerRsp.Hover (mkDocRegex)
 import Transform.Util
 import UnliftIO.MVar
+
+#if MIN_VERSION_mtl(2,3,0)
+import Control.Monad (when)
+#endif
 
 
 type ClientNotMethod m = SMethod (m :: Method 'ClientToServer 'Notification)

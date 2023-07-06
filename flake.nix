@@ -52,7 +52,7 @@
             { name = "ghc902"; stackYaml = "stack-9.0.2.yaml"; }
             { name = "ghc928"; stackYaml = "stack-9.2.8.yaml"; }
             { name = "ghc945"; stackYaml = "stack-9.4.5.yaml"; }
-            { name = "ghc962"; stackYaml = "stack-9.6.2.yaml"; }
+            # { name = "ghc962"; stackYaml = "stack-9.6.2.yaml"; }
           ]
         );
 

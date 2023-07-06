@@ -14,9 +14,9 @@
         overlays = [
           haskellNix.overlay
           (final: prev: {
-            hixProject = compiler-nix-name:
+            hixProject = compiler-nix-name: src:
               final.haskell-nix.hix.project {
-                src = gitignore.lib.gitignoreSource ./.;
+                inherit src;
                 evalSystem = "x86_64-linux";
                 inherit compiler-nix-name;
               };
@@ -27,19 +27,32 @@
 
         # lsp-types = pkgs.haskell.packages.ghc8107.callPackage ./lsp-types.nix {};
 
-        flake = compiler-nix-name: (pkgs.hixProject compiler-nix-name).flake {};
-        flakeStatic = compiler-nix-name: (pkgs.pkgsCross.musl64.hixProject compiler-nix-name).flake {};
+        flake = compiler-nix-name: src: (pkgs.hixProject compiler-nix-name src).flake {};
+        flakeStatic = compiler-nix-name: src: (pkgs.pkgsCross.musl64.hixProject compiler-nix-name src).flake {};
+
+        srcWithStackYaml = stackYaml: let
+          baseSrc = gitignore.lib.gitignoreSource ./.;
+        in
+          pkgs.runCommand "src-with-${stackYaml}" {} ''
+            cp -r ${baseSrc} $out
+            chmod u+w $out
+            cd $out
+            mv ${stackYaml} stack.yaml
+            rm stack-*.yaml*
+          '';
+
+        exeAttr = "haskell-notebook-language-server:exe:haskell-notebook-language-server";
 
         allVersions = with pkgs.lib; (
-          concatMap (name: [
-            (nameValuePair name (flake name).packages."haskell-notebook-language-server:exe:haskell-notebook-language-server")
-            (nameValuePair "${name}-static" (flakeStatic name).packages."haskell-notebook-language-server:exe:haskell-notebook-language-server")
+          concatMap (info: [
+            (nameValuePair info.name (flake info.name (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
+            (nameValuePair "${info.name}-static" (flakeStatic info.name (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
           ]) [
-            # "ghc8107"
-            "ghc902"
-            "ghc928"
-            "ghc945"
-            # "ghc962"
+            { name = "ghc8107"; stackYaml = "stack-8.10.7.yaml"; }
+            { name = "ghc902"; stackYaml = "stack-9.0.2.yaml"; }
+            { name = "ghc928"; stackYaml = "stack-9.2.8.yaml"; }
+            { name = "ghc945"; stackYaml = "stack-9.4.5.yaml"; }
+            { name = "ghc962"; stackYaml = "stack-9.6.2.yaml"; }
           ]
         );
 

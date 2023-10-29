@@ -43,7 +43,20 @@
 
         exeAttr = "haskell-notebook-language-server:exe:haskell-notebook-language-server";
 
-        allVersions = with pkgs.lib; (
+        packageForGitHub = hnls: ghcName: pkgs.runCommand "haskell-notebook-language-server-${hnls.version}" { nativeBuildInputs = [pkgs.binutils]; } ''
+          name="haskell-notebook-language-server-${hnls.version}-${ghcName}-x86_64-linux"
+
+          mkdir -p $out
+          cp ${hnls}/bin/haskell-notebook-language-server $out/$name
+
+          cd $out
+          chmod u+w "$name"
+          strip "$name"
+
+          tar -czvf $name.tar.gz $name
+        '';
+
+        allVersions = with pkgs.lib; listToAttrs (
           concatMap (info: [
             (nameValuePair info.name (flake info.name (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
             (nameValuePair "${info.name}-static" (flakeStatic info.name (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
@@ -51,7 +64,7 @@
             { name = "ghc8107"; stackYaml = "stack-8.10.7.yaml"; }
             { name = "ghc902"; stackYaml = "stack-9.0.2.yaml"; }
             { name = "ghc928"; stackYaml = "stack-9.2.8.yaml"; }
-            { name = "ghc945"; stackYaml = "stack-9.4.5.yaml"; }
+            # { name = "ghc947"; stackYaml = "stack-9.4.7.yaml"; }
             # { name = "ghc962"; stackYaml = "stack-9.6.2.yaml"; }
           ]
         );
@@ -62,13 +75,15 @@
             inherit (pkgs) cabal2nix;
             # inherit lsp-types;
 
-            all = with pkgs.lib; pkgs.linkFarm "haskell-notebook-language-server-all" (
-              map (x: {
-                inherit (x) name;
-                path = x.value;
-              }) allVersions
-            );
-          } // pkgs.lib.listToAttrs allVersions;
+            inherit allVersions;
+            staticVersions = pkgs.lib.filterAttrs (n: v: pkgs.lib.hasSuffix "-static" n) allVersions;
+            all = pkgs.linkFarm "haskell-notebook-language-server-all" allVersions;
+
+            githubArtifacts = with pkgs; symlinkJoin {
+              name = "haskell-notebook-language-server-artifacts";
+              paths = lib.mapAttrsToList (n: v: packageForGitHub v (lib.removeSuffix "-static" n)) staticVersions;
+            };
+          } // allVersions;
 
           inherit flake;
 

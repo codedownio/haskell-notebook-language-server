@@ -5,6 +5,13 @@
 
 packages:
 - completed:
+    hackage: myers-diff-0.3.0.0@sha256:23099edfae4ccb9e4903d0948deaf44e56e67decc48a4c363cbb0b363b9bb560,8611
+    pantry-tree:
+      sha256: d5df3f3db9fb5f7f07b629f76d68655849d04a9395cfea0ead4d6a9ed229eb0b
+      size: 1433
+  original:
+    hackage: myers-diff-0.3.0.0
+- completed:
     commit: c547ee2fdc0a09cf4129b19292147fec38527a55
     git: https://github.com/IHaskell/IHaskell.git
     name: ihaskell
@@ -32,7 +39,7 @@ packages:
     subdir: ./ghc-parser
 snapshots:
 - completed:
-    sha256: 45e6765c61828735fec1923470b9b4b190c49dc66d65cb4587e88446de899c90
-    size: 539333
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2023/7/4.yaml
-  original: nightly-2023-07-04
+    sha256: 0580a03f247573451c0a676673e0c2b474e0d42f78d4a93c4cd10eb32f2cb911
+    size: 698107
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2023/11/10.yaml
+  original: nightly-2023-11-10

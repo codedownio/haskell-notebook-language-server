@@ -5,7 +5,7 @@ packages:
 - .
 
 extra-deps:
-- myers-diff-0.2.0.0
+- myers-diff-0.3.0.0
 
 - lsp-types-2.0.0.1
 - row-types-1.0.1.2

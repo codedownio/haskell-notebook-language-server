@@ -5,7 +5,7 @@ packages:
 - .
 
 extra-deps:
-- myers-diff-0.2.0.0
+- myers-diff-0.3.0.0
 
 - git: https://github.com/IHaskell/IHaskell.git
   commit: c547ee2fdc0a09cf4129b19292147fec38527a55

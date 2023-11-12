@@ -5,12 +5,12 @@
 
 packages:
 - completed:
-    hackage: myers-diff-0.2.0.0@sha256:157bd9141fb21a17e195f328b10b8a8650f78065a36e8cb1d3cb919469ef45cc,7188
+    hackage: myers-diff-0.3.0.0@sha256:23099edfae4ccb9e4903d0948deaf44e56e67decc48a4c363cbb0b363b9bb560,8611
     pantry-tree:
-      sha256: c14522eb1b1b794526f2b82f1aa2f058e5fe607bb2b9941abf43e76da75edbae
-      size: 1283
+      sha256: d5df3f3db9fb5f7f07b629f76d68655849d04a9395cfea0ead4d6a9ed229eb0b
+      size: 1433
   original:
-    hackage: myers-diff-0.2.0.0
+    hackage: myers-diff-0.3.0.0
 - completed:
     commit: c547ee2fdc0a09cf4129b19292147fec38527a55
     git: https://github.com/IHaskell/IHaskell.git

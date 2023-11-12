@@ -3,6 +3,12 @@
 
 set -e
 
+for arg do
+    shift
+
+    [ "$arg" = "--dry-run" ] && DRY_RUN=t && continue
+done
+
 BUILT=$(nix build .#githubArtifacts --no-link --json | jq -r '.[0].outputs.out')
 echo "Built: $BUILT"
 ls "$BUILT"
@@ -13,6 +19,10 @@ IFS=$'\n'
 ARTIFACTS=$(find "$BUILT" -name "*.tar.gz")
 unset IFS
 echo "Saw artifacts: $ARTIFACTS"
+
+if [[ -n "$DRY_RUN" ]]; then
+  exit $?
+fi
 
 # Smoke check
 # FIRST_EXECUTABLE=$(find "$BUILT" -type f -executable | head -n 1)

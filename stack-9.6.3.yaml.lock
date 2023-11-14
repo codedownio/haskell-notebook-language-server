@@ -5,12 +5,16 @@
 
 packages:
 - completed:
-    hackage: myers-diff-0.3.0.0@sha256:23099edfae4ccb9e4903d0948deaf44e56e67decc48a4c363cbb0b363b9bb560,8611
+    commit: 3683ab4e052347bc47eb5546361f47bcd8c0fa58
+    git: https://github.com/codedownio/myers-diff.git
+    name: myers-diff
     pantry-tree:
-      sha256: d5df3f3db9fb5f7f07b629f76d68655849d04a9395cfea0ead4d6a9ed229eb0b
-      size: 1433
+      sha256: ad44b9dcac56932c51114dd0b57bd2a30bdda758c21252643c91bfb148c25ee5
+      size: 3023
+    version: 0.3.0.0
   original:
-    hackage: myers-diff-0.3.0.0
+    commit: 3683ab4e052347bc47eb5546361f47bcd8c0fa58
+    git: https://github.com/codedownio/myers-diff.git
 - completed:
     commit: c547ee2fdc0a09cf4129b19292147fec38527a55
     git: https://github.com/IHaskell/IHaskell.git

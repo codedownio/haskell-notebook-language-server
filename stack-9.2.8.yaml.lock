@@ -5,15 +5,15 @@
 
 packages:
 - completed:
-    commit: 600d2c4614266e8412cd3aa64e08f47b7060d4c2
+    commit: 3683ab4e052347bc47eb5546361f47bcd8c0fa58
     git: https://github.com/codedownio/myers-diff.git
     name: myers-diff
     pantry-tree:
-      sha256: b187e0a7c66fc07fafe5af4874aedb93b41d4d692e9147a7a4ee237080914b76
-      size: 2003
-    version: 0.2.0.0
+      sha256: ad44b9dcac56932c51114dd0b57bd2a30bdda758c21252643c91bfb148c25ee5
+      size: 3023
+    version: 0.3.0.0
   original:
-    commit: 600d2c4614266e8412cd3aa64e08f47b7060d4c2
+    commit: 3683ab4e052347bc47eb5546361f47bcd8c0fa58
     git: https://github.com/codedownio/myers-diff.git
 - completed:
     hackage: lsp-types-2.0.0.1@sha256:259442a8d499b3a959cb6b12de331e586c6b37e2c4e1f9d82a542976ea728f41,29290

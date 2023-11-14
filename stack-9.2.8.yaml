@@ -4,8 +4,20 @@ resolver: lts-20.26
 packages:
 - .
 
+nix:
+  # pure: false
+  packages:
+  - zlib
+  - libsodium # Needed by zeromq
+  - zeromq
+  - pkg-config
+  - pcre
+  path:
+  - "nixpkgs=/home/tom/tools/nixpkgs"
+
 extra-deps:
-- myers-diff-0.3.0.0
+- git: https://github.com/codedownio/myers-diff.git
+  commit: 3683ab4e052347bc47eb5546361f47bcd8c0fa58
 
 - lsp-types-2.0.0.1
 - row-types-1.0.1.2

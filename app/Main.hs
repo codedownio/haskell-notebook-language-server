@@ -98,7 +98,9 @@ main = do
 
   -- TODO: switch to using pickFromIxMap or some other way to remove old entries
 
-  transformerState <- newTransformerState
+  transformerState <- newTransformerState $ AppConfig {
+    appConfigWriteFileOnChange = False
+    }
 
   logLevel <- case optLogLevel of
     Nothing -> return LevelInfo

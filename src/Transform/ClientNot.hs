@@ -86,21 +86,24 @@ transformClientNot' sendExtraNotification SMethod_TextDocumentDidChange params =
   let (changeEvents', tx') = handleDiffMulti transformerParams before changeEvents tx
   let after = applyChanges changeEvents before
 
-  whenServerCapabilitiesSatisfy supportsWillSave $ \_ ->
-    sendExtraNotification $ TNotificationMessage "2.0" SMethod_TextDocumentWillSave $ WillSaveTextDocumentParams {
-      _textDocument = TextDocumentIdentifier newUri
-      , _reason = TextDocumentSaveReason_AfterDelay
-      }
+  AppConfig {..} <- asks transformerConfig
 
-  liftIO $ T.writeFile newPath (Rope.toText after)
+  when appConfigWriteFileOnChange $ do
+    whenServerCapabilitiesSatisfy supportsWillSave $ \_ ->
+      sendExtraNotification $ TNotificationMessage "2.0" SMethod_TextDocumentWillSave $ WillSaveTextDocumentParams {
+        _textDocument = TextDocumentIdentifier newUri
+        , _reason = TextDocumentSaveReason_AfterDelay
+        }
 
-  whenServerCapabilitiesSatisfy supportsSave $ \maybeSaveOptions ->
-    sendExtraNotification $ TNotificationMessage "2.0" SMethod_TextDocumentDidSave $ DidSaveTextDocumentParams {
-      _textDocument = TextDocumentIdentifier newUri
-      , _text = case maybeSaveOptions of
-          Just (SaveOptions {_includeText=(Just True)}) -> Just (Rope.toText after)
-          _ -> Nothing
-      }
+    liftIO $ T.writeFile newPath (Rope.toText after)
+
+    whenServerCapabilitiesSatisfy supportsSave $ \maybeSaveOptions ->
+      sendExtraNotification $ TNotificationMessage "2.0" SMethod_TextDocumentDidSave $ DidSaveTextDocumentParams {
+        _textDocument = TextDocumentIdentifier newUri
+        , _text = case maybeSaveOptions of
+            Just (SaveOptions {_includeText=(Just True)}) -> Just (Rope.toText after)
+            _ -> Nothing
+        }
 
   return (ds { transformer = tx', curLines = after }, params & set contentChanges changeEvents'
                                                              & set (textDocument . uri) newUri)

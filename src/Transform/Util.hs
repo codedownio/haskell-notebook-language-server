@@ -78,19 +78,25 @@ data DocumentState = DocumentState {
   , referenceRegex :: Regex
   }
 
+data AppConfig = AppConfig {
+  appConfigWriteFileOnChange :: Bool
+  }
+
 data TransformerState = TransformerState {
   transformerDocuments :: MVar (M.Map Text DocumentState)
   , transformerInitializeParams :: MVar (Maybe InitializeParams)
   , transformerInitializeResult :: MVar (Maybe InitializeResult)
+  , transformerConfig :: AppConfig
   }
 
 -- * Transformers
 
-newTransformerState :: (MonadIO m) => m TransformerState
-newTransformerState = TransformerState
+newTransformerState :: (MonadIO m) => AppConfig -> m TransformerState
+newTransformerState config = TransformerState
   <$> newMVar mempty
   <*> newMVar Nothing
   <*> newMVar Nothing
+  <*> pure config
 
 lookupTransformer :: TransformerMonad m => Uri -> m (Maybe DocumentState)
 lookupTransformer uri = do

@@ -33,9 +33,11 @@ import Control.Monad (when)
 
 type ClientNotMethod m = SMethod (m :: Method 'ClientToServer 'Notification)
 
+type SendExtraNotificationFn n = forall (o :: Method 'ClientToServer 'Notification). ToJSON (TNotificationMessage o) => TNotificationMessage o -> n ()
+
 transformClientNot :: (
   TransformerMonad n, HasJSON (TNotificationMessage m)
-  ) => (forall (o :: Method 'ClientToServer 'Notification). ToJSON (TNotificationMessage o) => TNotificationMessage o -> n ())
+  ) => SendExtraNotificationFn n
     -> ClientNotMethod m
     -> TNotificationMessage m
     -> n (TNotificationMessage m)

@@ -141,7 +141,7 @@ main = do
             ExitSuccess -> logInfoN [i|haskell-language-server subprocess exited successfully|]
 
 
-handleStdin :: (
+handleStdin :: forall m. (
   MonadLoggerIO m, MonadReader TransformerState m, MonadUnliftIO m, MonadFail m
   ) => Handle -> MVar ClientRequestMap -> MVar ServerRequestMap -> m ()
 handleStdin wrappedIn clientReqMap serverReqMap = do
@@ -162,7 +162,12 @@ handleStdin wrappedIn clientReqMap serverReqMap = do
             Nothing -> return m
           transformClientReq meth msg >>= liftIO . writeToHandle wrappedIn . A.encode
         Right (ClientToServerNot meth msg) ->
-          transformClientNot (liftIO . writeToHandle wrappedIn . A.encode) meth msg >>= (liftIO . writeToHandle wrappedIn . A.encode)
+          transformClientNot sendExtraNotification meth msg >>= (liftIO . writeToHandle wrappedIn . A.encode)
+  where
+    sendExtraNotification :: SendExtraNotificationFn m
+    sendExtraNotification msg = do
+      logDebugN [i|Sending extra notification: #{A.encode msg}|]
+      liftIO $ writeToHandle wrappedIn $ A.encode msg
 
 readWrappedOut :: (
   MonadUnliftIO m, MonadLoggerIO m, MonadReader TransformerState m, MonadFail m

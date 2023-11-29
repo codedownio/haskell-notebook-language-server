@@ -32,6 +32,7 @@
             cd $out
             cp ${stackYaml} stack.yaml
             cp ${stackYaml}.lock stack.yaml.lock
+            sed -i 's/\.\././g' stack.yaml
           '';
 
         exeAttr = "haskell-notebook-language-server:exe:haskell-notebook-language-server";

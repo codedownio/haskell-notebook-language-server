@@ -7,8 +7,8 @@ import Data.Text as T
 import Data.Text.Rope (Rope)
 import qualified Data.Text.Rope as Rope
 import Language.LSP.Notebook.DirectiveToPragma
-import Language.LSP.Transformer
 import Language.LSP.Protocol.Types
+import Language.LSP.Transformer
 import Test.Sandwich
 import Test.Sandwich.QuickCheck
 import TestLib.Generators
@@ -34,26 +34,23 @@ spec = describe "DirectiveToPragma" $ do
 
   it "Does a simple single line change" $ do
     let changes = [mkChange (4, 16) (4, 16) Nothing "2"]
-    let (_projectedBefore, dp) = project @DirectiveToPragma DTPParams docLines
-    let before = docLines
+    let (_projectedBefore, dp) = project @DirectiveToPragma DTPParams doc
+    let before = doc
     let (changes', _transformer') = handleDiffMulti DTPParams before changes dp
     changes' `shouldBe` changes
 
   describe "QuickCheck" $ introduceQuickCheck $ do
     prop "Does handleDiff for single line changes correctly" $ do
-      testChange @DirectiveToPragma DTPParams docLines <$> arbitrarySingleLineChange docLines
+      testChange @DirectiveToPragma DTPParams doc <$> arbitrarySingleLineChange doc
 
-doc :: Text
-doc = [i|
+doc :: Rope
+doc = Rope.fromText [i|
 
 :set -XFoo
 
 foo = putStrLn 4
 
 |]
-
-docLines :: Rope
-docLines = Rope.fromText doc
 
 main :: IO ()
 main = runSandwichWithCommandLineArgs defaultOptions spec

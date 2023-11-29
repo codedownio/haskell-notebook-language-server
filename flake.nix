@@ -83,8 +83,8 @@
             cp -r ${baseSrc} $out
             chmod u+w $out
             cd $out
-            mv ${stackYaml} stack.yaml
-            rm stack-*.yaml*
+            cp ${stackYaml} stack.yaml
+            cp ${stackYaml}.lock stack.yaml.lock
           '';
 
         exeAttr = "haskell-notebook-language-server:exe:haskell-notebook-language-server";
@@ -107,11 +107,11 @@
             (nameValuePair info.name (flake info.name (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
             (nameValuePair "${info.name}-static" (flakeStatic info.name (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
           ]) [
-            { name = "ghc8107"; stackYaml = "stack-8.10.7.yaml"; }
-            { name = "ghc902"; stackYaml = "stack-9.0.2.yaml"; }
-            { name = "ghc928"; stackYaml = "stack-9.2.8.yaml"; }
-            { name = "ghc947"; stackYaml = "stack-9.4.7.yaml"; }
-            { name = "ghc963"; stackYaml = "stack-9.6.3.yaml"; }
+            { name = "ghc8107"; stackYaml = "stack/stack-8.10.7.yaml"; }
+            { name = "ghc902"; stackYaml = "stack/stack-9.0.2.yaml"; }
+            { name = "ghc928"; stackYaml = "stack/stack-9.2.8.yaml"; }
+            { name = "ghc947"; stackYaml = "stack/stack-9.4.7.yaml"; }
+            { name = "ghc963"; stackYaml = "stack/stack-9.6.3.yaml"; }
           ]
         );
 

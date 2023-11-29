@@ -2,7 +2,7 @@
 resolver: nightly-2023-11-10
 
 packages:
-- .
+- ../
 
 nix:
   # pure: false

@@ -1,8 +1,8 @@
 
-resolver: lts-21.17
+resolver: lts-18.28
 
 packages:
-- .
+- ../
 
 nix:
   # pure: false
@@ -19,8 +19,9 @@ extra-deps:
 - git: https://github.com/codedownio/myers-diff.git
   commit: 3683ab4e052347bc47eb5546361f47bcd8c0fa58
 
-- git: https://github.com/IHaskell/IHaskell.git
-  commit: c547ee2fdc0a09cf4129b19292147fec38527a55
-  subdirs:
-  - .
-  - ./ghc-parser
+- lsp-types-2.0.0.1
+- row-types-1.0.1.2
+- hashable-1.3.5.0
+- data-array-byte-0.1.0.1
+
+- text-rope-0.2

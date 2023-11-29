@@ -2,7 +2,7 @@
 resolver: lts-19.33
 
 packages:
-- .
+- ../
 
 nix:
   # pure: false

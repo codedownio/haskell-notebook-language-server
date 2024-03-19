@@ -43,7 +43,7 @@ packages:
     subdir: ./ghc-parser
 snapshots:
 - completed:
-    sha256: 0580a03f247573451c0a676673e0c2b474e0d42f78d4a93c4cd10eb32f2cb911
-    size: 698107
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2023/11/10.yaml
-  original: nightly-2023-11-10
+    sha256: 6f0bea3ba5b07360f25bc886e8cff8d847767557a492a6f7f6dcb06e3cc79ee9
+    size: 712905
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/13.yaml
+  original: lts-22.13

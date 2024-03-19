@@ -5,7 +5,7 @@
     url = "github:hercules-ci/gitignore.nix";
     inputs.nixpkgs.follows = "nixpkgs";
   };
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-23.05";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
 
   outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs }@inputs:
     # flake-utils.lib.eachDefaultSystem (system:
@@ -58,8 +58,8 @@
             { name = "ghc8107"; stackYaml = "stack/stack-8.10.7.yaml"; }
             { name = "ghc902"; stackYaml = "stack/stack-9.0.2.yaml"; }
             { name = "ghc928"; stackYaml = "stack/stack-9.2.8.yaml"; }
-            { name = "ghc947"; stackYaml = "stack/stack-9.4.7.yaml"; }
-            { name = "ghc963"; stackYaml = "stack/stack-9.6.3.yaml"; }
+            { name = "ghc948"; stackYaml = "stack/stack-9.4.8.yaml"; }
+            { name = "ghc964"; stackYaml = "stack/stack-9.6.4.yaml"; }
           ]
         );
 

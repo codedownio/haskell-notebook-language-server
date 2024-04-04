@@ -87,10 +87,12 @@ jobs:
           yaml: "stack/stack-9.0.2.yaml"
         - ghc: "9.2.8"
           yaml: "stack/stack-9.2.8.yaml"
-        - ghc: "9.4.7"
-          yaml: "stack/stack-9.4.7.yaml"
-        - ghc: "9.6.3"
-          yaml: "stack/stack-9.6.3.yaml"
+        - ghc: "9.4.8"
+          yaml: "stack/stack-9.4.8.yaml"
+        - ghc: "9.6.4"
+          yaml: "stack/stack-9.6.4.yaml"
+        - ghc: "9.8.2"
+          yaml: "stack/stack-9.8.2.yaml"
 
     steps:
     - name: Install libraries

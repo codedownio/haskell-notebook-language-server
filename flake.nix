@@ -1,10 +1,10 @@
 {
   inputs.flake-utils.url = "github:numtide/flake-utils";
-  inputs.haskellNix.url = "github:input-output-hk/haskell.nix";
   inputs.gitignore = {
     url = "github:hercules-ci/gitignore.nix";
     inputs.nixpkgs.follows = "nixpkgs";
   };
+  inputs.haskellNix.url = "github:input-output-hk/haskell.nix";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
 
   outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs }@inputs:

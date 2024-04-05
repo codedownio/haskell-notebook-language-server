@@ -18,7 +18,7 @@ VERSION="$(nix eval .#ghc928-static.version --raw)"
 IFS=$'\n'
 ARTIFACTS=$(find "$BUILT" -name "*.tar.gz")
 unset IFS
-echo "Saw artifacts: $ARTIFACTS"
+echo "Saw artifacts:\n$ARTIFACTS"
 
 if [[ -n "$DRY_RUN" ]]; then
   exit $?

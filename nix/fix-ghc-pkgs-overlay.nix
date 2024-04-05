@@ -41,6 +41,7 @@ final: prev: {
             "mtl"
             "parsec"
             "process"
+            "semaphore-compat"
             "text"
             "time"
             "transformers"

@@ -70,13 +70,12 @@
             inherit (pkgs) cabal2nix;
             # inherit lsp-types;
 
-            inherit allVersions;
-            staticVersions = pkgs.lib.filterAttrs (n: v: pkgs.lib.hasSuffix "-static" n) allVersions;
             all = pkgs.linkFarm "haskell-notebook-language-server-all" allVersions;
 
             githubArtifacts = with pkgs; symlinkJoin {
               name = "haskell-notebook-language-server-artifacts";
-              paths = lib.mapAttrsToList (n: v: packageForGitHub v (lib.removeSuffix "-static" n)) staticVersions;
+              paths = lib.mapAttrsToList (n: v: packageForGitHub v (lib.removeSuffix "-static" n))
+                                         (pkgs.lib.filterAttrs (n: v: pkgs.lib.hasSuffix "-static" n) allVersions);
             };
           } // allVersions;
 

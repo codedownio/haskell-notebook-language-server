@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -61,7 +62,7 @@ options = Options
 
 fullOpts :: ParserInfo Options
 fullOpts = info (options <**> helper) (
-  fullDesc <> progDesc "Run a wrapped haskell-language-server with notebook support"
+  fullDesc <> progDesc ("Run a wrapped haskell-language-server with notebook support (GHC " <> show __GLASGOW_HASKELL__ <> ")")
   )
 
 main :: IO ()

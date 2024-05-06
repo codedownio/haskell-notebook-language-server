@@ -1,33 +1,36 @@
 #! /usr/bin/env nix-shell
 #! nix-shell -i bash -p jq github-cli
 
-set -e
+set -eo pipefail
 
-for arg do
-    shift
+SCRIPTDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+cd "$SCRIPTDIR"
 
-    [ "$arg" = "--dry-run" ] && DRY_RUN=t && continue
-done
+. ./util.sh
+
+cd ..
 
 BUILT=$(nix build .#githubArtifacts --no-link --json | jq -r '.[0].outputs.out')
 echo "Built: $BUILT"
 ls "$BUILT"
 
 VERSION="$(nix eval .#ghc928-static.version --raw)"
+echo "Got version: $VERSION"
 
 IFS=$'\n'
 ARTIFACTS=$(find "$BUILT" -name "*.tar.gz")
 unset IFS
 echo "Saw artifacts:\n$ARTIFACTS"
 
-if [[ -n "$DRY_RUN" ]]; then
-  exit $?
-fi
-
 # Smoke check
 # FIRST_EXECUTABLE=$(find "$BUILT" -type f -executable | head -n 1)
 # echo "FIRST_EXECUTABLE: $FIRST_EXECUTABLE"
 # $FIRST_EXECUTABLE --help > /dev/null 2>&1
+
+echo ""
+echo "This will tag the current commit as $TAG and upload the above aliases to Git."
+echo ""
+confirm_execution
 
 TAG=v"$VERSION"
 echo "Tagging at $TAG"

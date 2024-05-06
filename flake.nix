@@ -77,11 +77,11 @@
               paths = lib.mapAttrsToList (n: v: packageForGitHub v (lib.removeSuffix "-static" n))
                                          (pkgs.lib.filterAttrs (n: v: pkgs.lib.hasSuffix "-static" n) allVersions);
             };
+
+            nixpkgsPath = pkgs.writeShellScriptBin "nixpkgsPath.sh" "echo -n ${pkgs.path}";
           } // allVersions;
 
           inherit flake;
-
-          nixpkgsPath = pkgs.path;
         }
     );
 

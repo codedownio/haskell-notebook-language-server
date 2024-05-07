@@ -52,6 +52,7 @@ data Options = Options {
   optWrappedLanguageServer :: Maybe FilePath
   , optHlsArgs :: Maybe Text
   , optLogLevel :: Maybe Text
+  , optPrintVersion :: Bool
   }
 
 options :: Parser Options
@@ -59,15 +60,20 @@ options = Options
   <$> optional (strOption (long "wrapped-hls" <> help "Wrapped haskell-language-server binary"))
   <*> optional (strOption (long "hls-args" <> help "Extra arguments to haskell-language-server"))
   <*> optional (strOption (long "log-level" <> help "Log level (debug, info, warn, error)"))
+  <*> flag False True (long "version" <> help "Print version")
 
 fullOpts :: ParserInfo Options
 fullOpts = info (options <**> helper) (
-  fullDesc <> progDesc ("Run a wrapped haskell-language-server with notebook support (GHC " <> show __GLASGOW_HASKELL__ <> ")")
+  fullDesc <> progDesc ("Run a wrapped haskell-language-server with notebook support (GHC " <> show (__GLASGOW_HASKELL__ :: Integer) <> ")")
   )
 
 main :: IO ()
 main = do
   Options {..} <- execParser fullOpts
+
+  when optPrintVersion $ do
+    putStrLn CURRENT_PACKAGE_VERSION
+    exitSuccess
 
   wrappedLanguageServerPath <- (pure optWrappedLanguageServer <|> findExecutable "haskell-language-server-wrapper") >>= \case
     Nothing -> throwIO $ userError [i|Couldn't find haskell-language-server binary.|]

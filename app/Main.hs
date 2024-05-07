@@ -82,17 +82,25 @@ main = do
         , std_err = CreatePipe
         })
 
-  hSetBuffering stdin NoBuffering -- TODO: LineBuffering here and below?
+  -- No buffering: used for LSP stream from client
+  hSetBuffering stdin NoBuffering
   hSetEncoding  stdin utf8
 
+  -- No buffering: used for LSP stream to client
+  hSetBuffering stdout NoBuffering
+  hSetEncoding  stdout utf8
+
+  -- Line buffering: used for normal log lines
+  hSetBuffering stderr LineBuffering
+  hSetEncoding  stderr utf8
+
+  -- No buffering: used for LSP stream from wrapped server
   hSetBuffering hlsOut NoBuffering
   hSetEncoding  hlsOut utf8
 
-  hSetBuffering stdout LineBuffering
-  hSetEncoding  stdout utf8
-
-  hSetBuffering stderr LineBuffering
-  hSetEncoding  stderr utf8
+  -- No buffering: used for LSP stream to wrapped server
+  hSetBuffering hlsIn NoBuffering
+  hSetEncoding  hlsIn utf8
 
   clientReqMap <- newMVar newClientRequestMap
   serverReqMap <- newMVar newServerRequestMap
@@ -136,12 +144,13 @@ main = do
         }
 
   flip runLoggingT logFn $ filterLogger logFilterFn $ flip runReaderT transformerState $
-    withAsync (readWrappedOut clientReqMap serverReqMap hlsOut sendToStdout) $ \_hlsOutAsync ->
-      withAsync (readWrappedErr hlsErr) $ \_hlsErrAsync ->
-        withAsync (forever $ handleStdin hlsIn clientReqMap serverReqMap) $ \_stdinAsync -> do
-          waitForProcess p >>= \case
-            ExitFailure n -> logErrorN [i|haskell-language-server subprocess exited with code #{n}|]
-            ExitSuccess -> logInfoN [i|haskell-language-server subprocess exited successfully|]
+    flip withException (\(e :: SomeException) -> logErrorN [i|HNLS overall exception: #{e}|]) $
+      withAsync (readWrappedOut clientReqMap serverReqMap hlsOut sendToStdout) $ \_hlsOutAsync ->
+        withAsync (readWrappedErr hlsErr) $ \_hlsErrAsync ->
+          withAsync (forever $ handleStdin hlsIn clientReqMap serverReqMap) $ \_stdinAsync -> do
+            waitForProcess p >>= \case
+              ExitFailure n -> logErrorN [i|haskell-language-server subprocess exited with code #{n}|]
+              ExitSuccess -> logInfoN [i|haskell-language-server subprocess exited successfully|]
 
 
 handleStdin :: forall m. (
@@ -216,9 +225,7 @@ logErr :: MonadLoggerIO m => Text -> m ()
 logErr = logInfoN
 
 writeToHandle :: Handle -> BL8.ByteString -> IO ()
-writeToHandle h bytes = do
-  BL8.hPutStr h [i|Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
-  hFlush h
+writeToHandle h bytes = BL8.hPutStr h [i|Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
 
 levelToType :: LogLevel -> MessageType
 levelToType LevelDebug = MessageType_Log

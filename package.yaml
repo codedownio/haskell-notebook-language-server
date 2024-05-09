@@ -1,5 +1,5 @@
 name:                haskell-notebook-language-server
-version:             0.3.2.0
+version:             0.3.3.0
 
 extra-source-files:
 - README.md

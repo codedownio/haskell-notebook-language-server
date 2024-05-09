@@ -45,7 +45,7 @@
 
           cd $out
           chmod u+w "$name"
-          strip "$name"
+          # strip "$name"
 
           tar -czvf $name.tar.gz $name
         '';

@@ -53,6 +53,8 @@ data Options = Options {
   , optHlsArgs :: Maybe Text
   , optLogLevel :: Maybe Text
   , optPrintVersion :: Bool
+  , optDebugWrites :: Bool
+  , optDebugReads :: Bool
   }
 
 options :: Parser Options
@@ -61,6 +63,8 @@ options = Options
   <*> optional (strOption (long "hls-args" <> help "Extra arguments to haskell-language-server"))
   <*> optional (strOption (long "log-level" <> help "Log level (debug, info, warn, error)"))
   <*> flag False True (long "version" <> help "Print version")
+  <*> flag False True (long "debug-writes" <> help "Debug writes to HLS")
+  <*> flag False True (long "debug-reads" <> help "Debug reads from HLS")
 
 fullOpts :: ParserInfo Options
 fullOpts = info (options <**> helper) (
@@ -141,7 +145,7 @@ main = do
   let sendToStdout :: (MonadUnliftIO m, ToJSON a) => a -> m ()
       sendToStdout x = do
         withMVar stdoutLock $ \_ -> do
-          liftIO $ writeToHandle stdout $ A.encode x
+          liftIO $ writeToHandle' stdout $ A.encode x
 
   let logFn :: Loc -> LogSource -> LogLevel -> LogStr -> IO ()
       logFn _loc _src level msg = sendToStdout $ TNotificationMessage "2.0" SMethod_WindowLogMessage $ LogMessageParams {
@@ -151,9 +155,9 @@ main = do
 
   flip runLoggingT logFn $ filterLogger logFilterFn $ flip runReaderT transformerState $
     flip withException (\(e :: SomeException) -> logErrorN [i|HNLS overall exception: #{e}|]) $
-      withAsync (readWrappedOut clientReqMap serverReqMap hlsOut sendToStdout) $ \_hlsOutAsync ->
+      withAsync (readWrappedOut optDebugReads clientReqMap serverReqMap hlsOut sendToStdout) $ \_hlsOutAsync ->
         withAsync (readWrappedErr hlsErr) $ \_hlsErrAsync ->
-          withAsync (forever $ handleStdin hlsIn clientReqMap serverReqMap) $ \_stdinAsync -> do
+          withAsync (forever $ handleStdin optDebugWrites hlsIn clientReqMap serverReqMap) $ \_stdinAsync -> do
             waitForProcess p >>= \case
               ExitFailure n -> logErrorN [i|haskell-language-server subprocess exited with code #{n}|]
               ExitSuccess -> logInfoN [i|haskell-language-server subprocess exited successfully|]
@@ -161,8 +165,8 @@ main = do
 
 handleStdin :: forall m. (
   MonadLoggerIO m, MonadReader TransformerState m, MonadUnliftIO m, MonadFail m
-  ) => Handle -> MVar ClientRequestMap -> MVar ServerRequestMap -> m ()
-handleStdin wrappedIn clientReqMap serverReqMap = do
+  ) => Bool -> Handle -> MVar ClientRequestMap -> MVar ServerRequestMap -> m ()
+handleStdin debugWrites wrappedIn clientReqMap serverReqMap = do
   (A.eitherDecode <$> liftIO (parseStream stdin)) >>= \case
     Left err -> logErr [i|Couldn't decode incoming message: #{err}|]
     Right (x :: A.Value) -> do
@@ -170,28 +174,32 @@ handleStdin wrappedIn clientReqMap serverReqMap = do
       case A.parseEither (parseClientMessage (lookupServerId m)) x of
         Left err -> do
           logErr [i|Couldn't decode incoming message: #{err}|]
-          liftIO $ writeToHandle wrappedIn (A.encode x)
+          writeToHandle debugWrites wrappedIn (A.encode x)
         Right (ClientToServerRsp meth msg) -> do
-          transformClientRsp meth msg >>= liftIO . writeToHandle wrappedIn . A.encode
+          transformClientRsp meth msg >>= writeToHandle debugWrites wrappedIn . A.encode
         Right (ClientToServerReq meth msg) -> do
           let msgId = msg ^. Lens.id
           modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of
             Just m' -> return m'
             Nothing -> return m
-          transformClientReq meth msg >>= liftIO . writeToHandle wrappedIn . A.encode
+          transformClientReq meth msg >>= writeToHandle debugWrites wrappedIn . A.encode
         Right (ClientToServerNot meth msg) ->
-          transformClientNot sendExtraNotification meth msg >>= (liftIO . writeToHandle wrappedIn . A.encode)
+          transformClientNot sendExtraNotification meth msg >>= (writeToHandle debugWrites wrappedIn . A.encode)
   where
     sendExtraNotification :: SendExtraNotificationFn m
     sendExtraNotification msg = do
       logDebugN [i|Sending extra notification: #{A.encode msg}|]
-      liftIO $ writeToHandle wrappedIn $ A.encode msg
+      writeToHandle debugWrites wrappedIn $ A.encode msg
 
 readWrappedOut :: (
   MonadUnliftIO m, MonadLoggerIO m, MonadReader TransformerState m, MonadFail m
-  ) => MVar ClientRequestMap -> MVar ServerRequestMap -> Handle -> (forall a. ToJSON a => a -> m ()) -> m b
-readWrappedOut clientReqMap serverReqMap wrappedOut sendToStdout = forever $ do
-  (A.eitherDecode <$> liftIO (parseStream wrappedOut)) >>= \case
+  ) => Bool -> MVar ClientRequestMap -> MVar ServerRequestMap -> Handle -> (forall a. ToJSON a => a -> m ()) -> m b
+readWrappedOut debugReads clientReqMap serverReqMap wrappedOut sendToStdout = forever $ do
+  bytes <- liftIO (parseStream wrappedOut)
+
+  when debugReads $ logDebugN [i|Read from HLS: #{bytes}|]
+
+  case A.eitherDecode bytes of
     Left err -> logErr [i|Couldn't decode wrapped output: #{err}|]
     Right (x :: A.Value) -> do
       m <- readMVar clientReqMap
@@ -230,8 +238,13 @@ lookupClientId clientReqMap sid = do
 logErr :: MonadLoggerIO m => Text -> m ()
 logErr = logInfoN
 
-writeToHandle :: Handle -> BL8.ByteString -> IO ()
-writeToHandle h bytes = BL8.hPutStr h [i|Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
+writeToHandle :: MonadLoggerIO m => Bool -> Handle -> BL8.ByteString -> m ()
+writeToHandle debugWrites h bytes = do
+  when debugWrites $ logDebugN [i|Writing to HLS: Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
+  liftIO $ writeToHandle' h bytes
+
+writeToHandle' :: Handle -> BL8.ByteString -> IO ()
+writeToHandle' h bytes = BL8.hPutStr h [i|Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
 
 levelToType :: LogLevel -> MessageType
 levelToType LevelDebug = MessageType_Log

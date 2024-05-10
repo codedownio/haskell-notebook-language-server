@@ -18,8 +18,6 @@
 
         pkgs = import nixpkgs { inherit system overlays; inherit (haskellNix) config; };
 
-        # lsp-types = pkgs.haskell.packages.ghc8107.callPackage ./lsp-types.nix {};
-
         flake = compiler-nix-name: src: (pkgs.hixProject compiler-nix-name src []).flake {};
 
         staticModules = [{

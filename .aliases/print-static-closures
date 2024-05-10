@@ -1,0 +1,15 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p jq
+
+set -eo pipefail
+
+SCRIPTDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+cd "$SCRIPTDIR/.."
+
+STATIC_OUTPUTS=$(nix flake show --option allow-import-from-derivation true --json | jq '.packages["x86_64-linux"] | keys | .[] | select(contains("static"))' -r)
+
+for OUTPUT in $STATIC_OUTPUTS; do
+  echo "$OUTPUT:"
+  nix path-info -r $(nix build .#${OUTPUT} --no-link --json | jq -r '.[0].outputs.out')
+  echo ""
+done

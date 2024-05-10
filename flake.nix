@@ -54,6 +54,8 @@
 
           cd $out
           chmod u+w "$name"
+
+          # We don't need to strip here because we do it in the build with dontStrip=false
           # strip "$name"
 
           tar -czvf $name.tar.gz $name
@@ -77,7 +79,6 @@
         rec {
           packages = rec {
             inherit (pkgs) cabal2nix;
-            # inherit lsp-types;
 
             all = pkgs.linkFarm "haskell-notebook-language-server-all" allVersions;
 

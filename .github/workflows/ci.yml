@@ -81,6 +81,25 @@ jobs:
     - run: |
         nix build .#${{ matrix.output }}
 
+    - name: Static outputs have an empty closure
+      run: |
+        if [[ "${{ matrix.output }}" == *"static"* ]]; then
+          nix path-info ./result/bin/haskell-notebook-language-server -r
+
+          # Only allow up to 3 Nix store references.
+          # One should be the static binary itself.
+          # For some reason, our builds with GHC <= 9.4 have a couple more dependencies, which are
+          # the musl library and the ncurses library. We should track down why this is and stop
+          # it from happening.
+          # For now, we do this to make sure it doesn't regress further.
+          # c.f. the print-static-closures alias
+          NUM_REFERENCES=$(nix path-info ./result/bin/haskell-notebook-language-server -r | wc -l)
+          [[ "$NUM_REFERENCES" -le 3 ]] || {
+            echo "Found $NUM_REFERENCES Nix store references; only allowed up to 3"
+            exit 1
+          }
+        fi
+
   stack:
     name: stack / ghc ${{ matrix.ghc }}
     runs-on: ubuntu-latest

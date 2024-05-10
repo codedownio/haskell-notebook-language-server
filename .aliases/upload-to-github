@@ -14,7 +14,7 @@ BUILT=$(nix build .#githubArtifacts --no-link --json | jq -r '.[0].outputs.out')
 echo "Built: $BUILT"
 ls "$BUILT"
 
-VERSION="$(nix eval .#ghc928-static.version --raw)"
+VERSION="$(nix eval .#ghc92-static.version --raw)"
 echo "Got version: $VERSION"
 
 IFS=$'\n'

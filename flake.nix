@@ -61,15 +61,15 @@
 
         allVersions = with pkgs.lib; listToAttrs (
           concatMap (info: [
-            (nameValuePair info.name (flake info.name (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
-            (nameValuePair "${info.name}-static" (flakeStatic info.name (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
+            (nameValuePair info.name (flake info.ghc (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
+            (nameValuePair "${info.name}-static" (flakeStatic info.ghc (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
           ]) [
-            { name = "ghc8107"; stackYaml = "stack/stack-8.10.7.yaml"; }
-            { name = "ghc902"; stackYaml = "stack/stack-9.0.2.yaml"; }
-            { name = "ghc928"; stackYaml = "stack/stack-9.2.8.yaml"; }
-            { name = "ghc948"; stackYaml = "stack/stack-9.4.8.yaml"; }
-            { name = "ghc964"; stackYaml = "stack/stack-9.6.4.yaml"; }
-            { name = "ghc982"; stackYaml = "stack/stack-9.8.2.yaml"; }
+            { name = "ghc810"; ghc = "ghc8107"; stackYaml = "stack/stack-8.10.7.yaml"; }
+            { name = "ghc90"; ghc = "ghc902"; stackYaml = "stack/stack-9.0.2.yaml"; }
+            { name = "ghc92"; ghc = "ghc928"; stackYaml = "stack/stack-9.2.8.yaml"; }
+            { name = "ghc94"; ghc = "ghc948"; stackYaml = "stack/stack-9.4.8.yaml"; }
+            { name = "ghc96"; ghc = "ghc964"; stackYaml = "stack/stack-9.6.4.yaml"; }
+            { name = "ghc98"; ghc = "ghc982"; stackYaml = "stack/stack-9.8.2.yaml"; }
           ]
         );
 

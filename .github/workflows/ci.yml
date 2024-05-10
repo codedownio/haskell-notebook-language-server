@@ -62,8 +62,15 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - output: "ghc902"
-        - output: "ghc902-static"
+        # Test one non-static one
+        - output: "ghc90"
+
+        - output: "ghc810-static"
+        - output: "ghc90-static"
+        - output: "ghc92-static"
+        - output: "ghc94-static"
+        - output: "ghc96-static"
+        - output: "ghc98-static"
     steps:
     - uses: actions/checkout@v3
 
@@ -81,17 +88,17 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - ghc: "8.10.7"
+        - ghc: "8.10"
           yaml: "stack/stack-8.10.7.yaml"
-        - ghc: "9.0.2"
+        - ghc: "9.0"
           yaml: "stack/stack-9.0.2.yaml"
-        - ghc: "9.2.8"
+        - ghc: "9.2"
           yaml: "stack/stack-9.2.8.yaml"
-        - ghc: "9.4.8"
+        - ghc: "9.4"
           yaml: "stack/stack-9.4.8.yaml"
-        - ghc: "9.6.4"
+        - ghc: "9.6"
           yaml: "stack/stack-9.6.4.yaml"
-        - ghc: "9.8.2"
+        - ghc: "9.8"
           yaml: "stack/stack-9.8.2.yaml"
 
     steps:

@@ -49,26 +49,31 @@ fixupHoverText initialHover = do
 
 type HoverContents = MarkupContent |? (MarkedString |? [MarkedString])
 
-fixupDocumentReferences :: forall n. MonadLogger n => Regex -> HaskellNotebookTransformer -> Rope -> HoverContents -> n HoverContents
-fixupDocumentReferences docRegex transformer _curLines (InL (MarkupContent k t)) = (InL . MarkupContent k) <$> (fixupDocumentReferences' docRegex transformer t)
+fixupDocumentReferences :: forall n. TransformerMonad n => Regex -> HaskellNotebookTransformer -> Rope -> HoverContents -> n HoverContents
+fixupDocumentReferences docRegex transformer _curLines (InL (MarkupContent k t)) = do
+  AppConfig {..} <- asks transformerConfig
+  (InL . MarkupContent k) <$> (fixupDocumentReferences' appConfigGhcLibPath docRegex transformer t)
 fixupDocumentReferences docRegex transformer _curLines (InR markedStrings) = (InR <$>) $ case markedStrings of
   InL ms -> InL <$> transformMarkedString ms
   InR mss -> InR <$> (mapM transformMarkedString mss)
   where
     transformMarkedString :: MarkedString -> n MarkedString
-    transformMarkedString (MarkedString (InL t)) = (MarkedString . InL) <$> (fixupDocumentReferences' docRegex transformer t)
+    transformMarkedString (MarkedString (InL t)) = do
+      AppConfig {..} <- asks transformerConfig
+      (MarkedString . InL) <$> (fixupDocumentReferences' appConfigGhcLibPath docRegex transformer t)
     transformMarkedString (MarkedString (InR thing)) = do
-      t' <- fixupDocumentReferences' docRegex transformer (thing .! #value)
+      AppConfig {..} <- asks transformerConfig
+      t' <- fixupDocumentReferences' appConfigGhcLibPath docRegex transformer (thing .! #value)
       return $ MarkedString $ InR (thing & update #value t')
 
-fixupDocumentReferences' :: forall n. MonadLogger n => Regex -> HaskellNotebookTransformer -> Text -> n Text
-fixupDocumentReferences' docRegex transformer t =
+fixupDocumentReferences' :: forall n. MonadLogger n => FilePath -> Regex -> HaskellNotebookTransformer -> Text -> n Text
+fixupDocumentReferences' ghcLibPath docRegex transformer t =
   traverseOf ((regexing docRegex) . groups) (transformGroup transformer) t
 
   where
     transformGroup :: HaskellNotebookTransformer -> [Text] -> n [Text]
     transformGroup transformer orig@[(readMay . T.unpack) -> Just line, (readMay . T.unpack) -> Just ch] = do
-      case untransformPosition transformerParams transformer (Position (line - 1) (ch - 1)) of
+      case untransformPosition (transformerParams ghcLibPath) transformer (Position (line - 1) (ch - 1)) of
         Nothing -> return orig
         Just (Position line' ch') -> return [T.pack $ show (line' + 1), T.pack $ show (ch' + 1)]
 

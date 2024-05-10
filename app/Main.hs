@@ -51,8 +51,13 @@ import System.Exit
 data Options = Options {
   optWrappedLanguageServer :: Maybe FilePath
   , optHlsArgs :: Maybe Text
+
+  , optGhcLibPath :: FilePath
+
   , optLogLevel :: Maybe Text
+
   , optPrintVersion :: Bool
+
   , optDebugWrites :: Bool
   , optDebugReads :: Bool
   }
@@ -61,8 +66,13 @@ options :: Parser Options
 options = Options
   <$> optional (strOption (long "wrapped-hls" <> help "Wrapped haskell-language-server binary"))
   <*> optional (strOption (long "hls-args" <> help "Extra arguments to haskell-language-server"))
+
+  <*> strOption (long "ghc-lib" <> help "Path to GHC lib directory")
+
   <*> optional (strOption (long "log-level" <> help "Log level (debug, info, warn, error)"))
+
   <*> flag False True (long "version" <> help "Print version")
+
   <*> flag False True (long "debug-writes" <> help "Debug writes to HLS")
   <*> flag False True (long "debug-reads" <> help "Debug reads from HLS")
 
@@ -119,6 +129,7 @@ main = do
 
   transformerState <- newTransformerState $ AppConfig {
     appConfigWriteFileOnChange = False
+    , appConfigGhcLibPath = optGhcLibPath
     }
 
   logLevel <- case optLogLevel of
@@ -166,7 +177,7 @@ main = do
 handleStdin :: forall m. (
   MonadLoggerIO m, MonadReader TransformerState m, MonadUnliftIO m, MonadFail m
   ) => Bool -> Handle -> MVar ClientRequestMap -> MVar ServerRequestMap -> m ()
-handleStdin debugWrites wrappedIn clientReqMap serverReqMap = do
+handleStdin debugWrites wrappedIn clientReqMap serverReqMap = flip withException (\(e :: SomeException) -> logErrorN [i|HNLS stdin exception: #{e}|]) $ do
   (A.eitherDecode <$> liftIO (parseStream stdin)) >>= \case
     Left err -> logErr [i|Couldn't decode incoming message: #{err}|]
     Right (x :: A.Value) -> do
@@ -183,8 +194,11 @@ handleStdin debugWrites wrappedIn clientReqMap serverReqMap = do
             Just m' -> return m'
             Nothing -> return m
           transformClientReq meth msg >>= writeToHandle debugWrites wrappedIn . A.encode
-        Right (ClientToServerNot meth msg) ->
-          transformClientNot sendExtraNotification meth msg >>= (writeToHandle debugWrites wrappedIn . A.encode)
+        Right (ClientToServerNot meth msg) -> do
+          logDebugN [i|About to transform client not #{meth}|]
+          transformed <- transformClientNot sendExtraNotification meth msg
+          logDebugN [i|Going to write transformed: #{A.encode transformed}|]
+          writeToHandle debugWrites wrappedIn $ A.encode transformed
   where
     sendExtraNotification :: SendExtraNotificationFn m
     sendExtraNotification msg = do

@@ -4,11 +4,10 @@ module Language.LSP.Parse (
   ) where
 
 import GHC
-import qualified GHC.Paths
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHCParser
 import System.IO.Unsafe (unsafePerformIO)
 
 
-parseCodeString :: String -> [GHCParser.Located CodeBlock]
-parseCodeString = unsafePerformIO . runGhc (Just GHC.Paths.libdir) . parseString
+parseCodeString :: FilePath -> String -> [GHCParser.Located CodeBlock]
+parseCodeString ghcLibDir = unsafePerformIO . runGhc (Just ghcLibDir) . parseString

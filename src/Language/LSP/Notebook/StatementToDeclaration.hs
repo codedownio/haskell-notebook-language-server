@@ -15,8 +15,8 @@ import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
 import Language.LSP.Parse
-import Language.LSP.Transformer
 import Language.LSP.Protocol.Types
+import Language.LSP.Transformer
 
 
 data LineInfo = LineInfo {
@@ -26,13 +26,15 @@ data LineInfo = LineInfo {
 newtype StatementToDeclaration = StatementToDeclaration (Map UInt LineInfo)
   deriving (Show, Semigroup, Monoid)
 
-data STDParams = STDParams
+data STDParams = STDParams {
+  stdGhcLibDir :: FilePath
+  }
 
 instance Transformer StatementToDeclaration where
   type Params StatementToDeclaration = STDParams
 
   project :: Params StatementToDeclaration -> Doc -> (Doc, StatementToDeclaration)
-  project (STDParams) (docToList -> ls) = first listToDoc $ go 0 (zip ls [0 ..]) indices
+  project (STDParams {..}) (docToList -> ls) = first listToDoc $ go 0 (zip ls [0 ..]) indices
     where
       go :: Int -> [(Text, Int)] -> [[Int]] -> ([Text], StatementToDeclaration)
       go _ [] _ = ([], mempty)
@@ -60,17 +62,17 @@ instance Transformer StatementToDeclaration where
               (l : restLines, restParams)
 
       indices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                | locatedCodeBlock@(unloc -> Statement t) <- parseCodeString (T.unpack (T.intercalate "\n" ls))]
+                | locatedCodeBlock@(unloc -> Statement t) <- parseCodeString stdGhcLibDir (T.unpack (T.intercalate "\n" ls))]
 
   transformPosition :: Params StatementToDeclaration -> StatementToDeclaration -> Position -> Maybe Position
-  transformPosition (STDParams) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
+  transformPosition (STDParams {}) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
     Nothing -> Just $ Position l c
     Just (LineInfo leftEnd)
       | c <= leftEnd + 1 -> Just $ Position l c
       | otherwise -> Just $ Position l (c + insertedLen)
 
   untransformPosition :: Params StatementToDeclaration -> StatementToDeclaration -> Position -> Maybe Position
-  untransformPosition (STDParams) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
+  untransformPosition (STDParams {}) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
     Nothing -> Just $ Position l c
     Just (LineInfo leftEnd)
       | c <= leftEnd + 1 -> Just $ Position l c

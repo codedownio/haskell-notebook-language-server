@@ -41,7 +41,6 @@ library:
   - filepath
   - ghc
   - ghc-parser
-  - ghc-paths
   - ihaskell
   - lens
   - lens-regex-pcre
@@ -72,10 +71,7 @@ executables:
     dependencies:
     - aeson
     - bytestring
-    - ghc
-    - ghc-paths
     - haskell-notebook-language-server
-    - ihaskell
     - lens
     - mtl
     - optparse-applicative
@@ -99,7 +95,10 @@ tests:
     dependencies:
     - containers
     - exceptions
+    - ghc
+    - ghc-paths
     - haskell-notebook-language-server
+    - ihaskell
     - QuickCheck
     - row-types
     - sandwich

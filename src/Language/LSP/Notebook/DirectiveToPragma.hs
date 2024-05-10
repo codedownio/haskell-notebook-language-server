@@ -15,20 +15,22 @@ import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
 import Language.LSP.Parse
-import Language.LSP.Transformer
 import Language.LSP.Protocol.Types
+import Language.LSP.Transformer
 
 
 newtype DirectiveToPragma = DirectiveToPragma (Set UInt)
   deriving (Show, Eq)
 
-data DTPParams = DTPParams { }
+data DTPParams = DTPParams {
+  ghcLibDir :: FilePath
+  }
 
 instance Transformer DirectiveToPragma where
   type Params DirectiveToPragma = DTPParams
 
   project :: Params DirectiveToPragma -> Doc -> (Doc, DirectiveToPragma)
-  project DTPParams doc@(docToList -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat (fmap fst directiveIndices)))
+  project (DTPParams {..}) doc@(docToList -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat (fmap fst directiveIndices)))
     where
       go :: Int -> [(Text, Int)] -> [([Int], [String])] -> [Text]
       go _ [] _ = []
@@ -41,7 +43,7 @@ instance Transformer DirectiveToPragma where
 
       directiveIndices :: [([Int], [String])]
       directiveIndices = [(getLinesStartingAt t (GHC.line locatedCodeBlock - 1), fmap unflagLanguageOption (L.words t))
-                         | locatedCodeBlock@(unloc -> Directive SetDynFlag t) <- parseCodeString (T.unpack (Rope.toText doc))
+                         | locatedCodeBlock@(unloc -> Directive SetDynFlag t) <- parseCodeString ghcLibDir (T.unpack (Rope.toText doc))
                          , all isLanguageOption (L.words t)]
 
       isLanguageOption :: String -> Bool
@@ -53,13 +55,13 @@ instance Transformer DirectiveToPragma where
 
   -- TODO: do better here
   transformPosition :: Params DirectiveToPragma -> DirectiveToPragma -> Position -> Maybe Position
-  transformPosition DTPParams (DirectiveToPragma affectedLines) (Position l c)
+  transformPosition (DTPParams {}) (DirectiveToPragma affectedLines) (Position l c)
     | l `Set.member` affectedLines = Just $ Position l 0
     | otherwise = Just $ Position l c
 
   -- TODO: do better here
   untransformPosition :: Params DirectiveToPragma -> DirectiveToPragma -> Position -> Maybe Position
-  untransformPosition DTPParams (DirectiveToPragma affectedLines) (Position l c)
+  untransformPosition (DTPParams {}) (DirectiveToPragma affectedLines) (Position l c)
     | l `Set.member` affectedLines = Just $ Position l 0
     | otherwise = Just $ Position l c
 

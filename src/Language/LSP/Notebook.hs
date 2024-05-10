@@ -28,15 +28,15 @@ type HaskellNotebookTransformer =
   :> HeaderTransformer -- Add unsafePerformIO import at top
   :> PragmaSifter -- Sift pragmas to the top (above imports)
 
-expressionToDeclarationParams :: Params ExpressionToDeclaration
+expressionToDeclarationParams :: FilePath -> Params ExpressionToDeclaration
 expressionToDeclarationParams = EDParams 10
 
-transformerParams :: Params HaskellNotebookTransformer
-transformerParams =
-  DTPParams
-  :> SDParams
-  :> expressionToDeclarationParams
-  :> STDParams
-  :> ()
+transformerParams :: FilePath -> Params HaskellNotebookTransformer
+transformerParams ghcLibDir =
+  DTPParams ghcLibDir
+  :> SDParams ghcLibDir
+  :> expressionToDeclarationParams ghcLibDir
+  :> STDParams ghcLibDir
+  :> ghcLibDir
   :> ["import System.IO.Unsafe (unsafePerformIO)"]
-  :> ()
+  :> ghcLibDir

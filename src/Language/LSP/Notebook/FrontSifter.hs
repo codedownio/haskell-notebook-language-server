@@ -19,35 +19,35 @@ import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHCParser
 import Language.LSP.Notebook.Util
 import Language.LSP.Parse
-import Language.LSP.Transformer
 import Language.LSP.Protocol.Types
+import Language.LSP.Transformer
 
 
 newtype ImportSifter = ImportSifter (Vector Int)
   deriving Show
 instance Transformer ImportSifter where
-  type Params ImportSifter = ()
-  project () = second ImportSifter . projectChosenLines isImportCodeBlock
-  transformPosition () (ImportSifter indices) = transformUsingIndices indices
-  untransformPosition () (ImportSifter indices) = Just . untransformUsingIndices indices
+  type Params ImportSifter = FilePath
+  project ghcLibDir = second ImportSifter . projectChosenLines ghcLibDir isImportCodeBlock
+  transformPosition _ (ImportSifter indices) = transformUsingIndices indices
+  untransformPosition _ (ImportSifter indices) = Just . untransformUsingIndices indices
 
 newtype PragmaSifter = PragmaSifter (Vector Int)
   deriving Show
 instance Transformer PragmaSifter where
-  type Params PragmaSifter = ()
-  project () = second PragmaSifter . projectChosenLines isLanguagePragmaCodeBlock
-  transformPosition () (PragmaSifter indices) = transformUsingIndices indices
-  untransformPosition () (PragmaSifter indices) = Just . untransformUsingIndices indices
+  type Params PragmaSifter = FilePath
+  project ghcLibDir = second PragmaSifter . projectChosenLines ghcLibDir isLanguagePragmaCodeBlock
+  transformPosition _ (PragmaSifter indices) = transformUsingIndices indices
+  untransformPosition _ (PragmaSifter indices) = Just . untransformUsingIndices indices
 
 -- * Generic transformer functions
 
-projectChosenLines :: (CodeBlock -> Maybe String) -> Doc -> (Doc, Vector Int)
-projectChosenLines chooseFn (docToList -> ls) = (listToDoc (chosenLines <> nonChosenLines), fromList importIndices)
+projectChosenLines :: FilePath -> (CodeBlock -> Maybe String) -> Doc -> (Doc, Vector Int)
+projectChosenLines ghcLibDir chooseFn (docToList -> ls) = (listToDoc (chosenLines <> nonChosenLines), fromList importIndices)
   where
     getLinesStartingAt t startingAt = [startingAt..(startingAt + countNewLines t)]
 
     importIndices = mconcat [getLinesStartingAt t (GHCParser.line locatedCodeBlock - 1)
-                            | locatedCodeBlock@((chooseFn . unloc) -> Just t) <- parseCodeString (T.unpack (T.intercalate "\n" ls))]
+                            | locatedCodeBlock@((chooseFn . unloc) -> Just t) <- parseCodeString ghcLibDir (T.unpack (T.intercalate "\n" ls))]
 
     partitionLines :: [Int] -> [(Int, Text)] -> ([Text], [Text])
     partitionLines [] remaining = ([], fmap snd remaining)

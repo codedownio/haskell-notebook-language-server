@@ -20,8 +20,19 @@
 
         # lsp-types = pkgs.haskell.packages.ghc8107.callPackage ./lsp-types.nix {};
 
-        flake = compiler-nix-name: src: (pkgs.hixProject compiler-nix-name src).flake {};
-        flakeStatic = compiler-nix-name: src: (pkgs.pkgsCross.musl64.hixProject compiler-nix-name src).flake {};
+        flake = compiler-nix-name: src: (pkgs.hixProject compiler-nix-name src []).flake {};
+
+        staticModules = [{
+          packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.dontStrip = false;
+          packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.enableShared = false;
+          packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.configureFlags = [
+            ''--ghc-options="-pgml g++ -optl=-fuse-ld=gold -optl-Wl,--allow-multiple-definition -optl-Wl,--whole-archive -optl-Wl,-Bstatic -optl-Wl,-Bdynamic -optl-Wl,--no-whole-archive"''
+          ];
+          packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.libs = [];
+          packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.build-tools = [pkgs.pkgsCross.musl64.gcc];
+        }];
+
+        flakeStatic = compiler-nix-name: src: (pkgs.pkgsCross.musl64.hixProject compiler-nix-name src staticModules).flake {};
 
         srcWithStackYaml = stackYaml: let
           baseSrc = gitignore.lib.gitignoreSource ./.;
@@ -84,13 +95,4 @@
           inherit flake;
         }
     );
-
-  # nixConfig = {
-  #   # This sets the flake to use the IOG nix cache.
-  #   # Nix should ask for permission before using it,
-  #   # but remove it here if you do not want it to.
-  #   extra-substituters = ["https://cache.iog.io"];
-  #   extra-trusted-public-keys = ["hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ="];
-  #   allow-import-from-derivation = "true";
-  # };
 }

@@ -5,35 +5,35 @@ module Transform.Common where
 
 import Control.Lens hiding (List)
 import Language.LSP.Notebook
-import Language.LSP.Transformer
-import Language.LSP.Protocol.Types
 import Language.LSP.Protocol.Lens as Lens
+import Language.LSP.Protocol.Types
+import Language.LSP.Transformer
 
 
 -- * Transform
 
-transformRange :: HaskellNotebookTransformer -> Range -> Maybe Range
+transformRange :: FilePath -> HaskellNotebookTransformer -> Range -> Maybe Range
 transformRange = transformRanged
 
-transformRanged :: (HasRange a Range) => HaskellNotebookTransformer -> a -> Maybe a
-transformRanged tx x = x
-  & traverseOf (range . start) (transformPosition transformerParams tx)
-  >>= traverseOf (range . end) (transformPosition transformerParams tx)
+transformRanged :: (HasRange a Range) => FilePath -> HaskellNotebookTransformer -> a -> Maybe a
+transformRanged ghcLibPath tx x = x
+  & traverseOf (range . start) (transformPosition (transformerParams ghcLibPath) tx)
+  >>= traverseOf (range . end) (transformPosition (transformerParams ghcLibPath) tx)
 
 -- * Untransform
 
-untransformRange :: HaskellNotebookTransformer -> Range -> Maybe Range
+untransformRange :: FilePath -> HaskellNotebookTransformer -> Range -> Maybe Range
 untransformRange = untransformRanged
 
-untransformRanged :: (HasRange a Range) => HaskellNotebookTransformer -> a -> Maybe a
-untransformRanged tx x = x
-  & traverseOf (range . start) (untransformPosition transformerParams tx)
-  >>= traverseOf (range . end) (untransformPosition transformerParams tx)
+untransformRanged :: (HasRange a Range) => FilePath -> HaskellNotebookTransformer -> a -> Maybe a
+untransformRanged ghcLibPath tx x = x
+  & traverseOf (range . start) (untransformPosition (transformerParams ghcLibPath) tx)
+  >>= traverseOf (range . end) (untransformPosition (transformerParams ghcLibPath) tx)
 
-untransformRangedMaybe :: (HasRange a (Maybe Range)) => HaskellNotebookTransformer -> a -> Maybe a
-untransformRangedMaybe tx x = x
-  & traverseOf (range . _Just . start) (untransformPosition transformerParams tx)
-  >>= traverseOf (range . _Just . end) (untransformPosition transformerParams tx)
+untransformRangedMaybe :: (HasRange a (Maybe Range)) => FilePath -> HaskellNotebookTransformer -> a -> Maybe a
+untransformRangedMaybe ghcLibPath tx x = x
+  & traverseOf (range . _Just . start) (untransformPosition (transformerParams ghcLibPath) tx)
+  >>= traverseOf (range . _Just . end) (untransformPosition (transformerParams ghcLibPath) tx)
 
 -- * Orphan (wish this was in lsp-types)
 

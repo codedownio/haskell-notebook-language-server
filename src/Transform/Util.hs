@@ -80,6 +80,7 @@ data DocumentState = DocumentState {
 
 data AppConfig = AppConfig {
   appConfigWriteFileOnChange :: Bool
+  , appConfigGhcLibPath :: FilePath
   }
 
 data TransformerState = TransformerState {

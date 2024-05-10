@@ -1,5 +1,5 @@
 final: prev: {
-  hixProject = compiler-nix-name: src:
+  hixProject = compiler-nix-name: src: extraModules:
     final.haskell-nix.hix.project {
       inherit src;
       evalSystem = "x86_64-linux";
@@ -50,6 +50,6 @@ final: prev: {
             "terminfo"
           ];
         }
-      ];
+      ] ++ extraModules;
     };
 }

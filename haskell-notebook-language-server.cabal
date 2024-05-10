@@ -61,7 +61,6 @@ library
     , filepath
     , ghc
     , ghc-parser
-    , ghc-paths
     , ihaskell
     , lens
     , lens-regex-pcre
@@ -91,7 +90,6 @@ executable haskell-notebook-language-server
       Process
       RequestMap
       Streams
-      Test
       Paths_haskell_notebook_language_server
   hs-source-dirs:
       app
@@ -114,10 +112,7 @@ executable haskell-notebook-language-server
       aeson
     , base >=4.7 && <5
     , bytestring
-    , ghc
-    , ghc-paths
     , haskell-notebook-language-server
-    , ihaskell
     , lens
     , lsp-types >=2.0.0.1
     , monad-logger
@@ -137,6 +132,7 @@ test-suite haskell-notebook-language-server-test
   type: exitcode-stdio-1.0
   main-is: Main.hs
   other-modules:
+      Test
       Test.BinarySearchVec
       Test.Common
       Test.Hover
@@ -170,7 +166,10 @@ test-suite haskell-notebook-language-server-test
     , base >=4.7 && <5
     , containers
     , exceptions
+    , ghc
+    , ghc-paths
     , haskell-notebook-language-server
+    , ihaskell
     , lsp-types >=2.0.0.1
     , monad-logger
     , row-types

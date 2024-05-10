@@ -7,6 +7,7 @@ import Control.Lens hiding (List)
 import Control.Monad
 import Control.Monad.IO.Class
 import Control.Monad.Logger
+import Control.Monad.Reader
 import Data.Aeson as A
 import Data.Maybe
 import Data.String.Interpolate
@@ -30,8 +31,9 @@ transformServerNot meth msg = do
 transformServerNot' :: (TransformerMonad n) => SMethod m -> MessageParams m -> n (MessageParams m)
 
 transformServerNot' SMethod_TextDocumentPublishDiagnostics params = whenNotebookResultUri params $ withTransformer params $ \(DocumentState {transformer=tx, ..}) -> do
+  AppConfig {..} <- asks transformerConfig
   return $ params
          & set uri origUri
-         & over diagnostics (mapMaybe (traverseOf range (untransformRange tx)))
+         & over diagnostics (mapMaybe (traverseOf range (untransformRange appConfigGhcLibPath tx)))
 
 transformServerNot' _meth msg = pure msg

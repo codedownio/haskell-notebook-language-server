@@ -16,8 +16,8 @@ import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
 import Language.LSP.Parse
-import Language.LSP.Transformer
 import Language.LSP.Protocol.Types
+import Language.LSP.Transformer
 import Safe
 import Text.Regex.Base (defaultExecOpt)
 import Text.Regex.PCRE.Text (compile, compBlank, execute)
@@ -26,7 +26,10 @@ import Text.Regex.PCRE.Text (compile, compBlank, execute)
 newtype ExpressionToDeclaration = ExpressionToDeclaration (Set UInt)
   deriving Show
 
-data EDParams = EDParams { numberPadding :: Int }
+data EDParams = EDParams {
+  numberPadding :: Int
+  , ghcLibDir :: FilePath
+  }
 
 isExpressionVariable :: EDParams -> Text -> Bool
 isExpressionVariable (EDParams { numberPadding }) t
@@ -69,7 +72,7 @@ instance Transformer ExpressionToDeclaration where
         | otherwise = l : go counter xs (group:remainingGroups)
 
       exprIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                    | locatedCodeBlock@(unloc -> Expression t) <- parseCodeString (T.unpack (T.intercalate "\n" ls))
+                    | locatedCodeBlock@(unloc -> Expression t) <- parseCodeString ghcLibDir (T.unpack (T.intercalate "\n" ls))
                     , not (looksLikeTemplateHaskell t)]
 
   transformPosition :: Params ExpressionToDeclaration -> ExpressionToDeclaration -> Position -> Maybe Position

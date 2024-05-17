@@ -168,7 +168,10 @@ main = do
       sendToStdoutWithLogging x = do
         withMVar stdoutLock $ \_ -> do
           let bytes = A.encode x
-          when (optDebugClientWrites) $ logDebugN [i|Writing to client: Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
+          when (optDebugClientWrites) $ liftIO $ writeToHandle' stdout $ A.encode $ TNotificationMessage "2.0" SMethod_WindowLogMessage $ LogMessageParams {
+            _type_ = levelToType LevelDebug
+            , _message = [i|Writing to client: Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
+            }
           liftIO $ writeToHandle' stdout bytes
 
   let logFn :: Loc -> LogSource -> LogLevel -> LogStr -> IO ()

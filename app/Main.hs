@@ -58,8 +58,11 @@ data Options = Options {
 
   , optPrintVersion :: Bool
 
-  , optDebugWrites :: Bool
-  , optDebugReads :: Bool
+  , optDebugClientWrites :: Bool
+  , optDebugClientReads :: Bool
+
+  , optDebugHlsWrites :: Bool
+  , optDebugHlsReads :: Bool
   }
 
 options :: Parser Options
@@ -73,8 +76,11 @@ options = Options
 
   <*> flag False True (long "version" <> help "Print version")
 
-  <*> flag False True (long "debug-writes" <> help "Debug writes to HLS")
-  <*> flag False True (long "debug-reads" <> help "Debug reads from HLS")
+  <*> flag False True (long "debug-client-writes" <> help "Debug writes to the client")
+  <*> flag False True (long "debug-client-reads" <> help "Debug reads from the client")
+
+  <*> flag False True (long "debug-hls-writes" <> help "Debug writes to HLS")
+  <*> flag False True (long "debug-hls-reads" <> help "Debug reads from HLS")
 
 fullOpts :: ParserInfo Options
 fullOpts = info (options <**> helper) (
@@ -158,6 +164,13 @@ main = do
         withMVar stdoutLock $ \_ -> do
           liftIO $ writeToHandle' stdout $ A.encode x
 
+  let sendToStdoutWithLogging :: (MonadUnliftIO m, MonadLogger m, ToJSON a) => a -> m ()
+      sendToStdoutWithLogging x = do
+        withMVar stdoutLock $ \_ -> do
+          let bytes = A.encode x
+          when (optDebugClientWrites) $ logDebugN [i|Writing to client: Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
+          liftIO $ writeToHandle' stdout bytes
+
   let logFn :: Loc -> LogSource -> LogLevel -> LogStr -> IO ()
       logFn _loc _src level msg = sendToStdout $ TNotificationMessage "2.0" SMethod_WindowLogMessage $ LogMessageParams {
         _type_ = levelToType level
@@ -166,9 +179,9 @@ main = do
 
   flip runLoggingT logFn $ filterLogger logFilterFn $ flip runReaderT transformerState $
     flip withException (\(e :: SomeException) -> logErrorN [i|HNLS overall exception: #{e}|]) $
-      withAsync (readWrappedOut optDebugReads clientReqMap serverReqMap hlsOut sendToStdout) $ \_hlsOutAsync ->
+      withAsync (readWrappedOut optDebugHlsReads clientReqMap serverReqMap hlsOut sendToStdoutWithLogging) $ \_hlsOutAsync ->
         withAsync (readWrappedErr hlsErr) $ \_hlsErrAsync ->
-          withAsync (forever $ handleStdin optDebugWrites hlsIn clientReqMap serverReqMap) $ \_stdinAsync -> do
+          withAsync (forever $ handleStdin optDebugHlsWrites optDebugClientReads hlsIn clientReqMap serverReqMap) $ \_stdinAsync -> do
             waitForProcess p >>= \case
               ExitFailure n -> logErrorN [i|haskell-language-server subprocess exited with code #{n}|]
               ExitSuccess -> logInfoN [i|haskell-language-server subprocess exited successfully|]
@@ -176,42 +189,46 @@ main = do
 
 handleStdin :: forall m. (
   MonadLoggerIO m, MonadReader TransformerState m, MonadUnliftIO m, MonadFail m
-  ) => Bool -> Handle -> MVar ClientRequestMap -> MVar ServerRequestMap -> m ()
-handleStdin debugWrites wrappedIn clientReqMap serverReqMap = flip withException (\(e :: SomeException) -> logErrorN [i|HNLS stdin exception: #{e}|]) $ do
-  (A.eitherDecode <$> liftIO (parseStream stdin)) >>= \case
+  ) => Bool -> Bool -> Handle -> MVar ClientRequestMap -> MVar ServerRequestMap -> m ()
+handleStdin debugHlsWrites debugClientReads wrappedIn clientReqMap serverReqMap = flip withException (\(e :: SomeException) -> logErrorN [i|HNLS stdin exception: #{e}|]) $ do
+  bytes <- liftIO (parseStream stdin)
+
+  when debugClientReads $ logDebugN [i|Read from client: #{bytes}|]
+
+  case A.eitherDecode bytes of
     Left err -> logErr [i|Couldn't decode incoming message: #{err}|]
     Right (x :: A.Value) -> do
       m <- readMVar serverReqMap
       case A.parseEither (parseClientMessage (lookupServerId m)) x of
         Left err -> do
           logErr [i|Couldn't decode incoming message: #{err}|]
-          writeToHandle debugWrites wrappedIn (A.encode x)
+          writeToHlsHandle debugHlsWrites wrappedIn (A.encode x)
         Right (ClientToServerRsp meth msg) -> do
-          transformClientRsp meth msg >>= writeToHandle debugWrites wrappedIn . A.encode
+          transformClientRsp meth msg >>= writeToHlsHandle debugHlsWrites wrappedIn . A.encode
         Right (ClientToServerReq meth msg) -> do
           let msgId = msg ^. Lens.id
           modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of
             Just m' -> return m'
             Nothing -> return m
-          transformClientReq meth msg >>= writeToHandle debugWrites wrappedIn . A.encode
+          transformClientReq meth msg >>= writeToHlsHandle debugHlsWrites wrappedIn . A.encode
         Right (ClientToServerNot meth msg) -> do
           logDebugN [i|About to transform client not #{meth}|]
           transformed <- transformClientNot sendExtraNotification meth msg
           logDebugN [i|Going to write transformed: #{A.encode transformed}|]
-          writeToHandle debugWrites wrappedIn $ A.encode transformed
+          writeToHlsHandle debugHlsWrites wrappedIn $ A.encode transformed
   where
     sendExtraNotification :: SendExtraNotificationFn m
     sendExtraNotification msg = do
       logDebugN [i|Sending extra notification: #{A.encode msg}|]
-      writeToHandle debugWrites wrappedIn $ A.encode msg
+      writeToHlsHandle debugHlsWrites wrappedIn $ A.encode msg
 
 readWrappedOut :: (
   MonadUnliftIO m, MonadLoggerIO m, MonadReader TransformerState m, MonadFail m
   ) => Bool -> MVar ClientRequestMap -> MVar ServerRequestMap -> Handle -> (forall a. ToJSON a => a -> m ()) -> m b
-readWrappedOut debugReads clientReqMap serverReqMap wrappedOut sendToStdout = forever $ do
+readWrappedOut debugHlsReads clientReqMap serverReqMap wrappedOut sendToStdout = forever $ do
   bytes <- liftIO (parseStream wrappedOut)
 
-  when debugReads $ logDebugN [i|Read from HLS: #{bytes}|]
+  when debugHlsReads $ logDebugN [i|Read from HLS: #{bytes}|]
 
   case A.eitherDecode bytes of
     Left err -> logErr [i|Couldn't decode wrapped output: #{err}|]
@@ -252,9 +269,9 @@ lookupClientId clientReqMap sid = do
 logErr :: MonadLoggerIO m => Text -> m ()
 logErr = logInfoN
 
-writeToHandle :: MonadLoggerIO m => Bool -> Handle -> BL8.ByteString -> m ()
-writeToHandle debugWrites h bytes = do
-  when debugWrites $ logDebugN [i|Writing to HLS: Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
+writeToHlsHandle :: MonadLoggerIO m => Bool -> Handle -> BL8.ByteString -> m ()
+writeToHlsHandle debugHlsWrites h bytes = do
+  when debugHlsWrites $ logDebugN [i|Writing to HLS: Content-Length: #{BL.length bytes}\r\n\r\n#{bytes}|]
   liftIO $ writeToHandle' h bytes
 
 writeToHandle' :: Handle -> BL8.ByteString -> IO ()

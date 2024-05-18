@@ -46,7 +46,7 @@ transformClientNot sendExtraNotification meth msg = do
   p' <- transformClientNot' sendExtraNotification meth (msg ^. params)
   stop <- liftIO getCurrentTime
   let msg' = set params p' msg
-  when (msg' /= msg) $ logDebugN [i|Transforming client not #{meth} in #{diffUTCTime stop start}: (#{A.encode msg} --> #{A.encode msg'})|]
+  when (msg' /= msg) $ logDebugN [i|Transforming client not #{meth} in #{diffUTCTime stop start}, from #{start} -> #{stop}: (#{A.encode msg} --> #{A.encode msg'})|]
   return msg'
 
 transformClientNot' :: (

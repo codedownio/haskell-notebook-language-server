@@ -215,9 +215,7 @@ handleStdin debugHlsWrites debugClientReads wrappedIn clientReqMap serverReqMap 
             Nothing -> return m
           transformClientReq meth msg >>= writeToHlsHandle debugHlsWrites wrappedIn . A.encode
         Right (ClientToServerNot meth msg) -> do
-          logDebugN [i|About to transform client not #{meth}|]
           transformed <- transformClientNot sendExtraNotification meth msg
-          logDebugN [i|Going to write transformed: #{A.encode transformed}|]
           writeToHlsHandle debugHlsWrites wrappedIn $ A.encode transformed
   where
     sendExtraNotification :: SendExtraNotificationFn m

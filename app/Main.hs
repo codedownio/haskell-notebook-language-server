@@ -19,6 +19,7 @@ import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import Data.Time
 import qualified Language.LSP.Protocol.Lens as Lens
 import Language.LSP.Protocol.Message hiding (LookupFunc, parseClientMessage, parseServerMessage)
 import Language.LSP.Protocol.Types
@@ -194,9 +195,15 @@ handleStdin :: forall m. (
   MonadLoggerIO m, MonadReader TransformerState m, MonadUnliftIO m, MonadFail m
   ) => Bool -> Bool -> Handle -> MVar ClientRequestMap -> MVar ServerRequestMap -> m ()
 handleStdin debugHlsWrites debugClientReads wrappedIn clientReqMap serverReqMap = flip withException (\(e :: SomeException) -> logErrorN [i|HNLS stdin exception: #{e}|]) $ do
+  when debugClientReads $ do
+    now <- liftIO getCurrentTime
+    logDebugN [i|(#{now}) At beginning of handleStdin|]
+
   bytes <- liftIO (parseStream stdin)
 
-  when debugClientReads $ logDebugN [i|Read from client: #{bytes}|]
+  when debugClientReads $ do
+    now <- liftIO getCurrentTime
+    logDebugN [i|(#{now}) Read from client: #{bytes}|]
 
   case A.eitherDecode bytes of
     Left err -> logErr [i|Couldn't decode incoming message: #{err}. Bytes: #{bytes}.|]
@@ -215,6 +222,10 @@ handleStdin debugHlsWrites debugClientReads wrappedIn clientReqMap serverReqMap 
             Nothing -> return m
           transformClientReq meth msg >>= writeToHlsHandle debugHlsWrites wrappedIn . A.encode
         Right (ClientToServerNot meth msg) -> do
+          when debugClientReads $ do
+            now <- liftIO getCurrentTime
+            logDebugN [i|(#{now}) About to transform client not|]
+
           transformed <- transformClientNot sendExtraNotification meth msg
           writeToHlsHandle debugHlsWrites wrappedIn $ A.encode transformed
   where

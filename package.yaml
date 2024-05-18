@@ -78,6 +78,7 @@ executables:
     - process
     - retry
     - safe
+    - time
     - unix
     - unliftio-core
 

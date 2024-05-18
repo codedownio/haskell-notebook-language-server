@@ -123,6 +123,7 @@ executable haskell-notebook-language-server
     , safe
     , string-interpolate
     , text
+    , time
     , unix
     , unliftio
     , unliftio-core

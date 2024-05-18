@@ -199,12 +199,12 @@ handleStdin debugHlsWrites debugClientReads wrappedIn clientReqMap serverReqMap 
   when debugClientReads $ logDebugN [i|Read from client: #{bytes}|]
 
   case A.eitherDecode bytes of
-    Left err -> logErr [i|Couldn't decode incoming message: #{err}|]
+    Left err -> logErr [i|Couldn't decode incoming message: #{err}. Bytes: #{bytes}.|]
     Right (x :: A.Value) -> do
       m <- readMVar serverReqMap
       case A.parseEither (parseClientMessage (lookupServerId m)) x of
         Left err -> do
-          logErr [i|Couldn't decode incoming message: #{err}|]
+          logErr [i|Couldn't parse incoming message: #{err}. Value: #{A.encode x}|]
           writeToHlsHandle debugHlsWrites wrappedIn (A.encode x)
         Right (ClientToServerRsp meth msg) -> do
           transformClientRsp meth msg >>= writeToHlsHandle debugHlsWrites wrappedIn . A.encode
@@ -234,12 +234,12 @@ readWrappedOut debugHlsReads clientReqMap serverReqMap wrappedOut sendToStdout =
   when debugHlsReads $ logDebugN [i|Read from HLS: #{bytes}|]
 
   case A.eitherDecode bytes of
-    Left err -> logErr [i|Couldn't decode wrapped output: #{err}|]
+    Left err -> logErr [i|Couldn't decode wrapped output: #{err}. Bytes: #{bytes}|]
     Right (x :: A.Value) -> do
       m <- readMVar clientReqMap
       case A.parseEither (parseServerMessage (lookupClientId m)) x of
         Left err -> do
-          logErr [i|Couldn't decode server message: #{A.encode x} (#{err})|]
+          logErr [i|Couldn't parse server message: #{A.encode x} (#{err})|]
           sendToStdout x
         Right (ServerToClientNot meth msg) ->
           transformServerNot meth msg >>= sendToStdout

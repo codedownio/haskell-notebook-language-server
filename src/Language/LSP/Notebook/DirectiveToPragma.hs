@@ -5,6 +5,7 @@
 
 module Language.LSP.Notebook.DirectiveToPragma where
 
+import Control.Monad.IO.Class
 import qualified Data.List as L
 import Data.Set as Set
 import Data.String.Interpolate
@@ -29,8 +30,16 @@ data DTPParams = DTPParams {
 instance Transformer DirectiveToPragma where
   type Params DirectiveToPragma = DTPParams
 
-  project :: Params DirectiveToPragma -> Doc -> (Doc, DirectiveToPragma)
-  project (DTPParams {..}) doc@(docToList -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat (fmap fst directiveIndices)))
+  project :: MonadIO m => Params DirectiveToPragma -> Doc -> m (Doc, DirectiveToPragma)
+  project (DTPParams {..}) doc@(docToList -> ls) = do
+    parsed <- parseCodeString ghcLibDir (T.unpack (Rope.toText doc))
+
+    let directiveIndices :: [([Int], [String])]
+        directiveIndices = [(getLinesStartingAt t (GHC.line locatedCodeBlock - 1), fmap unflagLanguageOption (L.words t))
+                           | locatedCodeBlock@(unloc -> Directive SetDynFlag t) <- parsed
+                           , all isLanguageOption (L.words t)]
+
+    return (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat (fmap fst directiveIndices)))
     where
       go :: Int -> [(Text, Int)] -> [([Int], [String])] -> [Text]
       go _ [] _ = []
@@ -40,11 +49,6 @@ instance Transformer DirectiveToPragma where
             (extraLinesToProcess, remainingLines) = L.splitAt (L.length is) xs
             in [i|{-\# LANGUAGE #{L.unwords languageOptions} \#-}|] : ["" | _ <- extraLinesToProcess] <> go (counter + 1) remainingLines remainingGroups
         | otherwise = l : go counter xs (group:remainingGroups)
-
-      directiveIndices :: [([Int], [String])]
-      directiveIndices = [(getLinesStartingAt t (GHC.line locatedCodeBlock - 1), fmap unflagLanguageOption (L.words t))
-                         | locatedCodeBlock@(unloc -> Directive SetDynFlag t) <- parseCodeString ghcLibDir (T.unpack (Rope.toText doc))
-                         , all isLanguageOption (L.words t)]
 
       isLanguageOption :: String -> Bool
       isLanguageOption ('-':'X':_) = True

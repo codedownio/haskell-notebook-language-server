@@ -18,6 +18,8 @@ module Language.LSP.Transformer (
   , applyChanges
   ) where
 
+import Control.Monad
+import Control.Monad.IO.Class
 import Data.Diff.Myers
 import qualified Data.Diff.Types as DT
 import Data.Kind
@@ -35,18 +37,20 @@ type Doc = Rope.Rope
 class Transformer a where
   type Params a
 
-  project :: Params a -> Doc -> (Doc, a)
+  project :: MonadIO m => Params a -> Doc -> m (Doc, a)
 
-  handleDiffMulti :: Params a -> Doc -> [TextDocumentContentChangeEvent] -> a -> ([TextDocumentContentChangeEvent], a)
-  handleDiffMulti params before changes tx = (finalChanges, finalTx)
+  handleDiffMulti :: MonadIO m => Params a -> Doc -> [TextDocumentContentChangeEvent] -> a -> m ([TextDocumentContentChangeEvent], a)
+  handleDiffMulti params before changes tx = do
+    (finalChanges, _finalLines, finalTx) <- foldM f ([], before, tx) changes
+    return (finalChanges, finalTx)
+
     where
-      (finalChanges, _finalLines, finalTx) = L.foldl' f ([], before, tx) changes
+      f :: MonadIO m => ([TextDocumentContentChangeEvent], Doc, a) -> TextDocumentContentChangeEvent -> m ([TextDocumentContentChangeEvent], Doc, a)
+      f (changesSoFar, curLines, txSoFar) change = do
+          (newChanges, tx') <- handleDiff params curLines change txSoFar
+          return (changesSoFar <> newChanges, applyChanges [change] curLines, tx')
 
-      f :: ([TextDocumentContentChangeEvent], Doc, a) -> TextDocumentContentChangeEvent -> ([TextDocumentContentChangeEvent], Doc, a)
-      f (changesSoFar, curLines, txSoFar) change = let (newChanges, tx') = handleDiff params curLines change txSoFar in
-          (changesSoFar <> newChanges, applyChanges [change] curLines, tx')
-
-  handleDiff :: Params a -> Doc -> TextDocumentContentChangeEvent -> a -> ([TextDocumentContentChangeEvent], a)
+  handleDiff :: MonadIO m => Params a -> Doc -> TextDocumentContentChangeEvent -> a -> m ([TextDocumentContentChangeEvent], a)
   handleDiff = defaultHandleDiff
 
   transformPosition :: Params a -> a -> Position -> Maybe Position
@@ -59,27 +63,31 @@ infixr :>
 
 instance (Transformer a, Transformer b) => Transformer (a :> b) where
   type Params (a :> b) = Params a :> Params b
-  project (xParams :> yParams) lines = (lines'', x :> y)
-    where
-      (lines', x) = project xParams lines
-      (lines'', y) = project yParams lines'
-  handleDiff (xParams :> yParams) before change (x :> y) = (change'', x' :> y')
-    where
-      (change', x') = handleDiff xParams before change x
-      (change'', y') = handleDiffMulti yParams (fst (project @a xParams before)) change' y
+  project (xParams :> yParams) lines = do
+    (lines', x) <- project xParams lines
+    (lines'', y) <- project yParams lines'
+    return (lines'', x :> y)
+
+  handleDiff (xParams :> yParams) before change (x :> y) = do
+    (change', x') <- handleDiff xParams before change x
+    projected <- project @a xParams before
+    (change'', y') <- handleDiffMulti yParams (fst projected) change' y
+    return (change'', x' :> y')
+
   transformPosition (xParams :> yParams) (x :> y) p = transformPosition xParams x p >>= transformPosition yParams y
   untransformPosition (xParams :> yParams) (x :> y) p = untransformPosition yParams y p >>= untransformPosition xParams x
   -- untransformPosition (xParams :> yParams) (x :> y) p = untransformPosition yParams y p >>= untransformPosition xParams x
 
 -- Default implementation uses diff.
-defaultHandleDiff :: forall a. Transformer a => Params a -> Doc -> TextDocumentContentChangeEvent -> a -> ([TextDocumentContentChangeEvent], a)
-defaultHandleDiff params before change _transformer = (change', transformer')
-  where
-    (before', _ :: a) = project params before
-    after = applyChanges [change] before
-    (after', transformer' :: a) = project params after
-    change' = fmap repackChangeEvent $ diffTextsToChangeEventsConsolidate (Rope.toText before') (Rope.toText after')
+defaultHandleDiff :: forall a m. (Transformer a, MonadIO m) => Params a -> Doc -> TextDocumentContentChangeEvent -> a -> m ([TextDocumentContentChangeEvent], a)
+defaultHandleDiff params before change _transformer = do
+  (before', _ :: a) <- project params before
+  let after = applyChanges [change] before
+  (after', transformer' :: a) <- project params after
+  let change' = fmap repackChangeEvent $ diffTextsToChangeEventsConsolidate (Rope.toText before') (Rope.toText after')
+  return (change', transformer')
 
+  where
     repackChangeEvent (DT.ChangeEvent range text) = TextDocumentContentChangeEvent $ InL $ #range .== repackRange range .+ #rangeLength .== Nothing .+ #text .== text
     repackRange (DT.Range (DT.Position l1 c1) (DT.Position l2 c2)) = Range (Position (fromIntegral l1) (fromIntegral c1)) (Position (fromIntegral l2) (fromIntegral c2))
 

@@ -3,11 +3,11 @@ module Language.LSP.Parse (
   parseCodeString
   ) where
 
+import Control.Monad.IO.Class
 import GHC
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHCParser
-import System.IO.Unsafe (unsafePerformIO)
 
 
-parseCodeString :: FilePath -> String -> [GHCParser.Located CodeBlock]
-parseCodeString ghcLibDir = unsafePerformIO . runGhc (Just ghcLibDir) . parseString
+parseCodeString :: MonadIO m => FilePath -> String -> m [GHCParser.Located CodeBlock]
+parseCodeString ghcLibDir = liftIO . runGhc (Just ghcLibDir) . parseString

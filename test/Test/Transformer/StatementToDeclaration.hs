@@ -14,7 +14,7 @@ import Test.Sandwich
 spec :: TopSpec
 spec = describe "StatementToDeclaration" $ do
   it "projects and transforms a single expression" $ do
-    let (ls, sd@(StatementToDeclaration affectedLines)) = project (STDParams GHC.Paths.libdir) (listToDoc ["foo <- readLn", "foo = 42"])
+    (ls, sd@(StatementToDeclaration affectedLines)) <- project (STDParams GHC.Paths.libdir) (listToDoc ["foo <- readLn", "foo = 42"])
     ls `shouldBe` (listToDoc ["foo = unsafePerformIO $  readLn", "foo = 42"])
     affectedLines `shouldBe` (M.fromList [(0, LineInfo 4)])
 
@@ -23,7 +23,7 @@ spec = describe "StatementToDeclaration" $ do
     transformAndUntransform (STDParams GHC.Paths.libdir) (Position 0 5) (Position 0 5) sd
 
   -- it "projects and transforms a multiline expression" $ do
-  --   let (ls, sd@(StatementToDeclaration affectedLines)) = project (STDParams GHC.Paths.libdir) (listToDoc ["putStrLn [42", "  ]", "foo = 42"])
+  --   (ls, sd@(StatementToDeclaration affectedLines)) <- project (STDParams GHC.Paths.libdir) (listToDoc ["putStrLn [42", "  ]", "foo = 42"])
   --   ls `shouldBe` (listToDoc ["expr0000000000 = putStrLn [42"
   --                            , "                   ]"
   --                            , "foo = 42"])

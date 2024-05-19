@@ -20,6 +20,7 @@ import GHC.Stack
 import Language.LSP.Protocol.Types
 import Language.LSP.Transformer
 import Test.QuickCheck as Q
+import Test.QuickCheck.Monadic
 import Test.Sandwich
 import UnliftIO.Exception
 
@@ -46,24 +47,24 @@ testChange = testChange' @a (const [])
 testChange' :: forall a. (
   Transformer a, Eq a, Show a
   ) => ([TextDocumentContentChangeEvent] -> [Property]) -> Params a -> Doc -> TextDocumentContentChangeEvent -> Property
-testChange' extraProps params docLines change = conjoin ([
-  -- Applying the change' returned from handleDiff to the projected before value gives expected projected value
-  afterFromChange' === projectedAfter
+testChange' extraProps params docLines change = monadicIO $ do
+  (projectedBefore, transformer :: a) <- project params docLines
 
-  -- The re-projected transformer matches the one we got back from handleDiff
-  , reprojectedTransformer === transformer'
-  ] <> extraProps changes)
+  -- Expected un-projected document after the change
+  let docLines' = applyChanges [change] docLines
+  (projectedAfter, reprojectedTransformer :: a) <- project params docLines'
 
-  where
-    -- Expected un-projected document after the change
-    docLines' = applyChanges [change] docLines
+  (changes, transformer') <- handleDiff params docLines change transformer
 
-    (projectedBefore, transformer :: a) = project params docLines
-    (projectedAfter, reprojectedTransformer :: a) = project params docLines'
+  let afterFromChange' = applyChanges changes projectedBefore
 
-    (changes, transformer') = handleDiff params docLines change transformer
+  return $ conjoin ([
+    -- Applying the change' returned from handleDiff to the projected before value gives expected projected value
+    afterFromChange' === projectedAfter
 
-    afterFromChange' = applyChanges changes projectedBefore
+    -- The re-projected transformer matches the one we got back from handleDiff
+    , reprojectedTransformer === transformer'
+    ] <> extraProps changes)
 
 -- * Util
 

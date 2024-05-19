@@ -13,7 +13,7 @@ import Test.Sandwich
 spec :: TopSpec
 spec = describe "ImportSifter" $ do
   it "projects and transforms a single import" $ do
-    let (ls, sifter@(ImportSifter indices)) = project GHC.Paths.libdir (listToDoc ["putStrLn 42", "import Bar"])
+    (ls, sifter@(ImportSifter indices)) <- project GHC.Paths.libdir (listToDoc ["putStrLn 42", "import Bar"])
     ls `shouldBe` (listToDoc ["import Bar", "putStrLn 42"])
     indices `shouldBe` [1]
 
@@ -21,7 +21,7 @@ spec = describe "ImportSifter" $ do
     transformAndUntransform GHC.Paths.libdir (Position 1 0) (Position 0 0) sifter
 
   it "projects and transforms two imports" $ do
-    let (ls, sifter@(ImportSifter indices)) = project GHC.Paths.libdir (listToDoc ["putStrLn 42", "import Bar", "foo = 42", "import Foo", "bar = 24"])
+    (ls, sifter@(ImportSifter indices)) <- project GHC.Paths.libdir (listToDoc ["putStrLn 42", "import Bar", "foo = 42", "import Foo", "bar = 24"])
     ls `shouldBe` (listToDoc ["import Bar", "import Foo", "putStrLn 42", "foo = 42", "bar = 24"])
     indices `shouldBe` [1, 3]
 

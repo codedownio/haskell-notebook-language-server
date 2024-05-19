@@ -1,3 +1,4 @@
+{-# LANGUAGE BangPatterns #-}
 {-# LANGUAGE InstanceSigs #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE MultiWayIf #-}
@@ -7,6 +8,7 @@
 
 module Language.LSP.Notebook.FrontSifter where
 
+import Control.Monad.IO.Class
 import Data.Bifunctor
 import Data.Bits
 import Data.Function
@@ -14,6 +16,7 @@ import qualified Data.List as L
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
+import qualified Data.Text.Rope as Rope
 import Data.Vector as V hiding (zip)
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHCParser
@@ -27,7 +30,7 @@ newtype ImportSifter = ImportSifter (Vector Int)
   deriving Show
 instance Transformer ImportSifter where
   type Params ImportSifter = FilePath
-  project ghcLibDir = second ImportSifter . projectChosenLines ghcLibDir isImportCodeBlock
+  project ghcLibDir = fmap (second ImportSifter) . projectChosenLines ghcLibDir isImportCodeBlock
   transformPosition _ (ImportSifter indices) = transformUsingIndices indices
   untransformPosition _ (ImportSifter indices) = Just . untransformUsingIndices indices
 
@@ -35,19 +38,25 @@ newtype PragmaSifter = PragmaSifter (Vector Int)
   deriving Show
 instance Transformer PragmaSifter where
   type Params PragmaSifter = FilePath
-  project ghcLibDir = second PragmaSifter . projectChosenLines ghcLibDir isLanguagePragmaCodeBlock
+  project ghcLibDir = fmap (second PragmaSifter) . projectChosenLines ghcLibDir isLanguagePragmaCodeBlock
   transformPosition _ (PragmaSifter indices) = transformUsingIndices indices
   untransformPosition _ (PragmaSifter indices) = Just . untransformUsingIndices indices
 
 -- * Generic transformer functions
 
-projectChosenLines :: FilePath -> (CodeBlock -> Maybe String) -> Doc -> (Doc, Vector Int)
-projectChosenLines ghcLibDir chooseFn (docToList -> ls) = (listToDoc (chosenLines <> nonChosenLines), fromList importIndices)
+projectChosenLines :: MonadIO m => FilePath -> (CodeBlock -> Maybe String) -> Doc -> m (Doc, Vector Int)
+projectChosenLines ghcLibDir chooseFn (docToList -> ls) = do
+  parsed <- parseCodeString ghcLibDir (T.unpack (T.intercalate "\n" ls))
+
+  let importIndices = mconcat [getLinesStartingAt t (GHCParser.line locatedCodeBlock - 1)
+                              | locatedCodeBlock@((chooseFn . unloc) -> Just t) <- parsed]
+
+  let (chosenLines, nonChosenLines) = partitionLines importIndices (zip [0..] ls)
+
+  return (listToDoc (chosenLines <> nonChosenLines), fromList importIndices)
+
   where
     getLinesStartingAt t startingAt = [startingAt..(startingAt + countNewLines t)]
-
-    importIndices = mconcat [getLinesStartingAt t (GHCParser.line locatedCodeBlock - 1)
-                            | locatedCodeBlock@((chooseFn . unloc) -> Just t) <- parseCodeString ghcLibDir (T.unpack (T.intercalate "\n" ls))]
 
     partitionLines :: [Int] -> [(Int, Text)] -> ([Text], [Text])
     partitionLines [] remaining = ([], fmap snd remaining)
@@ -57,9 +66,6 @@ projectChosenLines ghcLibDir chooseFn (docToList -> ls) = (listToDoc (chosenLine
           (curLine : chosen, notChosen)
       | otherwise = let (chosen, notChosen) = partitionLines all ys in
           (chosen, curLine : notChosen)
-
-    (chosenLines, nonChosenLines) = partitionLines importIndices (zip [0..] ls)
-
 
 transformUsingIndices :: Vector Int -> Position -> Maybe Position
 transformUsingIndices indices (Position l c) = case binarySearchVec indices (fromIntegral l) of

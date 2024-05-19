@@ -13,7 +13,7 @@ import Test.Sandwich
 spec :: TopSpec
 spec = describe "ExpressionToDeclaration" $ do
   it "projects and transforms a single expression" $ do
-    let (ls, ed@(ExpressionToDeclaration affectedLines)) = project (EDParams 10 GHC.Paths.libdir) (listToDoc ["putStrLn 42", "foo = 42"])
+    (ls, ed@(ExpressionToDeclaration affectedLines)) <- project (EDParams 10 GHC.Paths.libdir) (listToDoc ["putStrLn 42", "foo = 42"])
     ls `shouldBe` (listToDoc ["expr0000000000 = putStrLn 42", "foo = 42"])
     affectedLines `shouldBe` [0]
 
@@ -22,7 +22,7 @@ spec = describe "ExpressionToDeclaration" $ do
     transformAndUntransform (EDParams 10 GHC.Paths.libdir) (Position 1 0) (Position 1 0) ed
 
   it "projects and transforms a multiline expression" $ do
-    let (ls, ed@(ExpressionToDeclaration affectedLines)) = project (EDParams 10 GHC.Paths.libdir) (listToDoc ["putStrLn [42", "  ]", "foo = 42"])
+    (ls, ed@(ExpressionToDeclaration affectedLines)) <- project (EDParams 10 GHC.Paths.libdir) (listToDoc ["putStrLn [42", "  ]", "foo = 42"])
     ls `shouldBe` (listToDoc ["expr0000000000 = putStrLn [42"
                              , "                   ]"
                              , "foo = 42"])
@@ -35,7 +35,7 @@ spec = describe "ExpressionToDeclaration" $ do
     transformAndUntransform (EDParams 10 GHC.Paths.libdir) (Position 2 0) (Position 2 0) ed
 
   it "numbers expressions incrementally" $ do
-    let (ls, (ExpressionToDeclaration affectedLines)) = project (EDParams 10 GHC.Paths.libdir) (listToDoc ["putStrLn 42", "putStrLn 43", "foo = 42"])
+    (ls, (ExpressionToDeclaration affectedLines)) <- project (EDParams 10 GHC.Paths.libdir) (listToDoc ["putStrLn 42", "putStrLn 43", "foo = 42"])
     ls `shouldBe` (listToDoc ["expr0000000000 = putStrLn 42"
                              , "expr0000000001 = putStrLn 43"
                              , "foo = 42"])

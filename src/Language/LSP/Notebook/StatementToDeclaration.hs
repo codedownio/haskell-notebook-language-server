@@ -6,6 +6,7 @@
 
 module Language.LSP.Notebook.StatementToDeclaration where
 
+import Control.Monad.IO.Class
 import Data.Bifunctor
 import qualified Data.List as L
 import Data.Map as M
@@ -33,8 +34,14 @@ data STDParams = STDParams {
 instance Transformer StatementToDeclaration where
   type Params StatementToDeclaration = STDParams
 
-  project :: Params StatementToDeclaration -> Doc -> (Doc, StatementToDeclaration)
-  project (STDParams {..}) (docToList -> ls) = first listToDoc $ go 0 (zip ls [0 ..]) indices
+  project :: MonadIO m => Params StatementToDeclaration -> Doc -> m (Doc, StatementToDeclaration)
+  project (STDParams {..}) (docToList -> ls) = do
+    parsed <- parseCodeString stdGhcLibDir (T.unpack (T.intercalate "\n" ls))
+
+    let indices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
+                  | locatedCodeBlock@(unloc -> Statement t) <- parsed]
+
+    return (first listToDoc $ go 0 (zip ls [0 ..]) indices)
     where
       go :: Int -> [(Text, Int)] -> [[Int]] -> ([Text], StatementToDeclaration)
       go _ [] _ = ([], mempty)
@@ -60,9 +67,6 @@ instance Transformer StatementToDeclaration where
             (restLines, restParams) = go counter xs (group:remainingGroups)
             in
               (l : restLines, restParams)
-
-      indices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                | locatedCodeBlock@(unloc -> Statement t) <- parseCodeString stdGhcLibDir (T.unpack (T.intercalate "\n" ls))]
 
   transformPosition :: Params StatementToDeclaration -> StatementToDeclaration -> Position -> Maybe Position
   transformPosition (STDParams {}) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of

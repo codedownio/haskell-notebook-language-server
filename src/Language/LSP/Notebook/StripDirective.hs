@@ -5,6 +5,7 @@
 
 module Language.LSP.Notebook.StripDirective where
 
+import Control.Monad.IO.Class
 import qualified Data.List as L
 import Data.Set as Set
 import Data.Text (Text)
@@ -27,8 +28,14 @@ data SDParams = SDParams {
 instance Transformer StripDirective where
   type Params StripDirective = SDParams
 
-  project :: Params StripDirective -> Doc -> (Doc, StripDirective)
-  project (SDParams {..}) (docToList -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, StripDirective (Set.fromList $ fromIntegral <$> mconcat directiveIndices))
+  project :: MonadIO m => Params StripDirective -> Doc -> m (Doc, StripDirective)
+  project (SDParams {..}) doc@(docToList -> ls) = do
+    parsed <- parseCodeString ghcLibDir (T.unpack (T.intercalate "\n" ls))
+
+    let directiveIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
+                           | locatedCodeBlock@(unloc -> Directive _ t) <- parsed]
+
+    return (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, StripDirective (Set.fromList $ fromIntegral <$> mconcat directiveIndices))
     where
       go :: Int -> [(Text, Int)] -> [[Int]] -> [Text]
       go _ [] _ = []
@@ -39,8 +46,6 @@ instance Transformer StripDirective where
             in "" : ["" | _ <- extraLinesToProcess] <> go (counter + 1) remainingLines remainingGroups
         | otherwise = l : go counter xs (group:remainingGroups)
 
-      directiveIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                         | locatedCodeBlock@(unloc -> Directive _ t) <- parseCodeString ghcLibDir (T.unpack (T.intercalate "\n" ls))]
 
   transformPosition :: Params StripDirective -> StripDirective -> Position -> Maybe Position
   transformPosition (SDParams {}) (StripDirective affectedLines) (Position l c)

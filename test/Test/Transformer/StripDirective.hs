@@ -12,7 +12,7 @@ import Test.Sandwich
 spec :: TopSpec
 spec = describe "StripDirective" $ do
   it "strips out GHCi directives" $ do
-    let (ls, ed@(StripDirective affectedLines)) = project (SDParams GHC.Paths.libdir) (listToDoc ["foo = 42", ":t foo"])
+    (ls, ed@(StripDirective affectedLines)) <- project (SDParams GHC.Paths.libdir) (listToDoc ["foo = 42", ":t foo"])
     ls `shouldBe` (listToDoc ["foo = 42", ""])
     affectedLines `shouldBe` [1]
 

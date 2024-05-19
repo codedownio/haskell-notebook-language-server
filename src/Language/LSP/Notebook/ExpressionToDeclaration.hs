@@ -49,8 +49,15 @@ containsExpressionVariable (EDParams {..}) t = do
 instance Transformer ExpressionToDeclaration where
   type Params ExpressionToDeclaration = EDParams
 
-  project :: Params ExpressionToDeclaration -> Doc -> (Doc, ExpressionToDeclaration)
-  project (EDParams {..}) (docToList -> ls) = (listToDoc $ go 0 (zip ls [0 ..]) exprIndices, ExpressionToDeclaration (Set.fromList $ fromIntegral <$> mconcat exprIndices))
+  project :: MonadIO m => Params ExpressionToDeclaration -> Doc -> m (Doc, ExpressionToDeclaration)
+  project (EDParams {..}) (docToList -> ls) = do
+    parsed <- parseCodeString ghcLibDir (T.unpack (T.intercalate "\n" ls))
+
+    let exprIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
+                      | locatedCodeBlock@(unloc -> Expression t) <- parsed
+                      , not (looksLikeTemplateHaskell t)]
+
+    return (listToDoc $ go 0 (zip ls [0 ..]) exprIndices, ExpressionToDeclaration (Set.fromList $ fromIntegral <$> mconcat exprIndices))
     where
       go :: Int -> [(Text, Int)] -> [[Int]] -> [Text]
       go _ [] _ = []
@@ -70,10 +77,6 @@ instance Transformer ExpressionToDeclaration where
             in
               (prefix <> l) : extraLines <> go (counter + 1) remainingLines remainingGroups
         | otherwise = l : go counter xs (group:remainingGroups)
-
-      exprIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                    | locatedCodeBlock@(unloc -> Expression t) <- parseCodeString ghcLibDir (T.unpack (T.intercalate "\n" ls))
-                    , not (looksLikeTemplateHaskell t)]
 
   transformPosition :: Params ExpressionToDeclaration -> ExpressionToDeclaration -> Position -> Maybe Position
   transformPosition (EDParams {..}) (ExpressionToDeclaration affectedLines) (Position l c)

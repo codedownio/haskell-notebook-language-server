@@ -1,8 +1,8 @@
 
-resolver: nightly-2024-05-18
+resolver: lts-22.22
 
 packages:
-- ../
+- ./
 
 nix:
   # pure: false

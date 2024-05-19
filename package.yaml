@@ -104,3 +104,24 @@ tests:
     - sandwich
     - sandwich-quickcheck
     - text-rope
+
+benchmarks:
+  benchmarks:
+    main:                Main.hs
+    source-dirs:
+    - bench
+    ghc-options:
+    # Turn off -threaded due to warning from
+    # https://hackage.haskell.org/package/weigh
+    # - -threaded
+    # - -rtsopts
+    # - -with-rtsopts=-N
+    - -O2
+    dependencies:
+    - criterion
+    - ghc-paths
+    - haskell-notebook-language-server
+    - myers-diff
+    - row-types
+    - string-interpolate
+    - text-rope

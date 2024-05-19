@@ -180,3 +180,40 @@ test-suite haskell-notebook-language-server-test
     , text-rope
     , unliftio
   default-language: Haskell2010
+
+benchmark benchmarks
+  type: exitcode-stdio-1.0
+  main-is: Main.hs
+  other-modules:
+      Paths_haskell_notebook_language_server
+  hs-source-dirs:
+      bench
+  default-extensions:
+      OverloadedStrings
+      QuasiQuotes
+      NamedFieldPuns
+      RecordWildCards
+      ScopedTypeVariables
+      FlexibleContexts
+      FlexibleInstances
+      LambdaCase
+      ViewPatterns
+      MultiWayIf
+      TupleSections
+      NumericUnderscores
+      TypeApplications
+  ghc-options: -Wunused-packages -Wall -fno-warn-name-shadowing -O2
+  build-depends:
+      base >=4.7 && <5
+    , criterion
+    , ghc-paths
+    , haskell-notebook-language-server
+    , lsp-types >=2.0.0.1
+    , monad-logger
+    , myers-diff
+    , row-types
+    , string-interpolate
+    , text
+    , text-rope
+    , unliftio
+  default-language: Haskell2010

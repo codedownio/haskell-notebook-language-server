@@ -106,6 +106,7 @@ tests:
     - sandwich
     - sandwich-quickcheck
     - text-rope
+    - transformers
 
 benchmarks:
   benchmarks:

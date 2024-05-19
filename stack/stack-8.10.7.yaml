@@ -25,3 +25,11 @@ extra-deps:
 - data-array-byte-0.1.0.1
 
 - text-rope-0.2
+
+- ipython-kernel-0.11.0.0
+
+- git: https://github.com/codedownio/IHaskell.git
+  commit: 7df14126586fd32f841fa1a99ce5ec5ec7a20fa4
+  subdirs:
+  - .
+  - ./ghc-parser

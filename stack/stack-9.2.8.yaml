@@ -21,3 +21,11 @@ extra-deps:
 
 - lsp-types-2.0.0.1
 - row-types-1.0.1.2
+
+- ipython-kernel-0.11.0.0
+
+- git: https://github.com/codedownio/IHaskell.git
+  commit: 7df14126586fd32f841fa1a99ce5ec5ec7a20fa4
+  subdirs:
+  - .
+  - ./ghc-parser

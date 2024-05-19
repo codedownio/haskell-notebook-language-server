@@ -10,6 +10,7 @@ import qualified Data.List as L
 import Data.Set as Set
 import Data.Text (Text)
 import qualified Data.Text as T
+import GHC (DynFlags)
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
@@ -22,15 +23,15 @@ newtype StripDirective = StripDirective (Set UInt)
   deriving Show
 
 data SDParams = SDParams {
-  ghcLibDir :: FilePath
+  flags :: DynFlags
   }
 
 instance Transformer StripDirective where
   type Params StripDirective = SDParams
 
   project :: MonadIO m => Params StripDirective -> Doc -> m (Doc, StripDirective)
-  project (SDParams {..}) doc@(docToList -> ls) = do
-    parsed <- parseCodeString ghcLibDir (T.unpack (T.intercalate "\n" ls))
+  project (SDParams {..}) (docToList -> ls) = do
+    parsed <- parseCodeString flags (T.unpack (T.intercalate "\n" ls))
 
     let directiveIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
                            | locatedCodeBlock@(unloc -> Directive _ t) <- parsed]

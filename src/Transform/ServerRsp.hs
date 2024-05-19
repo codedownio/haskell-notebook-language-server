@@ -49,14 +49,14 @@ transformServerRsp' SMethod_TextDocumentCompletion initialParams result = do
   AppConfig {..} <- asks transformerConfig
   whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) -> do
     let fixupCompletionEdit Nothing = Nothing
-        fixupCompletionEdit (Just (InL edit)) = InL <$> (untransformRanged appConfigGhcLibPath tx edit)
+        fixupCompletionEdit (Just (InL edit)) = InL <$> (untransformRanged appConfigDynFlags tx edit)
         fixupCompletionEdit (Just (InR (InsertReplaceEdit newText insert replace))) =
-          InR <$> (InsertReplaceEdit newText <$> untransformRanged appConfigGhcLibPath tx insert <*> untransformRanged appConfigGhcLibPath tx replace)
+          InR <$> (InsertReplaceEdit newText <$> untransformRanged appConfigDynFlags tx insert <*> untransformRanged appConfigDynFlags tx replace)
 
     let fixupItem :: CompletionItem -> CompletionItem
         fixupItem item = item
          & over textEdit fixupCompletionEdit
-         & over (additionalTextEdits . _Just) (mapMaybe (untransformRanged appConfigGhcLibPath tx))
+         & over (additionalTextEdits . _Just) (mapMaybe (untransformRanged appConfigDynFlags tx))
 
     case result of
       (InL items) -> return (InL (fmap fixupItem items))
@@ -68,7 +68,7 @@ transformServerRsp' SMethod_TextDocumentDocumentHighlight initialParams result =
   AppConfig {..} <- asks transformerConfig
   whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) ->
     case result of
-      InL highlights -> return $ InL $ mapMaybe (untransformRanged appConfigGhcLibPath tx) highlights
+      InL highlights -> return $ InL $ mapMaybe (untransformRanged appConfigDynFlags tx) highlights
       InR null -> return $ InR null
 
 transformServerRsp' SMethod_TextDocumentHover initialParams result = do
@@ -78,7 +78,7 @@ transformServerRsp' SMethod_TextDocumentHover initialParams result = do
       InR null -> return $ InR null
       InL hov -> do
         hov' <- fixupHoverText hov
-        return $ case untransformRangedMaybe appConfigGhcLibPath tx hov' of
+        return $ case untransformRangedMaybe appConfigDynFlags tx hov' of
           Just ret -> InL ret
           Nothing -> InR LSP.Null
 
@@ -86,11 +86,11 @@ transformServerRsp' SMethod_TextDocumentDocumentSymbol initialParams result = do
   AppConfig {..} <- asks transformerConfig
   whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) ->
     case result of
-      InL symbolInformations -> return $ InL (symbolInformations & filter (not . ignoreSymbol appConfigGhcLibPath)
-                                                                 & mapMaybe (traverseOf (location . range) (untransformRange appConfigGhcLibPath tx)))
-      InR (InL documentSymbols) -> return $ InR $ InL (documentSymbols & filter (not . ignoreSymbol appConfigGhcLibPath)
-                                                                       & mapMaybe (traverseOf range (untransformRange appConfigGhcLibPath tx))
-                                                                       & mapMaybe (traverseOf selectionRange (untransformRange appConfigGhcLibPath tx)))
+      InL symbolInformations -> return $ InL (symbolInformations & filter (not . ignoreSymbol appConfigDynFlags)
+                                                                 & mapMaybe (traverseOf (location . range) (untransformRange appConfigDynFlags tx)))
+      InR (InL documentSymbols) -> return $ InR $ InL (documentSymbols & filter (not . ignoreSymbol appConfigDynFlags)
+                                                                       & mapMaybe (traverseOf range (untransformRange appConfigDynFlags tx))
+                                                                       & mapMaybe (traverseOf selectionRange (untransformRange appConfigDynFlags tx)))
       InR (InR LSP.Null) -> return $ InR $ InR LSP.Null
   where
     ignoreSymbol ghcLibPath x = isExpressionVariable (expressionToDeclarationParams ghcLibPath) (x ^. name)
@@ -111,6 +111,6 @@ transformServerRsp' SMethod_TextDocumentCodeLens _initialParams (InR null) = ret
 transformServerRsp' SMethod_TextDocumentCodeLens initialParams (InL result) = (InL <$>) $ do
   AppConfig {..} <- asks transformerConfig
   whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) -> do
-    return $ mapMaybe (untransformRanged appConfigGhcLibPath tx) result
+    return $ mapMaybe (untransformRanged appConfigDynFlags tx) result
 
 transformServerRsp' _ _ result = return result

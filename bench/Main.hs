@@ -7,6 +7,7 @@
 module Main (main) where
 
 import Control.DeepSeq
+import Control.Monad.Trans.State
 import Criterion
 import Criterion.Main
 import Data.Diff.Myers
@@ -14,6 +15,7 @@ import qualified Data.Diff.Types as DT
 import Data.Row.Records
 import Data.String.Interpolate
 import qualified Data.Text.Rope as Rope
+import GHC (DynFlags, getSessionDynFlags, runGhc)
 import GHC.Generics
 import qualified GHC.Paths
 import IHaskell.Eval.Parser
@@ -50,28 +52,30 @@ deriving instance NFData CodeBlock
 deriving instance Generic (Located CodeBlock)
 deriving instance NFData (Located CodeBlock)
 
-testGroup :: Benchmark
-testGroup =
+testGroup :: DynFlags -> Benchmark
+testGroup flags =
   bgroup [i|Parsing|] [
-    bench "parse foo = putSt" $ nfIO $ parseCodeString GHC.Paths.libdir "foo = putSt"
-    , bench "parse foo = putStrLn" $ nfIO $ parseCodeString GHC.Paths.libdir "foo = putStrLn \"hi\""
+    bench "parse foo = putSt" $ nfIO $ parseCodeString flags "foo = putSt"
+    , bench "parse foo = putStrLn" $ nfIO $ parseCodeString flags "foo = putStrLn \"hi\""
 
     -- bench "diffTextsToChangeEventsConsolidate" $ nf (fmap repackChangeEvent . diffTextsToChangeEventsConsolidate "foo = p") "foo = pu"
 
-    -- , bench "defaultHandleDiff 1 change" $ nf (fst . defaultHandleDiff (transformerParams GHC.Paths.libdir) doc addU) tx
+    -- , bench "defaultHandleDiff 1 change" $ nf (fst . defaultHandleDiff (transformerParams flags) doc addU) tx
 
-    , bench "project" $ nfIO (fst <$> project @HaskellNotebookTransformer (transformerParams GHC.Paths.libdir) "foo = p")
-    , bench "projectChosenLines" $ nfIO (projectChosenLines GHC.Paths.libdir isLanguagePragmaCodeBlock (Rope.fromText "foo = p"))
+    , bench "project" $ nfIO (fst <$> project @HaskellNotebookTransformer (transformerParams flags) "foo = p")
+    , bench "projectChosenLines" $ nfIO (projectChosenLines flags isLanguagePragmaCodeBlock (Rope.fromText "foo = p"))
     , bench "after" $ nf (applyChanges [addU]) (Rope.fromText "foo = p")
 
 
-    -- , bench "handleDiffMulti no changes" $ nf (fst . handleDiffMulti (transformerParams GHC.Paths.libdir) doc []) tx
-    -- , bench "handleDiffMulti 1 change" $ nf (fst . handleDiffMulti (transformerParams GHC.Paths.libdir) doc [addU]) tx
+    -- , bench "handleDiffMulti no changes" $ nf (fst . handleDiffMulti (transformerParams flags) doc []) tx
+    -- , bench "handleDiffMulti 1 change" $ nf (fst . handleDiffMulti (transformerParams flags) doc [addU]) tx
     ]
 
 
 main :: IO ()
 main = do
+  flags <- runGhc (Just GHC.Paths.libdir) getSessionDynFlags
+
   defaultMain [
-    testGroup
+    testGroup flags
     ]

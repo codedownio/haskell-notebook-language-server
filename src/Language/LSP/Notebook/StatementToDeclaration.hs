@@ -12,6 +12,7 @@ import qualified Data.List as L
 import Data.Map as M
 import Data.Text (Text)
 import qualified Data.Text as T
+import GHC (DynFlags)
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
@@ -28,7 +29,7 @@ newtype StatementToDeclaration = StatementToDeclaration (Map UInt LineInfo)
   deriving (Show, Semigroup, Monoid)
 
 data STDParams = STDParams {
-  stdGhcLibDir :: FilePath
+  stdFlags :: DynFlags
   }
 
 instance Transformer StatementToDeclaration where
@@ -36,7 +37,7 @@ instance Transformer StatementToDeclaration where
 
   project :: MonadIO m => Params StatementToDeclaration -> Doc -> m (Doc, StatementToDeclaration)
   project (STDParams {..}) (docToList -> ls) = do
-    parsed <- parseCodeString stdGhcLibDir (T.unpack (T.intercalate "\n" ls))
+    parsed <- parseCodeString stdFlags (T.unpack (T.intercalate "\n" ls))
 
     let indices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
                   | locatedCodeBlock@(unloc -> Statement t) <- parsed]

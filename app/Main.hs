@@ -19,6 +19,7 @@ import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Encoding as T
+import GHC (getSessionDynFlags, runGhc)
 import qualified Language.LSP.Protocol.Lens as Lens
 import Language.LSP.Protocol.Message hiding (LookupFunc, parseClientMessage, parseServerMessage)
 import Language.LSP.Protocol.Types
@@ -133,9 +134,11 @@ main = do
 
   -- TODO: switch to using pickFromIxMap or some other way to remove old entries
 
+  flags <- runGhc (Just optGhcLibPath) getSessionDynFlags
+
   transformerState <- newTransformerState $ AppConfig {
     appConfigWriteFileOnChange = False
-    , appConfigGhcLibPath = optGhcLibPath
+    , appConfigDynFlags = flags
     }
 
   logLevel <- case optLogLevel of

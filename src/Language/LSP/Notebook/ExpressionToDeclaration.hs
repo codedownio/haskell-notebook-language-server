@@ -12,6 +12,7 @@ import Data.Set as Set
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
+import GHC (DynFlags)
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
@@ -28,7 +29,7 @@ newtype ExpressionToDeclaration = ExpressionToDeclaration (Set UInt)
 
 data EDParams = EDParams {
   numberPadding :: Int
-  , ghcLibDir :: FilePath
+  , flags :: DynFlags
   }
 
 isExpressionVariable :: EDParams -> Text -> Bool
@@ -51,7 +52,7 @@ instance Transformer ExpressionToDeclaration where
 
   project :: MonadIO m => Params ExpressionToDeclaration -> Doc -> m (Doc, ExpressionToDeclaration)
   project (EDParams {..}) (docToList -> ls) = do
-    parsed <- parseCodeString ghcLibDir (T.unpack (T.intercalate "\n" ls))
+    parsed <- parseCodeString flags (T.unpack (T.intercalate "\n" ls))
 
     let exprIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
                       | locatedCodeBlock@(unloc -> Expression t) <- parsed

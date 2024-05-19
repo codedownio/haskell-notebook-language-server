@@ -17,6 +17,7 @@ import qualified Data.Map as M
 import Data.String.Interpolate
 import Data.Text
 import qualified Data.Text as T
+import GHC (DynFlags)
 import Language.LSP.Notebook
 import Language.LSP.Protocol.Lens as Lens
 import Language.LSP.Protocol.Types as LSP
@@ -80,7 +81,7 @@ data DocumentState = DocumentState {
 
 data AppConfig = AppConfig {
   appConfigWriteFileOnChange :: Bool
-  , appConfigGhcLibPath :: FilePath
+  , appConfigDynFlags :: DynFlags
   }
 
 data TransformerState = TransformerState {

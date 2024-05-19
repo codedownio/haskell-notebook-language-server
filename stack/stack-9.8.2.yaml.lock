@@ -3,10 +3,36 @@
 # For more information, please see the documentation at:
 #   https://docs.haskellstack.org/en/stable/lock_files
 
-packages: []
+packages:
+- completed:
+    commit: 7df14126586fd32f841fa1a99ce5ec5ec7a20fa4
+    git: https://github.com/codedownio/IHaskell.git
+    name: ihaskell
+    pantry-tree:
+      sha256: c9671e46fa0f8ac28ece14a3c88daa94552fad55c4a49ae089deacfd7cc1f865
+      size: 23345
+    subdir: .
+    version: 0.11.0.0
+  original:
+    commit: 7df14126586fd32f841fa1a99ce5ec5ec7a20fa4
+    git: https://github.com/codedownio/IHaskell.git
+    subdir: .
+- completed:
+    commit: 7df14126586fd32f841fa1a99ce5ec5ec7a20fa4
+    git: https://github.com/codedownio/IHaskell.git
+    name: ghc-parser
+    pantry-tree:
+      sha256: 02bb412e738063631d10750648b5c432d5df99599eaeff5050d92df6416df102
+      size: 903
+    subdir: ./ghc-parser
+    version: 0.2.6.0
+  original:
+    commit: 7df14126586fd32f841fa1a99ce5ec5ec7a20fa4
+    git: https://github.com/codedownio/IHaskell.git
+    subdir: ./ghc-parser
 snapshots:
 - completed:
-    sha256: 9970615b9dba805bcf13388d3842092708284906c7584b7cc027b4898b307dfa
-    size: 622359
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2024/4/3.yaml
-  original: nightly-2024-04-03
+    sha256: a6d9d8dffd276f0f08d3cb05b9bf773ff86503017200adea63bfd4ad64c36c62
+    size: 640467
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2024/5/18.yaml
+  original: nightly-2024-05-18

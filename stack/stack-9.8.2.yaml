@@ -14,3 +14,10 @@ nix:
   - pcre
   path:
   - "nixpkgs=/home/tom/tools/nixpkgs"
+
+extra-deps:
+- git: https://github.com/codedownio/IHaskell.git
+  commit: 7df14126586fd32f841fa1a99ce5ec5ec7a20fa4
+  subdirs:
+  - .
+  - ./ghc-parser

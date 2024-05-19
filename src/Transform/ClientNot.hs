@@ -59,7 +59,7 @@ transformClientNot' :: (
 transformClientNot' _ SMethod_TextDocumentDidOpen params = whenNotebook params $ \u -> do
   let ls = Rope.fromText (params ^. (textDocument . text))
   TransformerState {..} <- ask
-  (ls', transformer' :: HaskellNotebookTransformer) <- project (transformerParams (appConfigGhcLibPath transformerConfig)) ls
+  (ls', transformer' :: HaskellNotebookTransformer) <- project (transformerParams (appConfigDynFlags transformerConfig)) ls
   newUri <- addExtensionToUri ".hs" u
   referenceRegex <- case uriToFilePath newUri of
     Just s -> pure $ mkDocRegex (T.pack s)
@@ -84,7 +84,7 @@ transformClientNot' _ SMethod_TextDocumentDidOpen params = whenNotebook params $
 transformClientNot' sendExtraNotification SMethod_TextDocumentDidChange params = whenNotebook params $ modifyTransformer params $ \ds@(DocumentState {transformer=tx, curLines=before, newUri, newPath}) -> do
   let changeEvents = params ^. contentChanges
   AppConfig {..} <- asks transformerConfig
-  (changeEvents', tx') <- handleDiffMulti (transformerParams appConfigGhcLibPath) before changeEvents tx
+  (changeEvents', tx') <- handleDiffMulti (transformerParams appConfigDynFlags) before changeEvents tx
   let after = applyChanges changeEvents before
 
   when appConfigWriteFileOnChange $ do

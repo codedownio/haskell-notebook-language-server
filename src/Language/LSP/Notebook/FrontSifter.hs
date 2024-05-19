@@ -16,8 +16,8 @@ import qualified Data.List as L
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
-import qualified Data.Text.Rope as Rope
 import Data.Vector as V hiding (zip)
+import GHC (DynFlags)
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHCParser
 import Language.LSP.Notebook.Util
@@ -29,7 +29,7 @@ import Language.LSP.Transformer
 newtype ImportSifter = ImportSifter (Vector Int)
   deriving Show
 instance Transformer ImportSifter where
-  type Params ImportSifter = FilePath
+  type Params ImportSifter = DynFlags
   project ghcLibDir = fmap (second ImportSifter) . projectChosenLines ghcLibDir isImportCodeBlock
   transformPosition _ (ImportSifter indices) = transformUsingIndices indices
   untransformPosition _ (ImportSifter indices) = Just . untransformUsingIndices indices
@@ -37,16 +37,16 @@ instance Transformer ImportSifter where
 newtype PragmaSifter = PragmaSifter (Vector Int)
   deriving Show
 instance Transformer PragmaSifter where
-  type Params PragmaSifter = FilePath
+  type Params PragmaSifter = DynFlags
   project ghcLibDir = fmap (second PragmaSifter) . projectChosenLines ghcLibDir isLanguagePragmaCodeBlock
   transformPosition _ (PragmaSifter indices) = transformUsingIndices indices
   untransformPosition _ (PragmaSifter indices) = Just . untransformUsingIndices indices
 
 -- * Generic transformer functions
 
-projectChosenLines :: MonadIO m => FilePath -> (CodeBlock -> Maybe String) -> Doc -> m (Doc, Vector Int)
-projectChosenLines ghcLibDir chooseFn (docToList -> ls) = do
-  parsed <- parseCodeString ghcLibDir (T.unpack (T.intercalate "\n" ls))
+projectChosenLines :: MonadIO m => DynFlags -> (CodeBlock -> Maybe String) -> Doc -> m (Doc, Vector Int)
+projectChosenLines flags chooseFn (docToList -> ls) = do
+  parsed <- parseCodeString flags (T.unpack (T.intercalate "\n" ls))
 
   let importIndices = mconcat [getLinesStartingAt t (GHCParser.line locatedCodeBlock - 1)
                               | locatedCodeBlock@((chooseFn . unloc) -> Just t) <- parsed]

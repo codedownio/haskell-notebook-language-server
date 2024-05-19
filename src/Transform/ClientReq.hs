@@ -60,7 +60,7 @@ doTransformUriAndPosition :: forall m n a. (
 doTransformUriAndPosition params' (DocumentState {transformer=tx, newUri}) = do
   let params = params' & set (textDocument . uri) newUri
   AppConfig {..} <- asks transformerConfig
-  case transformPosition (transformerParams appConfigGhcLibPath) tx (params ^. position) of
+  case transformPosition (transformerParams appConfigDynFlags) tx (params ^. position) of
     Nothing -> do
       logWarnN [i|Couldn't transform position #{params ^. position}|]
       return params
@@ -72,7 +72,7 @@ doTransformUriAndRange :: forall m n a. (
 doTransformUriAndRange params' (DocumentState {transformer=tx, newUri}) = do
   let params = params' & set (textDocument . uri) newUri
   AppConfig {..} <- asks transformerConfig
-  case transformRange appConfigGhcLibPath tx (params ^. range) of
+  case transformRange appConfigDynFlags tx (params ^. range) of
     Nothing -> do
       logWarnN [i|Couldn't transform range #{params ^. range}|]
       return params

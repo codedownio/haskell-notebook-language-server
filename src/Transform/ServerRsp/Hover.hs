@@ -24,6 +24,7 @@ import Data.Row.Records
 import Data.String.Interpolate
 import Data.Text as T
 import Data.Text.Rope (Rope)
+import GHC (DynFlags)
 import Language.LSP.Notebook
 import Language.LSP.Protocol.Lens hiding (id, trace)
 import Language.LSP.Protocol.Types
@@ -52,7 +53,7 @@ type HoverContents = MarkupContent |? (MarkedString |? [MarkedString])
 fixupDocumentReferences :: forall n. TransformerMonad n => Regex -> HaskellNotebookTransformer -> Rope -> HoverContents -> n HoverContents
 fixupDocumentReferences docRegex transformer _curLines (InL (MarkupContent k t)) = do
   AppConfig {..} <- asks transformerConfig
-  (InL . MarkupContent k) <$> (fixupDocumentReferences' appConfigGhcLibPath docRegex transformer t)
+  (InL . MarkupContent k) <$> (fixupDocumentReferences' appConfigDynFlags docRegex transformer t)
 fixupDocumentReferences docRegex transformer _curLines (InR markedStrings) = (InR <$>) $ case markedStrings of
   InL ms -> InL <$> transformMarkedString ms
   InR mss -> InR <$> (mapM transformMarkedString mss)
@@ -60,20 +61,20 @@ fixupDocumentReferences docRegex transformer _curLines (InR markedStrings) = (In
     transformMarkedString :: MarkedString -> n MarkedString
     transformMarkedString (MarkedString (InL t)) = do
       AppConfig {..} <- asks transformerConfig
-      (MarkedString . InL) <$> (fixupDocumentReferences' appConfigGhcLibPath docRegex transformer t)
+      (MarkedString . InL) <$> (fixupDocumentReferences' appConfigDynFlags docRegex transformer t)
     transformMarkedString (MarkedString (InR thing)) = do
       AppConfig {..} <- asks transformerConfig
-      t' <- fixupDocumentReferences' appConfigGhcLibPath docRegex transformer (thing .! #value)
+      t' <- fixupDocumentReferences' appConfigDynFlags docRegex transformer (thing .! #value)
       return $ MarkedString $ InR (thing & update #value t')
 
-fixupDocumentReferences' :: forall n. MonadLogger n => FilePath -> Regex -> HaskellNotebookTransformer -> Text -> n Text
-fixupDocumentReferences' ghcLibPath docRegex transformer t =
+fixupDocumentReferences' :: forall n. MonadLogger n => DynFlags -> Regex -> HaskellNotebookTransformer -> Text -> n Text
+fixupDocumentReferences' flags docRegex transformer t =
   traverseOf ((regexing docRegex) . groups) (transformGroup transformer) t
 
   where
     transformGroup :: HaskellNotebookTransformer -> [Text] -> n [Text]
     transformGroup transformer orig@[(readMay . T.unpack) -> Just line, (readMay . T.unpack) -> Just ch] = do
-      case untransformPosition (transformerParams ghcLibPath) transformer (Position (line - 1) (ch - 1)) of
+      case untransformPosition (transformerParams flags) transformer (Position (line - 1) (ch - 1)) of
         Nothing -> return orig
         Just (Position line' ch') -> return [T.pack $ show (line' + 1), T.pack $ show (ch' + 1)]
 

@@ -54,6 +54,7 @@ library:
   - safe
   - text-rope
   - time
+  - transformers
   - unliftio-core
   - vector
 
@@ -71,6 +72,7 @@ executables:
     dependencies:
     - aeson
     - bytestring
+    - ghc
     - haskell-notebook-language-server
     - lens
     - mtl
@@ -120,6 +122,7 @@ benchmarks:
     dependencies:
     - criterion
     - deepseq
+    - ghc
     - ghc-parser
     - ghc-paths
     - haskell-notebook-language-server
@@ -128,3 +131,4 @@ benchmarks:
     - row-types
     - string-interpolate
     - text-rope
+    - transformers

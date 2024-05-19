@@ -12,6 +12,7 @@ import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
 import qualified Data.Text.Rope as Rope
+import GHC (DynFlags)
 import IHaskell.Eval.Parser
 import Language.Haskell.GHC.Parser as GHC
 import Language.LSP.Notebook.Util
@@ -24,7 +25,7 @@ newtype DirectiveToPragma = DirectiveToPragma (Set UInt)
   deriving (Show, Eq)
 
 data DTPParams = DTPParams {
-  ghcLibDir :: FilePath
+  flags :: DynFlags
   }
 
 instance Transformer DirectiveToPragma where
@@ -32,7 +33,7 @@ instance Transformer DirectiveToPragma where
 
   project :: MonadIO m => Params DirectiveToPragma -> Doc -> m (Doc, DirectiveToPragma)
   project (DTPParams {..}) doc@(docToList -> ls) = do
-    parsed <- parseCodeString ghcLibDir (T.unpack (Rope.toText doc))
+    parsed <- parseCodeString flags (T.unpack (Rope.toText doc))
 
     let directiveIndices :: [([Int], [String])]
         directiveIndices = [(getLinesStartingAt t (GHC.line locatedCodeBlock - 1), fmap unflagLanguageOption (L.words t))

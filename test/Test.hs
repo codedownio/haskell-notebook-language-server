@@ -4,6 +4,8 @@
 module Test where
 
 import Control.Monad
+import Control.Monad.IO.Class
+import Control.Monad.Trans.State
 import Data.String.Interpolate
 import Data.Text (Text)
 import qualified Data.Text as T
@@ -16,7 +18,9 @@ main :: IO ()
 main = do
   let text = ghciCommand
 
-  locatedCodeBlocks <- runGhc (Just GHC.Paths.libdir) $ parseString $ T.unpack text
+  flags <- runGhc (Just GHC.Paths.libdir) getSessionDynFlags
+
+  locatedCodeBlocks <- liftIO $ evalStateT (parseString (T.unpack text)) flags
   forM_ locatedCodeBlocks print
 
 

@@ -10,6 +10,7 @@ module Language.LSP.Notebook (
   , transformerParams
   ) where
 
+import GHC (DynFlags)
 import Language.LSP.Notebook.DirectiveToPragma
 import Language.LSP.Notebook.ExpressionToDeclaration
 import Language.LSP.Notebook.FrontSifter
@@ -20,23 +21,23 @@ import Language.LSP.Transformer
 
 
 type HaskellNotebookTransformer =
-  DirectiveToPragma -- Convert :set -XFoo directives to LANGUAGE pragmas
-  :> StripDirective -- Strip all remaining directives
-  :> ExpressionToDeclaration -- Convert naked expressions to declarations
-  :> StatementToDeclaration -- Convert naked statements to declarations
-  :> ImportSifter -- Sift imports to the top
-  :> HeaderTransformer -- Add unsafePerformIO import at top
-  :> PragmaSifter -- Sift pragmas to the top (above imports)
+  DirectiveToPragma -- Convert :set -XFoo directives to LANGUAGE pragmas -- 11.3ms using normal ihaskell
+  :> StripDirective -- Strip all remaining directives -- 14.09ms
+  :> ExpressionToDeclaration -- Convert naked expressions to declarations -- 13.2ms
+  :> StatementToDeclaration -- Convert naked statements to declarations -- 13.16ms
+  :> ImportSifter -- Sift imports to the top -- 12.24ms
+  :> HeaderTransformer -- Add unsafePerformIO import at top -- 4.715us
+  :> PragmaSifter -- Sift pragmas to the top (above imports) -- 12ms
 
-expressionToDeclarationParams :: FilePath -> Params ExpressionToDeclaration
+expressionToDeclarationParams :: DynFlags -> Params ExpressionToDeclaration
 expressionToDeclarationParams = EDParams 10
 
-transformerParams :: FilePath -> Params HaskellNotebookTransformer
-transformerParams ghcLibDir =
-  DTPParams ghcLibDir
-  :> SDParams ghcLibDir
-  :> expressionToDeclarationParams ghcLibDir
-  :> STDParams ghcLibDir
-  :> ghcLibDir
+transformerParams :: DynFlags -> Params HaskellNotebookTransformer
+transformerParams flags =
+  DTPParams flags
+  :> SDParams flags
+  :> expressionToDeclarationParams flags
+  :> STDParams flags
+  :> flags
   :> ["import System.IO.Unsafe (unsafePerformIO)"]
-  :> ghcLibDir
+  :> flags

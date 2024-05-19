@@ -1,5 +1,23 @@
 
-resolver: lts-22.22
+# resolver: lts-22.22
+
+# packages:
+# - ../
+
+# nix:
+#   # pure: false
+#   packages:
+#   - zlib
+#   - libsodium # Needed by zeromq
+#   - zeromq
+#   - pkg-config
+#   - pcre
+#   path:
+#   - "nixpkgs=/home/tom/tools/nixpkgs"
+
+
+
+resolver: lts-22.15
 
 packages:
 - ../
@@ -14,3 +32,13 @@ nix:
   - pcre
   path:
   - "nixpkgs=/home/tom/tools/nixpkgs"
+
+extra-deps:
+- git: https://github.com/codedownio/myers-diff.git
+  commit: 3683ab4e052347bc47eb5546361f47bcd8c0fa58
+
+- git: https://github.com/IHaskell/IHaskell.git
+  commit: c547ee2fdc0a09cf4129b19292147fec38527a55
+  subdirs:
+  - .
+  - ./ghc-parser

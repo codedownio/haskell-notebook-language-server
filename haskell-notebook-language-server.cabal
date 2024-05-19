@@ -206,8 +206,11 @@ benchmark benchmarks
   build-depends:
       base >=4.7 && <5
     , criterion
+    , deepseq
+    , ghc-parser
     , ghc-paths
     , haskell-notebook-language-server
+    , ihaskell
     , lsp-types >=2.0.0.1
     , monad-logger
     , myers-diff

@@ -119,8 +119,11 @@ benchmarks:
     - -O2
     dependencies:
     - criterion
+    - deepseq
+    - ghc-parser
     - ghc-paths
     - haskell-notebook-language-server
+    - ihaskell
     - myers-diff
     - row-types
     - string-interpolate

@@ -111,6 +111,7 @@ executable haskell-notebook-language-server
   ghc-options: -Wunused-packages -Wall -fno-warn-name-shadowing -threaded -rtsopts -with-rtsopts=-N -O2 -W
   build-depends:
       aeson
+    , attoparsec
     , base >=4.7 && <5
     , bytestring
     , ghc

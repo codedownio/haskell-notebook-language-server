@@ -13,6 +13,8 @@ import Control.Monad.IO.Class
 import Control.Monad.IO.Unlift
 import Data.Aeson as A hiding (Options)
 import qualified Data.Aeson.Types as A
+import qualified Data.ByteString as BS
+import Data.ByteString.Builder.Extra (defaultChunkSize)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ByteString.Lazy.Char8 as BL8
 import Data.String.Interpolate
@@ -185,9 +187,9 @@ main = do
 
   flip runLoggingT logFn $ filterLogger logFilterFn $ flip runReaderT transformerState $
     flip withException (\(e :: SomeException) -> logErrorN [i|HNLS overall exception: #{e}|]) $
-      withAsync (readWrappedOut optDebugHlsReads clientReqMap serverReqMap hlsOut sendToStdoutWithLogging) $ \_hlsOutAsync ->
+      withAsync (ioLoop (BS.hGetSome hlsOut defaultChunkSize) (readWrappedOut optDebugHlsReads clientReqMap serverReqMap sendToStdoutWithLogging)) $ \_hlsOutAsync ->
         withAsync (readWrappedErr hlsErr) $ \_hlsErrAsync ->
-          withAsync (forever $ handleStdin optDebugHlsWrites optDebugClientReads hlsIn clientReqMap serverReqMap) $ \_stdinAsync -> do
+          withAsync (ioLoop (BS.hGetSome stdin defaultChunkSize) (handleStdin optDebugHlsWrites optDebugClientReads hlsIn clientReqMap serverReqMap)) $ \_stdinAsync -> do
             waitForProcess p >>= \case
               ExitFailure n -> logErrorN [i|haskell-language-server subprocess exited with code #{n}|]
               ExitSuccess -> logInfoN [i|haskell-language-server subprocess exited successfully|]
@@ -195,10 +197,8 @@ main = do
 
 handleStdin :: forall m. (
   MonadLoggerIO m, MonadReader TransformerState m, MonadUnliftIO m, MonadFail m
-  ) => Bool -> Bool -> Handle -> MVar ClientRequestMap -> MVar ServerRequestMap -> m ()
-handleStdin debugHlsWrites debugClientReads wrappedIn clientReqMap serverReqMap = flip withException (\(e :: SomeException) -> logErrorN [i|HNLS stdin exception: #{e}|]) $ do
-  bytes <- liftIO (parseStream stdin)
-
+  ) => Bool -> Bool -> Handle -> MVar ClientRequestMap -> MVar ServerRequestMap -> BL8.ByteString -> m ()
+handleStdin debugHlsWrites debugClientReads wrappedIn clientReqMap serverReqMap bytes = flip withException (\(e :: SomeException) -> logErrorN [i|HNLS stdin exception: #{e}|]) $ do
   when debugClientReads $ logDebugN [i|Read from client: #{bytes}|]
 
   case A.eitherDecode bytes of
@@ -228,10 +228,8 @@ handleStdin debugHlsWrites debugClientReads wrappedIn clientReqMap serverReqMap 
 
 readWrappedOut :: (
   MonadUnliftIO m, MonadLoggerIO m, MonadReader TransformerState m, MonadFail m
-  ) => Bool -> MVar ClientRequestMap -> MVar ServerRequestMap -> Handle -> (forall a. ToJSON a => a -> m ()) -> m b
-readWrappedOut debugHlsReads clientReqMap serverReqMap wrappedOut sendToStdout = forever $ do
-  bytes <- liftIO (parseStream wrappedOut)
-
+  ) => Bool -> MVar ClientRequestMap -> MVar ServerRequestMap -> (forall a. ToJSON a => a -> m ()) -> BL8.ByteString -> m b
+readWrappedOut debugHlsReads clientReqMap serverReqMap sendToStdout bytes = forever $ do
   when debugHlsReads $ logDebugN [i|Read from HLS: #{bytes}|]
 
   case A.eitherDecode bytes of

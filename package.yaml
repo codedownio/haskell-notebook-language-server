@@ -71,6 +71,7 @@ executables:
     - -W
     dependencies:
     - aeson
+    - attoparsec
     - bytestring
     - ghc
     - haskell-notebook-language-server

@@ -27,7 +27,6 @@ import Language.LSP.Protocol.Types
 import Language.LSP.Transformer
 
 
--- (doc, tx :: HaskellNotebookTransformer) = project (transformerParams GHC.Paths.libdir) (Rope.fromText "foo = p")
 addU = TextDocumentContentChangeEvent $ InL (#range .== (Range (p 0 7) (p 0 7)) .+ #rangeLength .== Nothing .+ #text .== "u")
 
 p :: Int -> Int -> Position
@@ -52,23 +51,22 @@ deriving instance NFData CodeBlock
 deriving instance Generic (Located CodeBlock)
 deriving instance NFData (Located CodeBlock)
 
-testGroup :: DynFlags -> Benchmark
-testGroup flags =
+testGroup :: DynFlags -> Doc -> HaskellNotebookTransformer -> Benchmark
+testGroup flags doc tx =
   bgroup [i|Parsing|] [
     bench "parse foo = putSt" $ nfIO $ parseCodeString flags "foo = putSt"
     , bench "parse foo = putStrLn" $ nfIO $ parseCodeString flags "foo = putStrLn \"hi\""
 
-    -- bench "diffTextsToChangeEventsConsolidate" $ nf (fmap repackChangeEvent . diffTextsToChangeEventsConsolidate "foo = p") "foo = pu"
-
-    -- , bench "defaultHandleDiff 1 change" $ nf (fst . defaultHandleDiff (transformerParams flags) doc addU) tx
+    , bench "diffTextsToChangeEventsConsolidate" $ nf (fmap repackChangeEvent . diffTextsToChangeEventsConsolidate "foo = p") "foo = pu"
+    , bench "defaultHandleDiff 1 change" $ nfAppIO (fmap fst . defaultHandleDiff (transformerParams flags) doc addU) tx
+    , bench "handleDiffMulti no changes" $ nfAppIO (fmap fst . handleDiffMulti (transformerParams flags) doc []) tx
+    , bench "handleDiffMulti 1 change" $ nfAppIO (fmap fst . handleDiffMulti (transformerParams flags) doc [addU]) tx
 
     , bench "project" $ nfIO (fst <$> project @HaskellNotebookTransformer (transformerParams flags) "foo = p")
     , bench "projectChosenLines" $ nfIO (projectChosenLines flags isLanguagePragmaCodeBlock (Rope.fromText "foo = p"))
     , bench "after" $ nf (applyChanges [addU]) (Rope.fromText "foo = p")
 
 
-    -- , bench "handleDiffMulti no changes" $ nf (fst . handleDiffMulti (transformerParams flags) doc []) tx
-    -- , bench "handleDiffMulti 1 change" $ nf (fst . handleDiffMulti (transformerParams flags) doc [addU]) tx
     ]
 
 
@@ -76,6 +74,8 @@ main :: IO ()
 main = do
   flags <- runGhc (Just GHC.Paths.libdir) getSessionDynFlags
 
+  (doc, tx :: HaskellNotebookTransformer) <- project (transformerParams flags) (Rope.fromText "foo = p")
+
   defaultMain [
-    testGroup flags
+    testGroup flags doc tx
     ]

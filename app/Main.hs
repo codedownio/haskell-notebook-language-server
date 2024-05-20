@@ -187,9 +187,9 @@ main = do
 
   flip runLoggingT logFn $ filterLogger logFilterFn $ flip runReaderT transformerState $
     flip withException (\(e :: SomeException) -> logErrorN [i|HNLS overall exception: #{e}|]) $
-      withAsync (ioLoop (BS.hGetSome hlsOut defaultChunkSize) (readWrappedOut optDebugHlsReads clientReqMap serverReqMap sendToStdoutWithLogging)) $ \_hlsOutAsync ->
+      withAsync (ioLoop "from-hls" (BS.hGetSome hlsOut defaultChunkSize) (handleWrappedOut optDebugHlsReads clientReqMap serverReqMap sendToStdoutWithLogging)) $ \_hlsOutAsync ->
         withAsync (readWrappedErr hlsErr) $ \_hlsErrAsync ->
-          withAsync (ioLoop (BS.hGetSome stdin defaultChunkSize) (handleStdin optDebugHlsWrites optDebugClientReads hlsIn clientReqMap serverReqMap)) $ \_stdinAsync -> do
+          withAsync (ioLoop "from-client" (BS.hGetSome stdin defaultChunkSize) (handleStdin optDebugHlsWrites optDebugClientReads hlsIn clientReqMap serverReqMap)) $ \_stdinAsync -> do
             waitForProcess p >>= \case
               ExitFailure n -> logErrorN [i|haskell-language-server subprocess exited with code #{n}|]
               ExitSuccess -> logInfoN [i|haskell-language-server subprocess exited successfully|]
@@ -226,10 +226,10 @@ handleStdin debugHlsWrites debugClientReads wrappedIn clientReqMap serverReqMap 
       logDebugN [i|Sending extra notification: #{A.encode msg}|]
       writeToHlsHandle debugHlsWrites wrappedIn $ A.encode msg
 
-readWrappedOut :: (
+handleWrappedOut :: (
   MonadUnliftIO m, MonadLoggerIO m, MonadReader TransformerState m, MonadFail m
-  ) => Bool -> MVar ClientRequestMap -> MVar ServerRequestMap -> (forall a. ToJSON a => a -> m ()) -> BL8.ByteString -> m b
-readWrappedOut debugHlsReads clientReqMap serverReqMap sendToStdout bytes = forever $ do
+  ) => Bool -> MVar ClientRequestMap -> MVar ServerRequestMap -> (forall a. ToJSON a => a -> m ()) -> BL8.ByteString -> m ()
+handleWrappedOut debugHlsReads clientReqMap serverReqMap sendToStdout bytes = do
   when debugHlsReads $ logDebugN [i|Read from HLS: #{bytes}|]
 
   case A.eitherDecode bytes of

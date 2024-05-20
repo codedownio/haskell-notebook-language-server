@@ -1,24 +1,50 @@
+{-# LANGUAGE TypeFamilies #-}
 
-module Streams where
+module Streams (ioLoop) where
 
 import Control.Applicative ((<|>))
 import Control.Monad.IO.Class
+import Control.Monad.IO.Unlift
+import Control.Monad.Logger
 import qualified Data.Attoparsec.ByteString as Attoparsec
 import Data.Attoparsec.ByteString.Char8
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
+import Data.String.Interpolate
+import qualified Data.Text as T
+import UnliftIO.Exception (finally)
 
 
-ioLoop :: MonadIO m => IO BS.ByteString -> (BL.ByteString -> m ()) -> m ()
-ioLoop clientIn cb = go (parse parser mempty)
+ioLoop :: (MonadLoggerIO m, MonadUnliftIO m) => T.Text -> IO BS.ByteString -> (BL.ByteString -> m ()) -> m ()
+ioLoop loopName clientIn cb = finally (go (parse parser "")) (logDebugN [i|#{loopName}: exited|])
   where
     go r = do
-      res <- parseOne clientIn r
+      res <- parseOne loopName clientIn r
       case res of
-        Nothing -> pure ()
-        Just (msg, remainder) -> do
+        Left err -> do
+          logErrorN $ [i|#{loopName}: failed to parse: #{err}|]
+          pure ()
+        Right (msg, remainder) -> do
           cb $ BL.fromStrict msg
           go (parse parser remainder)
+
+parseOne ::
+  MonadLoggerIO m
+  => T.Text
+  -> IO BS.ByteString
+  -> Result BS.ByteString
+  -> m (Either T.Text (BS.ByteString, BS.ByteString))
+parseOne _loopName clientIn = go
+  where
+    go (Fail _ ctxs err) = do
+      pure $ Left [i|Header parse fail. Ctxs: #{ctxs}. Err: #{err}.|]
+    go (Partial c) = do
+      bs <- liftIO clientIn
+      if BS.null bs
+        then pure $ Left [i|Got null bytestring.|]
+        else go (c bs)
+    go (Done remainder msg) = do
+      pure $ Right (msg,remainder)
 
 parser :: Parser BS.ByteString
 parser = do
@@ -46,23 +72,3 @@ _ONE_CRLF :: BS.ByteString
 _ONE_CRLF = "\r\n"
 _TWO_CRLF :: BS.ByteString
 _TWO_CRLF = "\r\n\r\n"
-
-parseOne ::
-  MonadIO m
-  => IO BS.ByteString
-  -> Result BS.ByteString
-  -> m (Maybe (BS.ByteString, BS.ByteString))
-parseOne clientIn = go
-  where
-    go (Fail _ _ctxs _err) = do
-      -- logger <& HeaderParseFail ctxs err `WithSeverity` Error
-      pure Nothing
-    go (Partial c) = do
-      bs <- liftIO clientIn
-      if BS.null bs
-        then do
-          -- logger <& EOF `WithSeverity` Error
-          pure Nothing
-        else go (c bs)
-    go (Done remainder msg) = do
-      pure $ Just (msg,remainder)

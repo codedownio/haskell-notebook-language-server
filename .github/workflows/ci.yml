@@ -116,7 +116,7 @@ jobs:
         - ghc: "9.4"
           yaml: "stack/stack-9.4.8.yaml"
         - ghc: "9.6"
-          yaml: "stack/stack-9.6.4.yaml"
+          yaml: "stack/stack-9.6.6.yaml"
         - ghc: "9.8"
           yaml: "stack/stack-9.8.2.yaml"
 

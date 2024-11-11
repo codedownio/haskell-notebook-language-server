@@ -1,8 +1,10 @@
+system:
+
 final: prev: {
   hixProject = compiler-nix-name: src: extraModules:
     final.haskell-nix.hix.project {
       inherit src;
-      evalSystem = "x86_64-linux";
+      evalSystem = system;
       inherit compiler-nix-name;
       modules = [
         {

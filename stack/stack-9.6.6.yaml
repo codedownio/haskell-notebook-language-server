@@ -1,0 +1,32 @@
+
+resolver: lts-22.41
+
+packages:
+- ../
+
+ghc-options:
+  "$everything": -with-rtsopts=-M12G
+
+# Needed on macOS
+extra-include-dirs:
+- /opt/homebrew/include
+extra-lib-dirs:
+- /opt/homebrew/lib
+
+nix:
+  # pure: false
+  packages:
+  - zlib
+  - libsodium # Needed by zeromq
+  - zeromq
+  - pkg-config
+  - pcre
+  path:
+  - "nixpkgs=/home/tom/tools/nixpkgs"
+
+extra-deps:
+- git: https://github.com/codedownio/IHaskell.git
+  commit: 7df14126586fd32f841fa1a99ce5ec5ec7a20fa4
+  subdirs:
+  - .
+  - ./ghc-parser

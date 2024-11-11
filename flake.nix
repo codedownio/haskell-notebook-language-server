@@ -8,12 +8,11 @@
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
 
   outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs }@inputs:
-    # flake-utils.lib.eachDefaultSystem (system:
-    flake-utils.lib.eachSystem ["x86_64-linux"] (system:
+    flake-utils.lib.eachDefaultSystem (system:
       let
         overlays = [
           haskellNix.overlay
-          (import ./nix/fix-ghc-pkgs-overlay.nix)
+          (import ./nix/fix-ghc-pkgs-overlay.nix system)
         ];
 
         pkgs = import nixpkgs { inherit system overlays; inherit (haskellNix) config; };

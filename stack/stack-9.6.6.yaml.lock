@@ -5,17 +5,6 @@
 
 packages:
 - completed:
-    commit: 3683ab4e052347bc47eb5546361f47bcd8c0fa58
-    git: https://github.com/codedownio/myers-diff.git
-    name: myers-diff
-    pantry-tree:
-      sha256: ad44b9dcac56932c51114dd0b57bd2a30bdda758c21252643c91bfb148c25ee5
-      size: 3023
-    version: 0.3.0.0
-  original:
-    commit: 3683ab4e052347bc47eb5546361f47bcd8c0fa58
-    git: https://github.com/codedownio/myers-diff.git
-- completed:
     commit: 7df14126586fd32f841fa1a99ce5ec5ec7a20fa4
     git: https://github.com/codedownio/IHaskell.git
     name: ihaskell
@@ -43,7 +32,7 @@ packages:
     subdir: ./ghc-parser
 snapshots:
 - completed:
-    sha256: 5b002d57c51092aa58a8696ccf0993e74fa6ed2efd48e2bbca349e9c2f67c5ef
-    size: 713334
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/15.yaml
-  original: lts-22.15
+    sha256: 1e32b51d9082fdf6f3bd92accc9dfffd4ddaf406404427fb10bf76d2bc03cbbb
+    size: 720263
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/41.yaml
+  original: lts-22.41

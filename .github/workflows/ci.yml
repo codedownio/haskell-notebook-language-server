@@ -79,7 +79,7 @@ jobs:
         nix_path: nixpkgs=channel:release-24.05
         extra_nix_config: |
           trusted-public-keys = iohk.cachix.org-1:DpRUyj7h7V830dp/i6Nti+NEO2/nhblbov/8MW7Rqoo= cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=
-          substituters = https://hydra.iohk.io https://cache.nixos.org/
+          substituters = https://iohk.cachix.org https://cache.nixos.org/
 
     - run: |
         nix build .#${{ matrix.output }}

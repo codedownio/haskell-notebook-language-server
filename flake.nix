@@ -5,7 +5,7 @@
     inputs.nixpkgs.follows = "nixpkgs";
   };
   inputs.haskellNix.url = "github:input-output-hk/haskell.nix";
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-23.11";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-24.05";
 
   outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs }@inputs:
     flake-utils.lib.eachDefaultSystem (system:
@@ -17,9 +17,13 @@
 
         pkgs = import nixpkgs { inherit system overlays; inherit (haskellNix) config; };
 
-        flake = compiler-nix-name: src: (pkgs.hixProject compiler-nix-name src []).flake {};
+        flake = compiler-nix-name: src: (pkgs.hixProject compiler-nix-name src [{
+          # configureFlags = [
+          #   ''--ghc-options="-with-rtsopts=-M12G"''
+          # ];
+        }]).flake {};
 
-        staticModules = [{
+        flakeStatic = compiler-nix-name: src: (pkgs.pkgsCross.musl64.hixProject compiler-nix-name src [{
           packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.dontStrip = false;
           packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.enableShared = false;
           packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.configureFlags = [
@@ -27,9 +31,7 @@
           ];
           packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.libs = [];
           packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.build-tools = [pkgs.pkgsCross.musl64.gcc];
-        }];
-
-        flakeStatic = compiler-nix-name: src: (pkgs.pkgsCross.musl64.hixProject compiler-nix-name src staticModules).flake {};
+        }]).flake {};
 
         srcWithStackYaml = stackYaml: let
           baseSrc = gitignore.lib.gitignoreSource ./.;
@@ -69,8 +71,8 @@
             { name = "ghc90"; ghc = "ghc902"; stackYaml = "stack/stack-9.0.2.yaml"; }
             { name = "ghc92"; ghc = "ghc928"; stackYaml = "stack/stack-9.2.8.yaml"; }
             { name = "ghc94"; ghc = "ghc948"; stackYaml = "stack/stack-9.4.8.yaml"; }
-            { name = "ghc96"; ghc = "ghc964"; stackYaml = "stack/stack-9.6.4.yaml"; }
-            { name = "ghc98"; ghc = "ghc982"; stackYaml = "stack/stack-9.8.2.yaml"; }
+            { name = "ghc96"; ghc = "ghc966"; stackYaml = "stack/stack-9.6.6.yaml"; }
+            { name = "ghc98"; ghc = "ghc983"; stackYaml = "stack/stack-9.8.2.yaml"; }
           ]
         );
 

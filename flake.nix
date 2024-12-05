@@ -16,12 +16,20 @@
           # Set enableNativeBignum flag on compiler
           (final: prev: {
             haskell-nix = let
+              shouldPatch = name: compiler: builtins.elem name [
+                "ghc902"
+                "ghc928"
+                "ghc948"
+                "ghc966"
+                "ghc982"
+              ];
+
               overrideCompiler = name: compiler: (compiler.override {
                 enableNativeBignum = true;
               });
             in
               prev.lib.recursiveUpdate prev.haskell-nix {
-                compiler = prev.lib.mapAttrs overrideCompiler prev.haskell-nix.compiler;
+                compiler = prev.lib.mapAttrs overrideCompiler (prev.lib.filterAttrs shouldPatch prev.haskell-nix.compiler);
               };
           })
 

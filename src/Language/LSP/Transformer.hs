@@ -24,7 +24,6 @@ import Data.Diff.Myers
 import qualified Data.Diff.Types as DT
 import Data.Kind
 import qualified Data.List as L
-import Data.Row
 import Data.Text
 import qualified Data.Text as T
 import Data.Text.Rope (Rope)
@@ -88,7 +87,7 @@ defaultHandleDiff params before change _transformer = do
   return (change', transformer')
 
   where
-    repackChangeEvent (DT.ChangeEvent range text) = TextDocumentContentChangeEvent $ InL $ #range .== repackRange range .+ #rangeLength .== Nothing .+ #text .== text
+    repackChangeEvent (DT.ChangeEvent range text) = TextDocumentContentChangeEvent $ InL $ TextDocumentContentChangePartial (repackRange range) Nothing text
     repackRange (DT.Range (DT.Position l1 c1) (DT.Position l2 c2)) = Range (Position (fromIntegral l1) (fromIntegral c1)) (Position (fromIntegral l2) (fromIntegral c2))
 
 -- * Applying changes
@@ -106,11 +105,11 @@ applyChanges :: [J.TextDocumentContentChangeEvent] -> Rope -> Rope
 applyChanges changes rope = L.foldl' (flip applyChange) rope changes
 
 applyChange :: J.TextDocumentContentChangeEvent -> Rope -> Rope
-applyChange (J.TextDocumentContentChangeEvent (InL withRange)) str =
-  changeChars str (Rope.Position (fromIntegral sl) (fromIntegral sc)) (Rope.Position (fromIntegral fl) (fromIntegral fc)) (withRange .! #text)
+applyChange (J.TextDocumentContentChangeEvent (InL (TextDocumentContentChangePartial {..}))) str =
+  changeChars str (Rope.Position (fromIntegral sl) (fromIntegral sc)) (Rope.Position (fromIntegral fl) (fromIntegral fc)) _text
   where
-    J.Range (J.Position sl sc) (J.Position fl fc) = withRange .! #range
-applyChange (J.TextDocumentContentChangeEvent (InR textOnly)) _ = Rope.fromText (textOnly .! #text)
+    J.Range (J.Position sl sc) (J.Position fl fc) = _range
+applyChange (J.TextDocumentContentChangeEvent (InR (TextDocumentContentChangeWholeDocument {..}))) _ = Rope.fromText _text
 
 changeChars :: Rope -> Rope.Position -> Rope.Position -> Text -> Rope
 changeChars str start finish new = mconcat [before', Rope.fromText new, after]

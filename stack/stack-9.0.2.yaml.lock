@@ -16,12 +16,33 @@ packages:
     commit: 3683ab4e052347bc47eb5546361f47bcd8c0fa58
     git: https://github.com/codedownio/myers-diff.git
 - completed:
-    hackage: lsp-types-2.0.0.1@sha256:259442a8d499b3a959cb6b12de331e586c6b37e2c4e1f9d82a542976ea728f41,29290
+    hackage: lsp-types-2.3.0.0@sha256:ca17a686bda5dc7ff04105ca7081dce5a90bcd050c8800a13efd68b7f0901f1c,34215
     pantry-tree:
-      sha256: f8617d8aaa142ecc8ce62e0b2d930669d4969b6b9143368d20b1680874b8077c
-      size: 45522
+      sha256: 0bf22e394dc804c8cee74d19a7f38021cfd48a15082b39a14753c037f2a64288
+      size: 51996
   original:
-    hackage: lsp-types-2.0.0.1
+    hackage: lsp-types-2.3.0.0
+- completed:
+    hackage: hashable-1.4.7.0@sha256:573f3ab242f75465a0d67ce9d84202650a1606575e6dbd6d31ffcf4767a9a379,6629
+    pantry-tree:
+      sha256: 9ec168505c52fa389b7447a1251b302e32537adeecac88c2aa72beed53beb3bd
+      size: 1578
+  original:
+    hackage: hashable-1.4.7.0
+- completed:
+    hackage: lens-5.3.2@sha256:d78e49e957fb789217c7a5a53b2c6355f80ee50e8ec229021d5913f590fe1284,15231
+    pantry-tree:
+      sha256: be507f05122ca71faae535819a33e8d9b6fbc1ef71526372929b61f9e9112e68
+      size: 8350
+  original:
+    hackage: lens-5.3.2
+- completed:
+    hackage: mod-0.2.0.1@sha256:eeb316fef3a8c12f4e83bbeeea748e74d75fca54d4498d574ace92e464adb05a,2409
+    pantry-tree:
+      sha256: d469d7e415c1593f052d3ca647e4085ab759be378d25ca7d2eea0aab0083ce38
+      size: 590
+  original:
+    hackage: mod-0.2.0.1
 - completed:
     hackage: row-types-1.0.1.2@sha256:4d4c7cb95d06a32b28ba977852d52a26b4c1f695ef083a6fd874ab6d79933b64,3071
     pantry-tree:
@@ -29,6 +50,13 @@ packages:
       size: 1060
   original:
     hackage: row-types-1.0.1.2
+- completed:
+    hackage: data-array-byte-0.1.0.1@sha256:a4a1975fde77e289b605c45a3ef78d731d8c1834e4cef311152d910a1e94d98c,1989
+    pantry-tree:
+      sha256: 02f71ea84081a6e8d576e90511f76e476a397b53439ce4f73356e2f8df443a24
+      size: 326
+  original:
+    hackage: data-array-byte-0.1.0.1
 - completed:
     hackage: ipython-kernel-0.11.0.0@sha256:4e1c174037c4088b0113663d17c443fb6612e0f7639d28152c1e237816972550,2676
     pantry-tree:

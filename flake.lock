@@ -208,15 +208,16 @@
         "stackage": "stackage"
       },
       "locked": {
-        "lastModified": 1731291803,
-        "narHash": "sha256-S4tiDcmsWKNmUQm2p1UQVy1got+QQv/NxmC8M+7ZHLc=",
+        "lastModified": 1732884076,
+        "narHash": "sha256-UTxwsKWW9+koQ8UkzwDp7t8JLZ9wjq8Uae+YY086DKY=",
         "owner": "input-output-hk",
         "repo": "haskell.nix",
-        "rev": "c9a0b679f6ebfbb3542e23e188ce6139a842b933",
+        "rev": "7fee6ed25386a600d6bcdded728a7d3d6ad7e15c",
         "type": "github"
       },
       "original": {
         "owner": "input-output-hk",
+        "ref": "angerman/fix-install_name_tool",
         "repo": "haskell.nix",
         "type": "github"
       }

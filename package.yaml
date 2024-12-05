@@ -50,7 +50,6 @@ library:
   - network-uri
   - regex-base
   - regex-pcre-builtin
-  - row-types
   - safe
   - text-rope
   - time
@@ -80,7 +79,6 @@ executables:
     - optparse-applicative
     - process
     - retry
-    - safe
     - unix
     - unliftio-core
 
@@ -103,7 +101,6 @@ tests:
     - haskell-notebook-language-server
     - ihaskell
     - QuickCheck
-    - row-types
     - sandwich
     - sandwich-quickcheck
     - text-rope

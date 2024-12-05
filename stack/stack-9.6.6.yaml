@@ -4,15 +4,6 @@ resolver: lts-22.41
 packages:
 - ../
 
-ghc-options:
-  "$everything": -with-rtsopts=-M12G
-
-# Needed on macOS
-extra-include-dirs:
-- /opt/homebrew/include
-extra-lib-dirs:
-- /opt/homebrew/lib
-
 nix:
   # pure: false
   packages:
@@ -30,3 +21,5 @@ extra-deps:
   subdirs:
   - .
   - ./ghc-parser
+
+- lsp-types-2.3.0.0

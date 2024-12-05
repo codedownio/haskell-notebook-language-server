@@ -20,7 +20,6 @@ import Control.Monad.Logger
 import Control.Monad.Reader
 import qualified Data.List as L
 import qualified Data.Map as M
-import Data.Row.Records
 import Data.String.Interpolate
 import Data.Text as T
 import Data.Text.Rope (Rope)
@@ -64,8 +63,8 @@ fixupDocumentReferences docRegex transformer _curLines (InR markedStrings) = (In
       (MarkedString . InL) <$> (fixupDocumentReferences' appConfigDynFlags docRegex transformer t)
     transformMarkedString (MarkedString (InR thing)) = do
       AppConfig {..} <- asks transformerConfig
-      t' <- fixupDocumentReferences' appConfigDynFlags docRegex transformer (thing .! #value)
-      return $ MarkedString $ InR (thing & update #value t')
+      t' <- fixupDocumentReferences' appConfigDynFlags docRegex transformer (thing ^. value)
+      return $ MarkedString $ InR (thing & set value t')
 
 fixupDocumentReferences' :: forall n. MonadLogger n => DynFlags -> Regex -> HaskellNotebookTransformer -> Text -> n Text
 fixupDocumentReferences' flags docRegex transformer t =

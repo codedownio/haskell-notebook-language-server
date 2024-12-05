@@ -48,6 +48,13 @@ packages:
       size: 792
   original:
     hackage: ipython-kernel-0.11.0.0
+- completed:
+    hackage: lsp-types-2.3.0.0@sha256:ca17a686bda5dc7ff04105ca7081dce5a90bcd050c8800a13efd68b7f0901f1c,34215
+    pantry-tree:
+      sha256: 0bf22e394dc804c8cee74d19a7f38021cfd48a15082b39a14753c037f2a64288
+      size: 51996
+  original:
+    hackage: lsp-types-2.3.0.0
 snapshots:
 - completed:
     sha256: a81fb3877c4f9031e1325eb3935122e608d80715dc16b586eb11ddbff8671ecd

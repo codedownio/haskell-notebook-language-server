@@ -4,7 +4,7 @@
     url = "github:hercules-ci/gitignore.nix";
     inputs.nixpkgs.follows = "nixpkgs";
   };
-  inputs.haskellNix.url = "github:input-output-hk/haskell.nix";
+  inputs.haskellNix.url = "github:input-output-hk/haskell.nix/angerman/fix-install_name_tool";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-24.05";
 
   outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs }@inputs:
@@ -77,8 +77,14 @@
         );
 
       in
-        rec {
-          packages = rec {
+        {
+          devShells = {
+            default = pkgs.mkShell {
+              NIX_PATH = "nixpkgs=${pkgs.path}";
+            };
+          };
+
+          packages = {
             inherit (pkgs) cabal2nix;
 
             all = pkgs.linkFarm "haskell-notebook-language-server-all" allVersions;

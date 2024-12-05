@@ -27,13 +27,13 @@ import Language.LSP.Protocol.Types
 import Language.LSP.Transformer
 
 
-addU = TextDocumentContentChangeEvent $ InL (#range .== (Range (p 0 7) (p 0 7)) .+ #rangeLength .== Nothing .+ #text .== "u")
+addU = TextDocumentContentChangeEvent $ InL $ TextDocumentContentChangePartial (Range (p 0 7) (p 0 7)) Nothing "u"
 
 p :: Int -> Int -> Position
 p l c = Position (fromIntegral l) (fromIntegral c)
 
 
-repackChangeEvent (DT.ChangeEvent range text) = TextDocumentContentChangeEvent $ InL $ #range .== repackRange range .+ #rangeLength .== Nothing .+ #text .== text
+repackChangeEvent (DT.ChangeEvent range text) = TextDocumentContentChangeEvent $ InL $ TextDocumentContentChangePartial (repackRange range) Nothing text
 repackRange (DT.Range (DT.Position l1 c1) (DT.Position l2 c2)) = Range (Position (fromIntegral l1) (fromIntegral c1)) (Position (fromIntegral l2) (fromIntegral c2))
 
 deriving instance Generic PragmaType

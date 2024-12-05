@@ -61,7 +61,7 @@
         exeAttr = "haskell-notebook-language-server:exe:haskell-notebook-language-server";
 
         packageForGitHub = hnls: ghcName: pkgs.runCommand "haskell-notebook-language-server-${hnls.version}" { nativeBuildInputs = [pkgs.binutils]; } ''
-          name="haskell-notebook-language-server-${hnls.version}-${ghcName}-x86_64-linux"
+          name="haskell-notebook-language-server-${hnls.version}-${ghcName}-${system}"
 
           mkdir -p $out
           cp ${hnls}/bin/haskell-notebook-language-server $out/$name

@@ -7,11 +7,24 @@
   inputs.haskellNix.url = "github:input-output-hk/haskell.nix/angerman/fix-install_name_tool";
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-24.05";
 
-  outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs }@inputs:
-    flake-utils.lib.eachDefaultSystem (system:
+  outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs }:
+    flake-utils.lib.eachSystem ["x86_64-linux" "x86_64-darwin" "aarch64-darwin"] (system:
       let
         overlays = [
           haskellNix.overlay
+
+          # Set enableNativeBignum flag on compiler
+          (final: prev: {
+            haskell-nix = let
+              overrideCompiler = name: compiler: (compiler.override {
+                enableNativeBignum = true;
+              });
+            in
+              prev.lib.recursiveUpdate prev.haskell-nix {
+                compiler = prev.lib.mapAttrs overrideCompiler prev.haskell-nix.compiler;
+              };
+          })
+
           (import ./nix/fix-ghc-pkgs-overlay.nix system)
         ];
 

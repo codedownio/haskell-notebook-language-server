@@ -5,4 +5,5 @@ set -eo pipefail
 SCRIPTDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 cd "$SCRIPTDIR/.."
 
-nix build .#gcroots -o .gcroots
+nix build .#packages.aarch64-darwin.gcroots -o .gcroots-aarch64-darwin
+nix build .#packages.x86_64-darwin.gcroots -o .gcroots-x86_64-darwin

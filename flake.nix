@@ -40,9 +40,17 @@
 
         baseModules = {
           packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.dontStrip = false;
-          # packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.postFixup = ''
-          #   echo AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-          # '';
+        } // pkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
+          packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.postInstall = ''
+            ${builtins.readFile ./nix/fix-dylib.sh}
+
+            fix_dylib "$out/bin/haskell-notebook-language-server" libiconv.2.dylib libiconv.dylib
+            fix_dylib "$out/bin/haskell-notebook-language-server" libffi.8.dylib libffi.dylib
+            check_no_nix_refs "$out/bin/haskell-notebook-language-server"
+          '';
+          packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.configureFlags = [
+            ''--ghc-options="-optl-Wl,-dead_strip -optl-Wl,-dead_strip_dylibs -optl-Wl,-force_load,${pkgs.pkgsStatic.libffi}/lib/libffi.a"''
+          ];
         };
 
         flake = compiler-nix-name: src: (pkgs.hixProject compiler-nix-name src [baseModules]).flake {};

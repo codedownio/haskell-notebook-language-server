@@ -38,14 +38,16 @@
 
         pkgs = import nixpkgs { inherit system overlays; inherit (haskellNix) config; };
 
-        flake = compiler-nix-name: src: (pkgs.hixProject compiler-nix-name src [{
-          # configureFlags = [
-          #   ''--ghc-options="-with-rtsopts=-M12G"''
-          # ];
-        }]).flake {};
-
-        flakeStatic = compiler-nix-name: src: (pkgs.pkgsCross.musl64.hixProject compiler-nix-name src [{
+        baseModules = {
           packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.dontStrip = false;
+          # packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.postFixup = ''
+          #   echo AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+          # '';
+        };
+
+        flake = compiler-nix-name: src: (pkgs.hixProject compiler-nix-name src [baseModules]).flake {};
+
+        flakeStatic = compiler-nix-name: src: (pkgs.pkgsCross.musl64.hixProject compiler-nix-name src [baseModules {
           packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.enableShared = false;
           packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.configureFlags = [
             ''--ghc-options="-pgml g++ -optl=-fuse-ld=gold -optl-Wl,--allow-multiple-definition -optl-Wl,--whole-archive -optl-Wl,-Bstatic -optl-Wl,-Bdynamic -optl-Wl,--no-whole-archive"''
@@ -55,7 +57,11 @@
         }]).flake {};
 
         srcWithStackYaml = stackYaml: let
-          baseSrc = gitignore.lib.gitignoreSource ./.;
+          baseSrc = pkgs.lib.cleanSourceWith {
+          src = gitignore.lib.gitignoreSource ./.;
+          filter = name: type:
+            !(baseNameOf name == "flake.nix");
+          };
         in
           pkgs.runCommand "src-with-${stackYaml}" {} ''
             cp -r ${baseSrc} $out
@@ -68,7 +74,7 @@
 
         exeAttr = "haskell-notebook-language-server:exe:haskell-notebook-language-server";
 
-        packageForGitHub = hnls: ghcName: pkgs.runCommand "haskell-notebook-language-server-${hnls.version}" { nativeBuildInputs = [pkgs.binutils]; } ''
+        packageForGitHub = ghcName: hnls: pkgs.runCommand "haskell-notebook-language-server-${hnls.version}" { nativeBuildInputs = [pkgs.binutils]; } ''
           name="haskell-notebook-language-server-${hnls.version}-${ghcName}-${system}"
 
           mkdir -p $out
@@ -88,14 +94,22 @@
             (nameValuePair info.name (flake info.ghc (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
             (nameValuePair "${info.name}-static" (flakeStatic info.ghc (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
           ]) [
-            { name = "ghc810"; ghc = "ghc8107"; stackYaml = "stack/stack-8.10.7.yaml"; }
-            { name = "ghc90"; ghc = "ghc902"; stackYaml = "stack/stack-9.0.2.yaml"; }
+            # { name = "ghc810"; ghc = "ghc8107"; stackYaml = "stack/stack-8.10.7.yaml"; }
+            # { name = "ghc90"; ghc = "ghc902"; stackYaml = "stack/stack-9.0.2.yaml"; }
             { name = "ghc92"; ghc = "ghc928"; stackYaml = "stack/stack-9.2.8.yaml"; }
             { name = "ghc94"; ghc = "ghc948"; stackYaml = "stack/stack-9.4.8.yaml"; }
             { name = "ghc96"; ghc = "ghc966"; stackYaml = "stack/stack-9.6.6.yaml"; }
-            { name = "ghc98"; ghc = "ghc983"; stackYaml = "stack/stack-9.8.2.yaml"; }
+            { name = "ghc98"; ghc = "ghc982"; stackYaml = "stack/stack-9.8.2.yaml"; }
           ]
         );
+
+        lib = pkgs.lib;
+
+        staticVersions = lib.mapAttrsToList (n: v: packageForGitHub (lib.removeSuffix "-static" n) v)
+                                            (pkgs.lib.filterAttrs (n: v: pkgs.lib.hasSuffix "-static" n) allVersions);
+
+        dynamicVersions = lib.mapAttrsToList packageForGitHub
+                                             (pkgs.lib.filterAttrs (n: v: !(pkgs.lib.hasSuffix "-static" n)) allVersions);
 
       in
         {
@@ -105,16 +119,32 @@
             };
           };
 
-          packages = {
+          packages = rec {
             inherit (pkgs) cabal2nix;
 
             all = pkgs.linkFarm "haskell-notebook-language-server-all" allVersions;
 
             githubArtifacts = with pkgs; symlinkJoin {
               name = "haskell-notebook-language-server-artifacts";
-              paths = lib.mapAttrsToList (n: v: packageForGitHub v (lib.removeSuffix "-static" n))
-                                         (pkgs.lib.filterAttrs (n: v: pkgs.lib.hasSuffix "-static" n) allVersions);
+              paths = if pkgs.stdenv.isDarwin then dynamicVersions else staticVersions;
             };
+
+            gcroots = pkgs.writeText "haskell-notebook-language-server-gc-roots" ''
+              ${githubArtifacts}
+              ${pkgs.symlinkJoin {
+                name = "my-project-deps";
+                paths =
+                  allVersions.ghc98.buildInputs
+                  ++ allVersions.ghc98.nativeBuildInputs
+                  ++ allVersions.ghc96.buildInputs
+                  ++ allVersions.ghc96.nativeBuildInputs
+                  ++ allVersions.ghc94.buildInputs
+                  ++ allVersions.ghc94.nativeBuildInputs
+                  ++ allVersions.ghc92.buildInputs
+                  ++ allVersions.ghc92.nativeBuildInputs
+                ;
+              }}
+            '';
 
             nixpkgsPath = pkgs.writeShellScriptBin "nixpkgsPath.sh" "echo -n ${pkgs.path}";
           } // allVersions;

@@ -147,6 +147,15 @@
               paths = if pkgs.stdenv.isDarwin then dynamicVersions else staticVersions;
             };
 
+            grandCombinedGithubArtifacts = pkgs.symlinkJoin {
+              name = "haskell-notebook-language-server-grand-combined-artifacts";
+              paths = [
+                self.packages.x86_64-linux.githubArtifacts
+                self.packages.x86_64-darwin.githubArtifacts
+                self.packages.aarch64-darwin.githubArtifacts
+              ];
+            };
+
             gcroots = pkgs.writeText "haskell-notebook-language-server-gc-roots" ''
               ${githubArtifacts}
               ${pkgs.symlinkJoin {

@@ -10,7 +10,19 @@ cd "$SCRIPTDIR"
 
 cd ..
 
-BUILT=$(nix build .#githubArtifacts --no-link --json | jq -r '.[0].outputs.out')
+for arg do
+    shift
+
+    [ "$arg" = "--grand" ] && GRAND="t" && continue
+done
+
+if [[ -n "$GRAND" ]]; then
+  BUILT=$(nix build .#grandCombinedGithubArtifacts \
+    --builders-use-substitutes --no-link --json | jq -r '.[0].outputs.out')
+else
+  BUILT=$(nix build .#githubArtifacts --no-link --json | jq -r '.[0].outputs.out')
+fi
+
 echo "Built: $BUILT"
 ls "$BUILT"
 
@@ -27,12 +39,13 @@ echo "Saw artifacts:\n$ARTIFACTS"
 # echo "FIRST_EXECUTABLE: $FIRST_EXECUTABLE"
 # $FIRST_EXECUTABLE --help > /dev/null 2>&1
 
+TAG=v"$VERSION"
+
 echo ""
 echo "This will tag the current commit as $TAG and upload the above aliases to Git."
 echo ""
 confirm_execution
 
-TAG=v"$VERSION"
 echo "Tagging at $TAG"
 git tag "$TAG" -f
 echo ""

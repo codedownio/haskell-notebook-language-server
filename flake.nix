@@ -48,6 +48,8 @@
             fix_dylib "$out/bin/haskell-notebook-language-server" libffi.8.dylib libffi.dylib
             fix_dylib "$out/bin/haskell-notebook-language-server" libncursesw.6.dylib libncurses.dylib
             check_no_nix_refs "$out/bin/haskell-notebook-language-server"
+
+            strip "$out/bin/haskell-notebook-language-server"
           '';
           packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.configureFlags = let
             # Nixpkgs can't currently give us a cross-compiled x86_64-darwin libffi.a when we're building on aarch64-darwin.

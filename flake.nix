@@ -5,7 +5,7 @@
     inputs.nixpkgs.follows = "nixpkgs";
   };
   inputs.haskellNix.url = "github:input-output-hk/haskell.nix/master";
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-24.11";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-25.05";
 
   outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs }:
     flake-utils.lib.eachSystem ["x86_64-linux" "x86_64-darwin" "aarch64-darwin"] (system:

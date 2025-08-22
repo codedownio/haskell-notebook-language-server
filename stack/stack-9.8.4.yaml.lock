@@ -31,15 +31,21 @@ packages:
     git: https://github.com/codedownio/IHaskell.git
     subdir: ./ghc-parser
 - completed:
-    hackage: lsp-types-2.3.0.0@sha256:ca17a686bda5dc7ff04105ca7081dce5a90bcd050c8800a13efd68b7f0901f1c,34215
+    commit: f4ada7baa5b76b11bfb7ac991cfaa846339b3373
+    git: https://github.com/codedownio/IHaskell.git
+    name: ipython-kernel
     pantry-tree:
-      sha256: 0bf22e394dc804c8cee74d19a7f38021cfd48a15082b39a14753c037f2a64288
-      size: 51996
+      sha256: cc08767de2e06f8c1562be758ce5f1945667e3f3f9fd0508cc3295ffc70e6f8b
+      size: 792
+    subdir: ./ipython-kernel
+    version: 0.11.0.0
   original:
-    hackage: lsp-types-2.3.0.0
+    commit: f4ada7baa5b76b11bfb7ac991cfaa846339b3373
+    git: https://github.com/codedownio/IHaskell.git
+    subdir: ./ipython-kernel
 snapshots:
 - completed:
-    sha256: 1e32b51d9082fdf6f3bd92accc9dfffd4ddaf406404427fb10bf76d2bc03cbbb
-    size: 720263
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/22/41.yaml
-  original: lts-22.41
+    sha256: 069c8189232279d04bd107557d3a62132c04ae5ce3c710649e6b40f67f10b9d5
+    size: 684285
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/23/27.yaml
+  original: lts-23.27

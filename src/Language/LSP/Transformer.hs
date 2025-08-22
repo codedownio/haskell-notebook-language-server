@@ -24,7 +24,7 @@ import Data.Diff.Myers
 import qualified Data.Diff.Types as DT
 import Data.Kind
 import qualified Data.List as L
-import Data.Text
+import Data.Text (Text)
 import qualified Data.Text as T
 import Data.Text.Rope (Rope)
 import qualified Data.Text.Rope as Rope

@@ -1,5 +1,5 @@
 
-resolver: lts-20.26
+resolver: nightly-2025-07-23
 
 packages:
 - ../
@@ -16,13 +16,6 @@ nix:
   - "nixpkgs=/home/tom/tools/nixpkgs"
 
 extra-deps:
-- git: https://github.com/codedownio/myers-diff.git
-  commit: 3683ab4e052347bc47eb5546361f47bcd8c0fa58
-
-- lsp-types-2.3.0.0
-- row-types-1.0.1.2
-- mod-0.2.0.1
-
 - git: https://github.com/codedownio/IHaskell.git
   # codedown-aug-20-2025 branch
   commit: f4ada7baa5b76b11bfb7ac991cfaa846339b3373
@@ -30,3 +23,5 @@ extra-deps:
   - .
   - ./ghc-parser
   - ./ipython-kernel
+
+- cryptonite-0.30@sha256:12c85dea7be63e5ad90bcb487eb3846bf3c413347f94336fa1dede7b28f9936a,18301

@@ -17,7 +17,9 @@ nix:
 
 extra-deps:
 - git: https://github.com/codedownio/IHaskell.git
-  commit: 7df14126586fd32f841fa1a99ce5ec5ec7a20fa4
+  # codedown-aug-20-2025 branch
+  commit: f4ada7baa5b76b11bfb7ac991cfaa846339b3373
   subdirs:
   - .
   - ./ghc-parser
+  - ./ipython-kernel

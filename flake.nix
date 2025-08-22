@@ -21,7 +21,9 @@
                 "ghc928"
                 "ghc948"
                 "ghc966"
-                "ghc982"
+                "ghc984"
+                "ghc9102"
+                "ghc9122"
               ];
 
               overrideCompiler = name: compiler: (compiler.override {
@@ -67,14 +69,17 @@
 
         flake = compiler-nix-name: src: (pkgs.hixProject compiler-nix-name src [baseModules]).flake {};
 
-        flakeStatic = compiler-nix-name: src: (pkgs.pkgsCross.musl64.hixProject compiler-nix-name src [baseModules {
-          packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.enableShared = false;
-          packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.configureFlags = [
-            ''--ghc-options="-pgml g++ -optl=-fuse-ld=gold -optl-Wl,--allow-multiple-definition -optl-Wl,--whole-archive -optl-Wl,-Bstatic -optl-Wl,-Bdynamic -optl-Wl,--no-whole-archive"''
-          ];
-          packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.libs = [];
-          packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.build-tools = [pkgs.pkgsCross.musl64.gcc];
-        }]).flake {};
+        flakeStatic = compiler-nix-name: src: extraModules: let
+          staticModules = {
+            packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.enableShared = false;
+            packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.configureFlags = [
+              ''--ghc-options="-pgml g++ -optl=-fuse-ld=gold -optl-Wl,--allow-multiple-definition -optl-Wl,--whole-archive -optl-Wl,-Bstatic -optl-Wl,-Bdynamic -optl-Wl,--no-whole-archive"''
+            ];
+            packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.libs = [];
+            packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.build-tools = [pkgs.pkgsCross.musl64.gcc];
+          };
+        in
+          (pkgs.pkgsCross.musl64.hixProject compiler-nix-name src [baseModules] ++ extraModules ++ [staticModules]).flake {};
 
         srcWithStackYaml = stackYaml: let
           baseSrc = pkgs.lib.cleanSourceWith {
@@ -109,17 +114,26 @@
           tar -czvf $name.tar.gz $name
         '';
 
+        osStringModules = {
+          # Needed since GHC 9.10
+          packages.unix.components.library.configureFlags = [''-f os-string''];
+          packages.Win32.components.library.configureFlags = [''-f os-string''];
+          packages.directory.components.library.configureFlags = [''-f os-string''];
+        };
+
         allVersions = with pkgs.lib; listToAttrs (
           concatMap (info: [
             (nameValuePair info.name (flake info.ghc (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
-            (nameValuePair "${info.name}-static" (flakeStatic info.ghc (srcWithStackYaml info.stackYaml)).packages.${exeAttr})
+            (nameValuePair "${info.name}-static" (flakeStatic info.ghc (srcWithStackYaml info.stackYaml) info.extraModules).packages.${exeAttr})
           ]) [
             # { name = "ghc810"; ghc = "ghc8107"; stackYaml = "stack/stack-8.10.7.yaml"; }
             # { name = "ghc90"; ghc = "ghc902"; stackYaml = "stack/stack-9.0.2.yaml"; }
-            { name = "ghc92"; ghc = "ghc928"; stackYaml = "stack/stack-9.2.8.yaml"; }
-            { name = "ghc94"; ghc = "ghc948"; stackYaml = "stack/stack-9.4.8.yaml"; }
-            { name = "ghc96"; ghc = "ghc966"; stackYaml = "stack/stack-9.6.6.yaml"; }
-            { name = "ghc98"; ghc = "ghc982"; stackYaml = "stack/stack-9.8.2.yaml"; }
+            { name = "ghc92"; ghc = "ghc928"; stackYaml = "stack/stack-9.2.8.yaml"; extraModules = []; }
+            { name = "ghc94"; ghc = "ghc948"; stackYaml = "stack/stack-9.4.8.yaml"; extraModules = []; }
+            { name = "ghc96"; ghc = "ghc966"; stackYaml = "stack/stack-9.6.6.yaml"; extraModules = []; }
+            { name = "ghc98"; ghc = "ghc984"; stackYaml = "stack/stack-9.8.4.yaml"; extraModules = []; }
+            { name = "ghc910"; ghc = "ghc9102"; stackYaml = "stack/stack-9.10.2.yaml"; extraModules = [osStringModules]; }
+            { name = "ghc912"; ghc = "ghc9122"; stackYaml = "stack/stack-9.12.2.yaml"; extraModules = [osStringModules]; }
           ]
         );
 
@@ -158,19 +172,18 @@
               ];
             };
 
+            inherit (allVersions) ghc92 ghc94 ghc96 ghc98 ghc910 ghc912;
+
             gcroots = pkgs.writeText "haskell-notebook-language-server-gc-roots" ''
               ${githubArtifacts}
               ${pkgs.symlinkJoin {
                 name = "my-project-deps";
                 paths =
-                  allVersions.ghc98.buildInputs
-                  ++ allVersions.ghc98.nativeBuildInputs
-                  ++ allVersions.ghc96.buildInputs
-                  ++ allVersions.ghc96.nativeBuildInputs
-                  ++ allVersions.ghc94.buildInputs
-                  ++ allVersions.ghc94.nativeBuildInputs
-                  ++ allVersions.ghc92.buildInputs
-                  ++ allVersions.ghc92.nativeBuildInputs
+                  allVersions.ghc910.buildInputs ++ allVersions.ghc910.nativeBuildInputs
+                  ++ allVersions.ghc98.buildInputs ++ allVersions.ghc98.nativeBuildInputs
+                  ++ allVersions.ghc96.buildInputs ++ allVersions.ghc96.nativeBuildInputs
+                  ++ allVersions.ghc94.buildInputs ++ allVersions.ghc94.nativeBuildInputs
+                  ++ allVersions.ghc92.buildInputs ++ allVersions.ghc92.nativeBuildInputs
                 ;
               }}
             '';

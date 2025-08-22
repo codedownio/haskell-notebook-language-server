@@ -21,7 +21,8 @@ import Control.Monad.Reader
 import qualified Data.List as L
 import qualified Data.Map as M
 import Data.String.Interpolate
-import Data.Text as T
+import Data.Text (Text)
+import qualified Data.Text as T
 import Data.Text.Rope (Rope)
 import GHC (DynFlags)
 import Language.LSP.Notebook

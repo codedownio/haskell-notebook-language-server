@@ -1,0 +1,36 @@
+diff --git a/Setup.hs b/Setup.hs
+index 0995ee3f8f..8b2eeb2864 100644
+--- a/Setup.hs
++++ b/Setup.hs
+@@ -5,11 +5,12 @@ module Main where
+
+ import Distribution.Simple
+ import Distribution.Simple.BuildPaths
+-import Distribution.Types.LocalBuildInfo
+-import Distribution.Verbosity
+ import Distribution.Simple.Program
+-import Distribution.Simple.Utils
+ import Distribution.Simple.Setup
++import Distribution.Simple.Utils
++import Distribution.Types.LocalBuildInfo
++import Distribution.Utils.Path (getSymbolicPath)
++import Distribution.Verbosity
+
+ import System.IO
+ import System.Directory
+@@ -32,12 +33,12 @@ main = defaultMainWithHooks ghcHooks
+ ghcAutogen :: Verbosity -> LocalBuildInfo -> IO ()
+ ghcAutogen verbosity lbi@LocalBuildInfo{..} = do
+   -- Get compiler/ root directory from the cabal file
+-  let Just compilerRoot = takeDirectory <$> pkgDescrFile
++  let Just compilerRoot = (takeDirectory . getSymbolicPath) <$> pkgDescrFile
+
+   let platformHostFile = "GHC/Platform/Host.hs"
+-      platformHostPath = autogenPackageModulesDir lbi </> platformHostFile
++      platformHostPath = getSymbolicPath (autogenPackageModulesDir lbi) </> platformHostFile
+       ghcVersionFile = "GHC/Version.hs"
+-      ghcVersionPath = autogenPackageModulesDir lbi </> ghcVersionFile
++      ghcVersionPath = getSymbolicPath (autogenPackageModulesDir lbi) </> ghcVersionFile
+
+   -- Get compiler settings
+   settings <- lookupEnv "HADRIAN_SETTINGS" >>= \case

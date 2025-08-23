@@ -1,0 +1,55 @@
+diff --git a/Setup.hs b/Setup.hs
+index c7c0850..a5057c5 100644
+--- a/Setup.hs
++++ b/Setup.hs
+@@ -3,14 +3,15 @@ module Main where
+ 
+ import Distribution.Simple
+ import Distribution.Simple.BuildPaths
++import Distribution.Simple.Program
++import Distribution.Simple.Setup
++import Distribution.Simple.Utils
+ import Distribution.Types.ComponentLocalBuildInfo
+ import Distribution.Types.ComponentName (ComponentName(CLibName))
+-import Distribution.Types.LocalBuildInfo
+ import Distribution.Types.LibraryName (LibraryName(LMainLibName))
++import Distribution.Types.LocalBuildInfo
++import Distribution.Utils.Path (getSymbolicPath)
+ import Distribution.Verbosity
+-import Distribution.Simple.Program
+-import Distribution.Simple.Utils
+-import Distribution.Simple.Setup
+ 
+ import System.IO
+ import System.Process
+@@ -57,7 +58,7 @@ primopIncls =
+ ghcAutogen :: Verbosity -> LocalBuildInfo -> IO ()
+ ghcAutogen verbosity lbi@LocalBuildInfo{..} = do
+   -- Get compiler/ root directory from the cabal file
+-  let Just compilerRoot = takeDirectory <$> pkgDescrFile
++  let Just compilerRoot = (takeDirectory . getSymbolicPath) <$> pkgDescrFile
+ 
+   -- Require the necessary programs
+   (gcc   ,withPrograms) <- requireProgram normal gccProgram withPrograms
+@@ -77,10 +78,10 @@ ghcAutogen verbosity lbi@LocalBuildInfo{..} = do
+   -- Call genprimopcode to generate *.hs-incl
+   forM_ primopIncls $ \(file,command) -> do
+     contents <- readProcess "genprimopcode" [command] primopsStr
+-    rewriteFileEx verbosity (buildDir </> file) contents
++    rewriteFileEx verbosity (getSymbolicPath (buildDir lbi) </> file) contents
+ 
+   -- Write GHC.Platform.Constants
+-  let platformConstantsPath = autogenPackageModulesDir lbi </> "GHC/Platform/Constants.hs"
++  let platformConstantsPath = getSymbolicPath (autogenPackageModulesDir lbi) </> "GHC/Platform/Constants.hs"
+       targetOS = case lookup "target os" settings of
+         Nothing -> error "no target os in settings"
+         Just os -> os
+@@ -95,7 +96,7 @@ ghcAutogen verbosity lbi@LocalBuildInfo{..} = do
+                          _ -> error "Couldn't find unique cabal library when building ghc"
+ 
+   -- Write GHC.Settings.Config
+-      configHsPath = autogenPackageModulesDir lbi </> "GHC/Settings/Config.hs"
++      configHsPath = getSymbolicPath (autogenPackageModulesDir lbi) </> "GHC/Settings/Config.hs"
+       configHs = generateConfigHs cProjectUnitId settings
+   createDirectoryIfMissingVerbose verbosity True (takeDirectory configHsPath)
+   rewriteFileEx verbosity configHsPath configHs

@@ -1,11 +1,11 @@
 
-resolver: nightly-2025-07-23
+resolver: nightly-2025-08-22
 
 packages:
 - ../
 
 nix:
-  # pure: false
+  pure: false
   packages:
   - zlib
   - libsodium # Needed by zeromq

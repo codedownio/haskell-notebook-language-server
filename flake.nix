@@ -5,7 +5,8 @@
     inputs.nixpkgs.follows = "nixpkgs";
   };
   inputs.haskellNix.url = "github:input-output-hk/haskell.nix/master";
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-25.05";
+  inputs.nixpkgs.follows = "haskellNix/nixpkgs";
+  # inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-25.05";
 
   outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs }:
     flake-utils.lib.eachSystem ["x86_64-linux" "x86_64-darwin" "aarch64-darwin"] (system:
@@ -124,19 +125,19 @@
         };
 
         ghcBootFixModules = {
-          # Fix ghc-boot Setup.hs for Cabal SymbolicPath compatibility
-          packages.ghc-boot.prePatch = ''
-            mv Setup.hs old.hs
-            cp -L old.hs Setup.hs
-          '';
-          packages.ghc-boot.patches = [ ./nix/ghc-boot-setup-fix.patch ];
+          # # Fix ghc-boot Setup.hs for Cabal SymbolicPath compatibility
+          # packages.ghc-boot.prePatch = ''
+          #   mv Setup.hs old.hs
+          #   cp -L old.hs Setup.hs
+          # '';
+          # packages.ghc-boot.patches = [ ./nix/ghc-boot-setup-fix.patch ];
 
-          # Fix ghc Setup.hs for Cabal SymbolicPath compatibility
-          packages.ghc.prePatch = ''
-            mv Setup.hs old.hs
-            cp -L old.hs Setup.hs
-          '';
-          packages.ghc.patches = [ ./nix/ghc-setup-fix.patch ];
+          # # Fix ghc Setup.hs for Cabal SymbolicPath compatibility
+          # packages.ghc.prePatch = ''
+          #   mv Setup.hs old.hs
+          #   cp -L old.hs Setup.hs
+          # '';
+          # packages.ghc.patches = [ ./nix/ghc-setup-fix.patch ];
         };
 
         allVersions = with pkgs.lib; listToAttrs (

@@ -52,7 +52,7 @@ packages:
     hackage: cryptonite-0.30@sha256:12c85dea7be63e5ad90bcb487eb3846bf3c413347f94336fa1dede7b28f9936a,18301
 snapshots:
 - completed:
-    sha256: 8caf77d89de468341cf66de5557c527a00bf1f7733eae21cec4935880fe6221a
-    size: 669892
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2025/7/23.yaml
-  original: nightly-2025-07-23
+    sha256: 88787af584e2f653c067100fb7e2c4e9e796f59cad6e9eb4a41ba95815f7d1ab
+    size: 687336
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2025/8/22.yaml
+  original: nightly-2025-08-22

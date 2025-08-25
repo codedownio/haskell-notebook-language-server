@@ -1,19 +1,12 @@
 
-resolver: lts-24.1
+resolver: lts-24.6
 
 packages:
 - ../
 
 nix:
-  # pure: false
-  packages:
-  - zlib
-  - libsodium # Needed by zeromq
-  - zeromq
-  - pkg-config
-  - pcre
-  path:
-  - "nixpkgs=/home/tom/tools/nixpkgs"
+  enable: true
+  pure: false
 
 extra-deps:
 - git: https://github.com/codedownio/IHaskell.git

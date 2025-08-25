@@ -45,7 +45,7 @@ packages:
     subdir: ./ipython-kernel
 snapshots:
 - completed:
-    sha256: a033deeac115f963c6a976aeb8407595a196ac8cff629847488ebf504af5bbaf
-    size: 724470
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/24/1.yaml
-  original: lts-24.1
+    sha256: 473840099b95facf73ec72dcafe53a2487bfadeceb03a981a19e16469503a342
+    size: 726266
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/24/6.yaml
+  original: lts-24.6

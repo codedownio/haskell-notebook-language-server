@@ -5,15 +5,8 @@ packages:
 - ../
 
 nix:
-  # pure: false
-  packages:
-  - zlib
-  - libsodium # Needed by zeromq
-  - zeromq
-  - pkg-config
-  - pcre
-  path:
-  - "nixpkgs=/home/tom/tools/nixpkgs"
+  enable: true
+  pure: false
 
 extra-deps:
 - git: https://github.com/codedownio/myers-diff.git

@@ -21,7 +21,7 @@
                 "ghc902"
                 "ghc928"
                 "ghc948"
-                "ghc966"
+                "ghc967"
                 "ghc984"
                 "ghc9102"
                 "ghc9122"
@@ -149,7 +149,7 @@
             # { name = "ghc90"; ghc = "ghc902"; stackYaml = "stack/stack-9.0.2.yaml"; }
             { name = "ghc92"; ghc = "ghc928"; stackYaml = "stack/stack-9.2.8.yaml"; extraModules = []; }
             { name = "ghc94"; ghc = "ghc948"; stackYaml = "stack/stack-9.4.8.yaml"; extraModules = []; }
-            { name = "ghc96"; ghc = "ghc966"; stackYaml = "stack/stack-9.6.6.yaml"; extraModules = []; }
+            { name = "ghc96"; ghc = "ghc967"; stackYaml = "stack/stack-9.6.7.yaml"; extraModules = []; }
             { name = "ghc98"; ghc = "ghc984"; stackYaml = "stack/stack-9.8.4.yaml"; extraModules = []; }
             { name = "ghc910"; ghc = "ghc9102"; stackYaml = "stack/stack-9.10.2.yaml"; extraModules = [osStringModules]; }
             { name = "ghc912"; ghc = "ghc9122"; stackYaml = "stack/stack-9.12.2.yaml"; extraModules = [osStringModules ghcBootFixModules]; }
@@ -169,6 +169,14 @@
           devShells = {
             default = pkgs.mkShell {
               NIX_PATH = "nixpkgs=${pkgs.path}";
+
+              buildInputs = with pkgs; [
+                libsodium # Needed by zeromq
+                pcre
+                pkg-config
+                zeromq
+                zlib
+              ];
             };
           };
 

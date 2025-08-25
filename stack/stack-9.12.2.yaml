@@ -5,15 +5,8 @@ packages:
 - ../
 
 nix:
+  enable: true
   pure: false
-  packages:
-  - zlib
-  - libsodium # Needed by zeromq
-  - zeromq
-  - pkg-config
-  - pcre
-  path:
-  - "nixpkgs=/home/tom/tools/nixpkgs"
 
 extra-deps:
 - git: https://github.com/codedownio/IHaskell.git

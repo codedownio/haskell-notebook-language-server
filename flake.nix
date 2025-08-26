@@ -4,10 +4,14 @@
     url = "github:hercules-ci/gitignore.nix";
     inputs.nixpkgs.follows = "nixpkgs";
   };
+
   inputs.haskellNix.url = "github:input-output-hk/haskell.nix/master";
   inputs.nixpkgs.follows = "haskellNix/nixpkgs";
 
-  outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs }:
+  inputs.haskellNixOld.url = "github:input-output-hk/haskell.nix/7fee6ed25386a600d6bcdded728a7d3d6ad7e15c";
+  inputs.nixpkgsOld.follows = "haskellNixOld/nixpkgs";
+
+  outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs, haskellNixOld, nixpkgsOld }:
     flake-utils.lib.eachSystem ["x86_64-linux" "x86_64-darwin" "aarch64-darwin"] (system:
       let
         overlays = [
@@ -17,44 +21,47 @@
         ];
 
         pkgs = import nixpkgs { inherit system overlays; inherit (haskellNix) config; };
+        pkgsOld = import nixpkgsOld { inherit system overlays; inherit (haskellNixOld) config; };
+
+        inherit (pkgs) lib;
+        isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
 
         baseModules = {
           packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.dontStrip = false;
-        } // pkgs.lib.optionalAttrs pkgs.stdenv.isDarwin (import ./nix/darwin-modules.nix { inherit pkgs; });
+        } // pkgs.lib.optionalAttrs isDarwin (import ./nix/darwin-modules.nix { inherit pkgs; });
 
         flake = compiler-nix-name: src: extraModules:
           (pkgs.hixProject compiler-nix-name src ([baseModules] ++ extraModules)).flake {};
 
+        flakeOld = compiler-nix-name: src: extraModules:
+          (pkgsOld.hixProject compiler-nix-name src ([baseModules] ++ extraModules)).flake {};
+
         flakeStatic = compiler-nix-name: src: extraModules:
           (pkgs.pkgsCross.musl64.hixProject compiler-nix-name src ([baseModules] ++ extraModules ++ [(import ./nix/static-modules.nix { inherit pkgs; })])).flake {};
 
-        exeAttr = "haskell-notebook-language-server:exe:haskell-notebook-language-server";
-
         utils = import ./nix/utils.nix { inherit pkgs gitignore system; };
 
-        allVersions = with pkgs.lib; listToAttrs (
-          concatMap (info: [
-            (nameValuePair info.name (flake info.ghc (utils.srcWithStackYaml info.stackYaml) info.extraModules).packages.${exeAttr})
-            (nameValuePair "${info.name}-static" (flakeStatic info.ghc (utils.srcWithStackYaml info.stackYaml) info.extraModules).packages.${exeAttr})
-          ]) [
-            # { name = "ghc810"; ghc = "ghc8107"; stackYaml = "stack/stack-8.10.7.yaml"; }
-            # { name = "ghc90"; ghc = "ghc902"; stackYaml = "stack/stack-9.0.2.yaml"; }
-            { name = "ghc92"; ghc = "ghc928"; stackYaml = "stack/stack-9.2.8.yaml"; extraModules = []; }
-            { name = "ghc94"; ghc = "ghc948"; stackYaml = "stack/stack-9.4.8.yaml"; extraModules = []; }
-            { name = "ghc96"; ghc = "ghc967"; stackYaml = "stack/stack-9.6.7.yaml"; extraModules = []; }
-            { name = "ghc98"; ghc = "ghc984"; stackYaml = "stack/stack-9.8.4.yaml"; extraModules = []; }
-            { name = "ghc910"; ghc = "ghc9102"; stackYaml = "stack/stack-9.10.2.yaml"; extraModules = [(import ./nix/os-string-module.nix)]; }
-            { name = "ghc912"; ghc = "ghc9122"; stackYaml = "stack/stack-9.12.2.yaml"; extraModules = [(import ./nix/os-string-module.nix)]; }
-          ]
-        );
+        allVersions = lib.mapAttrs (_: v: v.packages."haskell-notebook-language-server:exe:haskell-notebook-language-server") {
+          ghc92 = flake "ghc928" (utils.src "stack/stack-9.2.8.yaml") [];
+          ghc94 = flake "ghc948" (utils.src "stack/stack-9.4.8.yaml") [];
+          ghc96 = flake "ghc967" (utils.src "stack/stack-9.6.7.yaml") [];
+          ghc98 = flake "ghc984" (utils.src "stack/stack-9.8.4.yaml") [];
+          ghc910 = flake "ghc9102" (utils.src "stack/stack-9.10.2.yaml") [(import ./nix/os-string-module.nix)];
+          ghc912 = flake "ghc9122" (utils.src "stack/stack-9.12.2.yaml") [(import ./nix/os-string-module.nix)];
 
-        lib = pkgs.lib;
+          ghc92-static = flakeStatic "ghc928" (utils.src "stack/stack-9.2.8.yaml") [];
+          ghc94-static = flakeStatic "ghc948" (utils.src "stack/stack-9.4.8.yaml") [];
+          ghc96-static = flakeStatic "ghc967" (utils.src "stack/stack-9.6.7.yaml") [];
+          ghc98-static = flakeStatic "ghc984" (utils.src "stack/stack-9.8.4.yaml") [];
+          ghc910-static = flakeStatic "ghc9102" (utils.src "stack/stack-9.10.2.yaml") [(import ./nix/os-string-module.nix)];
+          ghc912-static = flakeStatic "ghc9122" (utils.src "stack/stack-9.12.2.yaml") [(import ./nix/os-string-module.nix)];
+        };
 
         staticVersions = lib.mapAttrsToList (n: v: utils.packageForGitHub (lib.removeSuffix "-static" n) v)
-                                            (pkgs.lib.filterAttrs (n: v: pkgs.lib.hasSuffix "-static" n) allVersions);
+                                            (lib.filterAttrs (n: v: lib.hasSuffix "-static" n) allVersions);
 
         dynamicVersions = lib.mapAttrsToList utils.packageForGitHub
-                                             (pkgs.lib.filterAttrs (n: v: !(pkgs.lib.hasSuffix "-static" n)) allVersions);
+                                             (lib.filterAttrs (n: v: !(lib.hasSuffix "-static" n)) allVersions);
 
       in
         {
@@ -72,7 +79,7 @@
             };
           };
 
-          packages = rec {
+          packages = allVersions // rec {
             inherit (pkgs) cabal2nix;
 
             all = pkgs.linkFarm "haskell-notebook-language-server-all" allVersions;
@@ -90,8 +97,6 @@
                 self.packages.aarch64-darwin.githubArtifacts
               ];
             };
-
-            inherit (allVersions) ghc92 ghc94 ghc96 ghc98 ghc910 ghc912;
 
             gcroots = pkgs.writeText "haskell-notebook-language-server-gc-roots" ''
               ${githubArtifacts}

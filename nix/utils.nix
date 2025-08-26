@@ -1,7 +1,7 @@
 { pkgs, gitignore, system }:
 
 {
-  srcWithStackYaml = stackYaml: let
+  src = stackYaml: let
     baseSrc = pkgs.lib.cleanSourceWith {
       src = gitignore.lib.gitignoreSource ../.;
       filter = name: type:

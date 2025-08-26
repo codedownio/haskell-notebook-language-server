@@ -42,8 +42,8 @@
         utils = import ./nix/utils.nix { inherit pkgs gitignore system; };
 
         allVersions = lib.mapAttrs (_: v: v.packages."haskell-notebook-language-server:exe:haskell-notebook-language-server") {
-          ghc92 = flake "ghc928" (utils.src "stack/stack-9.2.8.yaml") [];
-          ghc94 = flake "ghc948" (utils.src "stack/stack-9.4.8.yaml") [];
+          ghc92 = (if isDarwin then flakeOld else flake) "ghc928" (utils.src "stack/stack-9.2.8.yaml") [];
+          ghc94 = (if isDarwin then flakeOld else flake) "ghc948" (utils.src "stack/stack-9.4.8.yaml") [];
           ghc96 = flake "ghc967" (utils.src "stack/stack-9.6.7.yaml") [];
           ghc98 = flake "ghc984" (utils.src "stack/stack-9.8.4.yaml") [];
           ghc910 = flake "ghc9102" (utils.src "stack/stack-9.10.2.yaml") [(import ./nix/os-string-module.nix)];

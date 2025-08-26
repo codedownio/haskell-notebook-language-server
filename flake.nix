@@ -6,36 +6,13 @@
   };
   inputs.haskellNix.url = "github:input-output-hk/haskell.nix/master";
   inputs.nixpkgs.follows = "haskellNix/nixpkgs";
-  # inputs.nixpkgs.url = "github:NixOS/nixpkgs/release-25.05";
 
   outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs }:
     flake-utils.lib.eachSystem ["x86_64-linux" "x86_64-darwin" "aarch64-darwin"] (system:
       let
         overlays = [
           haskellNix.overlay
-
-          # Set enableNativeBignum flag on compiler
-          (final: prev: {
-            haskell-nix = let
-              shouldPatch = name: compiler: builtins.elem name [
-                "ghc902"
-                "ghc928"
-                "ghc948"
-                "ghc967"
-                "ghc984"
-                "ghc9102"
-                "ghc9122"
-              ];
-
-              overrideCompiler = name: compiler: (compiler.override {
-                enableNativeBignum = true;
-              });
-            in
-              prev.lib.recursiveUpdate prev.haskell-nix {
-                compiler = prev.lib.mapAttrs overrideCompiler (prev.lib.filterAttrs shouldPatch prev.haskell-nix.compiler);
-              };
-          })
-
+          (import ./nix/enable-native-bignum-overlay.nix)
           (import ./nix/fix-ghc-pkgs-overlay.nix system)
         ];
 
@@ -43,107 +20,22 @@
 
         baseModules = {
           packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.dontStrip = false;
-        } // pkgs.lib.optionalAttrs pkgs.stdenv.isDarwin {
-          packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.postInstall = ''
-            ${builtins.readFile ./nix/fix-dylib.sh}
-
-            fix_dylib "$out/bin/haskell-notebook-language-server" libiconv.2.dylib libiconv.dylib
-            fix_dylib "$out/bin/haskell-notebook-language-server" libffi.8.dylib libffi.dylib
-            fix_dylib "$out/bin/haskell-notebook-language-server" libncursesw.6.dylib libncurses.dylib
-            check_no_nix_refs "$out/bin/haskell-notebook-language-server"
-
-            strip "$out/bin/haskell-notebook-language-server"
-          '';
-          packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.configureFlags = let
-            # Nixpkgs can't currently give us a cross-compiled x86_64-darwin libffi.a when we're building on aarch64-darwin.
-            # So, we bundle one in the repo.
-            # Tried to also detect if we're on aarch64-darwin, so it can work normally if the build machine is x86_64-darwin,
-            # but that is deliberately difficult here (builtins.currentSystem is considered an "impure builtin".)
-            libffi = if pkgs.stdenv.targetPlatform.system == "x86_64-darwin"
-                     then "${./assets/libffi.a}"
-                     else "${pkgs.pkgsStatic.libffi}/lib/libffi.a";
-            in
-              [
-                ''--ghc-options="-optl-Wl,-dead_strip -optl-Wl,-dead_strip_dylibs -optl-Wl,-force_load,${libffi}"''
-              ];
-        };
+        } // pkgs.lib.optionalAttrs pkgs.stdenv.isDarwin (import ./nix/darwin-modules.nix { inherit pkgs; });
 
         flake = compiler-nix-name: src: extraModules:
           (pkgs.hixProject compiler-nix-name src ([baseModules] ++ extraModules)).flake {};
 
-        flakeStatic = compiler-nix-name: src: extraModules: let
-          staticModules = {
-            packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.enableShared = false;
-            packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.configureFlags = [
-              ''--ghc-options="-pgml g++ -optl=-fuse-ld=gold -optl-Wl,--allow-multiple-definition -optl-Wl,--whole-archive -optl-Wl,-Bstatic -optl-Wl,-Bdynamic -optl-Wl,--no-whole-archive"''
-            ];
-            packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.libs = [];
-            packages.haskell-notebook-language-server.components.exes.haskell-notebook-language-server.build-tools = [pkgs.pkgsCross.musl64.gcc];
-          };
-        in
-          (pkgs.pkgsCross.musl64.hixProject compiler-nix-name src ([baseModules] ++ extraModules ++ [staticModules])).flake {};
-
-        srcWithStackYaml = stackYaml: let
-          baseSrc = pkgs.lib.cleanSourceWith {
-          src = gitignore.lib.gitignoreSource ./.;
-          filter = name: type:
-            !(baseNameOf name == "flake.nix");
-          };
-        in
-          pkgs.runCommand "src-with-${stackYaml}" {} ''
-            cp -r ${baseSrc} $out
-            chmod u+w $out
-            cd $out
-            cp ${stackYaml} stack.yaml
-            cp ${stackYaml}.lock stack.yaml.lock
-            sed -i 's/\.\././g' stack.yaml
-          '';
+        flakeStatic = compiler-nix-name: src: extraModules:
+          (pkgs.pkgsCross.musl64.hixProject compiler-nix-name src ([baseModules] ++ extraModules ++ [(import ./nix/static-modules.nix { inherit pkgs; })])).flake {};
 
         exeAttr = "haskell-notebook-language-server:exe:haskell-notebook-language-server";
 
-        packageForGitHub = ghcName: hnls: pkgs.runCommand "haskell-notebook-language-server-${hnls.version}" { nativeBuildInputs = [pkgs.binutils]; } ''
-          name="haskell-notebook-language-server-${hnls.version}-${ghcName}-${system}"
-
-          mkdir -p $out
-          cp ${hnls}/bin/haskell-notebook-language-server $out/$name
-
-          cd $out
-          chmod u+w "$name"
-
-          # We don't need to strip here because we do it in the build with dontStrip=false
-          # strip "$name"
-
-          tar -czvf $name.tar.gz $name
-        '';
-
-        osStringModules = {
-          # Needed since GHC 9.10
-          packages.file-io.components.library.configureFlags = [''-f os-string''];
-          packages.filepath.components.library.configureFlags = [''-f os-string''];
-          packages.directory.components.library.configureFlags = [''-f os-string''];
-          packages.unix.components.library.configureFlags = [''-f os-string''];
-        };
-
-        ghcBootFixModules = {
-          # # Fix ghc-boot Setup.hs for Cabal SymbolicPath compatibility
-          # packages.ghc-boot.prePatch = ''
-          #   mv Setup.hs old.hs
-          #   cp -L old.hs Setup.hs
-          # '';
-          # packages.ghc-boot.patches = [ ./nix/ghc-boot-setup-fix.patch ];
-
-          # # Fix ghc Setup.hs for Cabal SymbolicPath compatibility
-          # packages.ghc.prePatch = ''
-          #   mv Setup.hs old.hs
-          #   cp -L old.hs Setup.hs
-          # '';
-          # packages.ghc.patches = [ ./nix/ghc-setup-fix.patch ];
-        };
+        utils = import ./nix/utils.nix { inherit pkgs gitignore system; };
 
         allVersions = with pkgs.lib; listToAttrs (
           concatMap (info: [
-            (nameValuePair info.name (flake info.ghc (srcWithStackYaml info.stackYaml) info.extraModules).packages.${exeAttr})
-            (nameValuePair "${info.name}-static" (flakeStatic info.ghc (srcWithStackYaml info.stackYaml) info.extraModules).packages.${exeAttr})
+            (nameValuePair info.name (flake info.ghc (utils.srcWithStackYaml info.stackYaml) info.extraModules).packages.${exeAttr})
+            (nameValuePair "${info.name}-static" (flakeStatic info.ghc (utils.srcWithStackYaml info.stackYaml) info.extraModules).packages.${exeAttr})
           ]) [
             # { name = "ghc810"; ghc = "ghc8107"; stackYaml = "stack/stack-8.10.7.yaml"; }
             # { name = "ghc90"; ghc = "ghc902"; stackYaml = "stack/stack-9.0.2.yaml"; }
@@ -151,17 +43,17 @@
             { name = "ghc94"; ghc = "ghc948"; stackYaml = "stack/stack-9.4.8.yaml"; extraModules = []; }
             { name = "ghc96"; ghc = "ghc967"; stackYaml = "stack/stack-9.6.7.yaml"; extraModules = []; }
             { name = "ghc98"; ghc = "ghc984"; stackYaml = "stack/stack-9.8.4.yaml"; extraModules = []; }
-            { name = "ghc910"; ghc = "ghc9102"; stackYaml = "stack/stack-9.10.2.yaml"; extraModules = [osStringModules]; }
-            { name = "ghc912"; ghc = "ghc9122"; stackYaml = "stack/stack-9.12.2.yaml"; extraModules = [osStringModules ghcBootFixModules]; }
+            { name = "ghc910"; ghc = "ghc9102"; stackYaml = "stack/stack-9.10.2.yaml"; extraModules = [(import ./nix/os-string-module.nix)]; }
+            { name = "ghc912"; ghc = "ghc9122"; stackYaml = "stack/stack-9.12.2.yaml"; extraModules = [(import ./nix/os-string-module.nix)]; }
           ]
         );
 
         lib = pkgs.lib;
 
-        staticVersions = lib.mapAttrsToList (n: v: packageForGitHub (lib.removeSuffix "-static" n) v)
+        staticVersions = lib.mapAttrsToList (n: v: utils.packageForGitHub (lib.removeSuffix "-static" n) v)
                                             (pkgs.lib.filterAttrs (n: v: pkgs.lib.hasSuffix "-static" n) allVersions);
 
-        dynamicVersions = lib.mapAttrsToList packageForGitHub
+        dynamicVersions = lib.mapAttrsToList utils.packageForGitHub
                                              (pkgs.lib.filterAttrs (n: v: !(pkgs.lib.hasSuffix "-static" n)) allVersions);
 
       in

@@ -1231,6 +1231,22 @@
         "type": "github"
       }
     },
+    "nixpkgsOld": {
+      "locked": {
+        "lastModified": 1731362651,
+        "narHash": "sha256-RPLwndg8tfBtr5wf7+MOhX2OX83l48wcDhjvl5JrxjE=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e39f5c80e49a2abbf2b5631890476591072623fd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "e39f5c80e49a2abbf2b5631890476591072623fd",
+        "type": "github"
+      }
+    },
     "old-ghc-nix": {
       "flake": false,
       "locked": {
@@ -1275,10 +1291,7 @@
           "haskellNix",
           "nixpkgs"
         ],
-        "nixpkgsOld": [
-          "haskellNixOld",
-          "nixpkgs"
-        ]
+        "nixpkgsOld": "nixpkgsOld"
       }
     },
     "stackage": {

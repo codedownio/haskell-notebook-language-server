@@ -76,6 +76,8 @@
                 pkg-config
                 zeromq
                 zlib
+
+                pkgs.haskell.compiler.ghc9122
               ];
             };
           };

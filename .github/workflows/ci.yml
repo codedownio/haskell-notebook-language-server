@@ -144,7 +144,7 @@ jobs:
       name: Cache ~/.stack
       with:
         path: ~/.stack
-        key: ${{ runner.os }}-${{ matrix.ghc }}-${{ matrix.yaml }}
+        key: ${{ runner.os }}-${{ matrix.ghc }}-${{ matrix.yaml }}-key2
 
     - name: Build
       run: |

@@ -152,8 +152,8 @@ jobs:
 
     - name: Build
       run: |
-        stack build --stack-yaml ${{matrix.yaml}} --system-ghc --test --bench --no-run-tests --no-run-benchmarks
+        stack build --stack-yaml ${{matrix.yaml}} --no-nix --system-ghc --test --bench --no-run-tests --no-run-benchmarks
 
     - name: Test
       run: |
-        stack test --stack-yaml ${{matrix.yaml}} --system-ghc --test-arguments --print
+        stack test --stack-yaml ${{matrix.yaml}} --no-nix --system-ghc --test-arguments --print

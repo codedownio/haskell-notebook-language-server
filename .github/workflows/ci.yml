@@ -121,9 +121,9 @@ jobs:
         - ghc: "9.4"
           yaml: "stack/stack-9.4.8.yaml"
         - ghc: "9.6"
-          yaml: "stack/stack-9.6.6.yaml"
+          yaml: "stack/stack-9.6.7.yaml"
         - ghc: "9.8"
-          yaml: "stack/stack-9.8.2.yaml"
+          yaml: "stack/stack-9.8.4.yaml"
         - ghc: "9.10"
           yaml: "stack/stack-9.10.2.yaml"
         - ghc: "9.12"
@@ -156,4 +156,4 @@ jobs:
 
     - name: Test
       run: |
-        stack test --stack-yaml ${{matrix.yaml}} --no-nix --system-ghc --test-arguments --print
+        stack test haskell-notebook-language-server:test:tests --stack-yaml ${{matrix.yaml}} --no-nix --system-ghc --test-arguments --print

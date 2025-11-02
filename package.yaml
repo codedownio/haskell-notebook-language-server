@@ -83,7 +83,7 @@ executables:
     - unliftio-core
 
 tests:
-  haskell-notebook-language-server-test:
+  tests:
     main: Main.hs
     source-dirs:
     - test

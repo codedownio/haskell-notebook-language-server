@@ -71,6 +71,8 @@ jobs:
         - output: "ghc94-static"
         - output: "ghc96-static"
         - output: "ghc98-static"
+        - output: "ghc910-static"
+        - output: "ghc912-static"
     steps:
     - uses: actions/checkout@v4
 
@@ -122,6 +124,10 @@ jobs:
           yaml: "stack/stack-9.6.6.yaml"
         - ghc: "9.8"
           yaml: "stack/stack-9.8.2.yaml"
+        - ghc: "9.10"
+          yaml: "stack/stack-9.10.2.yaml"
+        - ghc: "9.12"
+          yaml: "stack/stack-9.12.2.yaml"
 
     steps:
     - name: Install libraries

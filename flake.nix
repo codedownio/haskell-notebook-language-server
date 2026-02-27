@@ -13,7 +13,7 @@
   inputs.nixpkgsOld.url = "github:NixOS/nixpkgs/e39f5c80e49a2abbf2b5631890476591072623fd";
 
   outputs = { self, flake-utils, gitignore, haskellNix, nixpkgs, haskellNixOld, nixpkgsOld }:
-    flake-utils.lib.eachSystem ["x86_64-linux" "x86_64-darwin" "aarch64-darwin"] (system:
+    flake-utils.lib.eachSystem ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"] (system:
       let
         overlays = [
           haskellNix.overlay
@@ -96,6 +96,7 @@
               name = "haskell-notebook-language-server-grand-combined-artifacts";
               paths = [
                 self.packages.x86_64-linux.githubArtifacts
+                self.packages.aarch64-linux.githubArtifacts
                 self.packages.x86_64-darwin.githubArtifacts
                 self.packages.aarch64-darwin.githubArtifacts
               ];

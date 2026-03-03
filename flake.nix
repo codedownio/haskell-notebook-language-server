@@ -64,6 +64,9 @@
         dynamicVersions = lib.mapAttrsToList utils.packageForGitHub
                                              (lib.filterAttrs (n: v: !(lib.hasSuffix "-static" n)) allVersions);
 
+        bundledVersions = lib.mapAttrsToList utils.packageForGitHubBundled
+                                              (lib.filterAttrs (n: v: !(lib.hasSuffix "-static" n)) allVersions);
+
       in
         {
           devShells = {
@@ -89,7 +92,10 @@
 
             githubArtifacts = with pkgs; symlinkJoin {
               name = "haskell-notebook-language-server-artifacts";
-              paths = if pkgs.stdenv.isDarwin then dynamicVersions else staticVersions;
+              paths =
+                if pkgs.stdenv.isDarwin then dynamicVersions
+                else if system == "aarch64-linux" then bundledVersions
+                else staticVersions;
             };
 
             grandCombinedGithubArtifacts = pkgs.symlinkJoin {

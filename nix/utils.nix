@@ -20,15 +20,28 @@
   packageForGitHub = ghcName: hnls: pkgs.runCommand "haskell-notebook-language-server-${hnls.version}" { nativeBuildInputs = [pkgs.binutils]; } ''
     name="haskell-notebook-language-server-${hnls.version}-${ghcName}-${system}"
 
-    mkdir -p $out
-    cp ${hnls}/bin/haskell-notebook-language-server $out/$name
+    mkdir -p $out/$name/bin
+    cp ${hnls}/bin/haskell-notebook-language-server $out/$name/bin/haskell-notebook-language-server
+
+    chmod u+w "$out/$name/bin/haskell-notebook-language-server"
 
     cd $out
-    chmod u+w "$name"
+    tar -czvf $name.tar.gz $name
+  '';
 
-    # We don't need to strip here because we do it in the build with dontStrip=false
-    # strip "$name"
+  packageForGitHubBundled = ghcName: hnls: let
+    bundled = pkgs.callPackage ./package-bundled.nix {
+      binaryDrv = hnls;
+      binaryName = "haskell-notebook-language-server";
+    };
+  in pkgs.runCommand "haskell-notebook-language-server-${hnls.version}" {} ''
+    name="haskell-notebook-language-server-${hnls.version}-${ghcName}-${system}"
 
+    mkdir -p $out/$name
+    cp -r ${bundled}/bin $out/$name/bin
+    cp -r ${bundled}/lib $out/$name/lib
+
+    cd $out
     tar -czvf $name.tar.gz $name
   '';
 }

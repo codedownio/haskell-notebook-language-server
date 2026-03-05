@@ -1,4 +1,4 @@
-{ pkgs, gitignore, system }:
+{ pkgs, gitignore, system, linux-dynamic-bundler }:
 
 {
   src = stackYaml: let
@@ -30,7 +30,8 @@
   '';
 
   packageForGitHubBundled = ghcName: hnls: let
-    bundled = pkgs.callPackage ./package-bundled.nix {
+    bundled = linux-dynamic-bundler.lib.bundle {
+      inherit pkgs;
       binaryDrv = hnls;
       binaryName = "haskell-notebook-language-server";
     };

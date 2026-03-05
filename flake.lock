@@ -922,6 +922,21 @@
         "type": "github"
       }
     },
+    "linux-dynamic-bundler": {
+      "locked": {
+        "lastModified": 1772676106,
+        "narHash": "sha256-WDOpQkjCDfQpYUUlknc/LTxgORiV7P0SnC7TXg1BgWk=",
+        "owner": "codedownio",
+        "repo": "linux-dynamic-bundler",
+        "rev": "2777e1f06e8d30416c818c23a37ab8fb0d4c9da5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "codedownio",
+        "repo": "linux-dynamic-bundler",
+        "type": "github"
+      }
+    },
     "lowdown-src": {
       "flake": false,
       "locked": {
@@ -1287,6 +1302,7 @@
         "gitignore": "gitignore",
         "haskellNix": "haskellNix",
         "haskellNixOld": "haskellNixOld",
+        "linux-dynamic-bundler": "linux-dynamic-bundler",
         "nixpkgs": [
           "haskellNix",
           "nixpkgs"

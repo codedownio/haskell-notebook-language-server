@@ -87,7 +87,8 @@ jobs:
     - name: Static outputs have an empty closure
       run: |
         if [[ "${{ matrix.output }}" == *"static"* ]]; then
-          nix path-info ./result/bin/haskell-notebook-language-server -r
+          BINARY=$(readlink -f ./result/bin/haskell-notebook-language-server)
+          nix path-info "$BINARY" -r
 
           # Only allow up to 3 Nix store references.
           # One should be the static binary itself.
@@ -96,7 +97,7 @@ jobs:
           # it from happening.
           # For now, we do this to make sure it doesn't regress further.
           # c.f. the print-static-closures alias
-          NUM_REFERENCES=$(nix path-info ./result/bin/haskell-notebook-language-server -r | wc -l)
+          NUM_REFERENCES=$(nix path-info "$BINARY" -r | wc -l)
           [[ "$NUM_REFERENCES" -le 3 ]] || {
             echo "Found $NUM_REFERENCES Nix store references; only allowed up to 3"
             exit 1

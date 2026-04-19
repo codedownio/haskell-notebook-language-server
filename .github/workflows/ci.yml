@@ -111,8 +111,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - ghc: "9.0"
-          yaml: "stack/stack-9.0.2.yaml"
         - ghc: "9.2"
           yaml: "stack/stack-9.2.8.yaml"
         - ghc: "9.4"

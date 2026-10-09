@@ -50,6 +50,7 @@ transformClientReq' SMethod_TextDocumentDocumentHighlight params = whenNotebook 
 transformClientReq' SMethod_TextDocumentDocumentSymbol params = whenNotebook params $ withTransformer params $ doTransformUri @m params
 transformClientReq' SMethod_TextDocumentHover params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
 transformClientReq' SMethod_TextDocumentImplementation params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
+transformClientReq' SMethod_TextDocumentInlayHint params = whenNotebook params $ withTransformer params $ doTransformUriAndRange @m params
 transformClientReq' SMethod_TextDocumentTypeDefinition params = whenNotebook params $ withTransformer params $ doTransformUriAndPosition @m params
 transformClientReq' _ params = return params
 

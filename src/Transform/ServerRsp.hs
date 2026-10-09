@@ -71,6 +71,13 @@ transformServerRsp' SMethod_TextDocumentDocumentHighlight initialParams result =
       InL highlights -> return $ InL $ mapMaybe (untransformRanged appConfigDynFlags tx) highlights
       InR null -> return $ InR null
 
+transformServerRsp' SMethod_TextDocumentInlayHint initialParams result = do
+  AppConfig {..} <- asks transformerConfig
+  whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) ->
+    case result of
+      InL hints -> return $ InL $ mapMaybe (untransformInlayHint appConfigDynFlags tx) hints
+      InR null -> return $ InR null
+
 transformServerRsp' SMethod_TextDocumentHover initialParams result = do
   AppConfig {..} <- asks transformerConfig
   whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {transformer=tx}) ->

@@ -31,16 +31,16 @@ newtype ImportSifter = ImportSifter (Vector Int)
 instance Transformer ImportSifter where
   type Params ImportSifter = DynFlags
   project ghcLibDir = fmap (second ImportSifter) . projectChosenLines ghcLibDir isImportCodeBlock
-  transformPosition _ (ImportSifter indices) = transformUsingIndices indices
-  untransformPosition _ (ImportSifter indices) = Just . untransformUsingIndices indices
+  transformPosition (ImportSifter indices) = transformUsingIndices indices
+  untransformPosition (ImportSifter indices) = Just . untransformUsingIndices indices
 
 newtype PragmaSifter = PragmaSifter (Vector Int)
   deriving Show
 instance Transformer PragmaSifter where
   type Params PragmaSifter = DynFlags
   project ghcLibDir = fmap (second PragmaSifter) . projectChosenLines ghcLibDir isLanguagePragmaCodeBlock
-  transformPosition _ (PragmaSifter indices) = transformUsingIndices indices
-  untransformPosition _ (PragmaSifter indices) = Just . untransformUsingIndices indices
+  transformPosition (PragmaSifter indices) = transformUsingIndices indices
+  untransformPosition (PragmaSifter indices) = Just . untransformUsingIndices indices
 
 -- * Generic transformer functions
 

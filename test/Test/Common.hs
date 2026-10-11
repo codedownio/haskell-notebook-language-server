@@ -8,7 +8,7 @@ import Language.LSP.Transformer
 import Test.Sandwich
 
 
-transformAndUntransform :: (MonadIO m, MonadThrow m, Transformer a) => Params a -> Position -> Position -> a -> m ()
-transformAndUntransform params from to x = do
-  transformPosition params x from `shouldBe` (Just to)
-  untransformPosition params x to `shouldBe` (Just from)
+transformAndUntransform :: (MonadIO m, MonadThrow m, Transformer a) => Position -> Position -> a -> m ()
+transformAndUntransform from to x = do
+  transformPosition x from `shouldBe` (Just to)
+  untransformPosition x to `shouldBe` (Just from)

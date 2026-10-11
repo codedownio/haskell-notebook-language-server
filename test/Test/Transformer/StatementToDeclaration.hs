@@ -24,9 +24,9 @@ spec = describe "StatementToDeclaration" $ do
     ls `shouldBe` (listToDoc ["foo = unsafePerformIO $  readLn", "foo = 42"])
     affectedLines `shouldBe` (M.fromList [(0, LineInfo 4)])
 
-    transformAndUntransform (STDParams flagsToUse) (Position 0 0) (Position 0 0) sd
-    transformAndUntransform (STDParams flagsToUse) (Position 0 8) (Position 0 28) sd
-    transformAndUntransform (STDParams flagsToUse) (Position 0 5) (Position 0 5) sd
+    transformAndUntransform (Position 0 0) (Position 0 0) sd
+    transformAndUntransform (Position 0 8) (Position 0 28) sd
+    transformAndUntransform (Position 0 5) (Position 0 5) sd
 
   -- it "projects and transforms a multiline expression" $ do
   --   (ls, sd@(StatementToDeclaration affectedLines)) <- project (STDParams flagsToUse) (listToDoc ["putStrLn [42", "  ]", "foo = 42"])
@@ -35,11 +35,11 @@ spec = describe "StatementToDeclaration" $ do
   --                            , "foo = 42"])
   --   affectedLines `shouldBe` [0, 1]
 
-  --   transformAndUntransform (STDParams flagsToUse) (Position 0 0) (Position 0 17) sd
-  --   transformAndUntransform (STDParams flagsToUse) (Position 0 1) (Position 0 18) sd
-  --   transformAndUntransform (STDParams flagsToUse) (Position 1 0) (Position 1 17) sd
-  --   transformAndUntransform (STDParams flagsToUse) (Position 1 1) (Position 1 18) sd
-  --   transformAndUntransform (STDParams flagsToUse) (Position 2 0) (Position 2 0) sd
+  --   transformAndUntransform (Position 0 0) (Position 0 17) sd
+  --   transformAndUntransform (Position 0 1) (Position 0 18) sd
+  --   transformAndUntransform (Position 1 0) (Position 1 17) sd
+  --   transformAndUntransform (Position 1 1) (Position 1 18) sd
+  --   transformAndUntransform (Position 2 0) (Position 2 0) sd
 
 
 

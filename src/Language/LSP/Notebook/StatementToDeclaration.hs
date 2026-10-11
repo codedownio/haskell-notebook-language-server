@@ -69,15 +69,15 @@ instance Transformer StatementToDeclaration where
             in
               (l : restLines, restParams)
 
-  transformPosition :: Params StatementToDeclaration -> StatementToDeclaration -> Position -> Maybe Position
-  transformPosition (STDParams {}) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
+  transformPosition :: StatementToDeclaration -> Position -> Maybe Position
+  transformPosition (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
     Nothing -> Just $ Position l c
     Just (LineInfo leftEnd)
       | c <= leftEnd + 1 -> Just $ Position l c
       | otherwise -> Just $ Position l (c + insertedLen)
 
-  untransformPosition :: Params StatementToDeclaration -> StatementToDeclaration -> Position -> Maybe Position
-  untransformPosition (STDParams {}) (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
+  untransformPosition :: StatementToDeclaration -> Position -> Maybe Position
+  untransformPosition (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
     Nothing -> Just $ Position l c
     Just (LineInfo leftEnd)
       | c <= leftEnd + 1 -> Just $ Position l c

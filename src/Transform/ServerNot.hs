@@ -34,6 +34,6 @@ transformServerNot' SMethod_TextDocumentPublishDiagnostics params = whenNotebook
   AppConfig {..} <- asks transformerConfig
   return $ params
          & set uri origUri
-         & over diagnostics (mapMaybe (traverseOf range (untransformRange appConfigDynFlags tx)))
+         & over diagnostics (mapMaybe (traverseOf range (untransformRange tx)))
 
 transformServerNot' _meth msg = pure msg

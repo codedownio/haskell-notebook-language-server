@@ -105,6 +105,11 @@ lookupTransformer uri = do
   TransformerState {..} <- ask
   M.lookup (getUri uri) <$> readMVar transformerDocuments
 
+lookupTransformerByNewUri :: TransformerMonad m => Uri -> m (Maybe DocumentState)
+lookupTransformerByNewUri uri = do
+  TransformerState {..} <- ask
+  L.find (\DocumentState {newUri=u} -> u == uri) . M.elems <$> readMVar transformerDocuments
+
 withTransformer :: (TransformerMonad n) => a -> (DocumentState -> n a) -> Uri -> n a
 withTransformer def cb uri = do
   lookupTransformer uri >>= \case

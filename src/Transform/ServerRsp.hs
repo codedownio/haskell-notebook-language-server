@@ -107,12 +107,29 @@ transformServerRsp' SMethod_TextDocumentDocumentSymbol initialParams result = do
 
 
 transformServerRsp' SMethod_TextDocumentCodeAction _initialParams (InR null) = return $ InR null
-transformServerRsp' SMethod_TextDocumentCodeAction initialParams (InL result) = (InL <$>) $
-  whenNotebookByInitialParams initialParams result $ withTransformer result $ \(DocumentState {}) -> do
-    filterM (fmap not . isInternalReferringCodeAction) result
+transformServerRsp' SMethod_TextDocumentCodeAction initialParams (InL result) = (InL <$>) $ do
+  AppConfig {..} <- asks transformerConfig
+  whenNotebookByInitialParams initialParams result $ withTransformer result $ \ds ->
+    return $ mapMaybe (untransformCommandOrCodeAction appConfigDynFlags ds) result
   where
-    isInternalReferringCodeAction (InL _command) = pure False
-    isInternalReferringCodeAction (InR _codeAction) = pure False
+    untransformCommandOrCodeAction _flags _ds c@(InL _command) = Just c
+    untransformCommandOrCodeAction flags ds (InR codeAction) = InR <$> untransformCodeAction flags ds codeAction
+
+transformServerRsp' SMethod_CodeActionResolve _initialParams codeAction = case codeAction ^. edit of
+  Nothing -> return codeAction
+  Just wsEdit -> case workspaceEditUris wsEdit of
+    [] -> return codeAction
+    (shadowUri:_) -> lookupTransformerByNewUri shadowUri >>= \case
+      Nothing -> do
+        logWarnN [i|Resolved code action named #{shadowUri}, which is no document of ours; dropping its edit|]
+        return $ codeAction & set edit Nothing
+      Just ds -> do
+       AppConfig {..} <- asks transformerConfig
+       case untransformCodeAction appConfigDynFlags ds codeAction of
+        Just codeAction' -> return codeAction'
+        Nothing -> do
+          logWarnN [i|Resolved code action '#{codeAction ^. title}' doesn't map back into the notebook; dropping its edit|]
+          return $ codeAction & set edit Nothing
 
 transformServerRsp' SMethod_TextDocumentCodeLens _initialParams (InR null) = return $ InR null
 transformServerRsp' SMethod_TextDocumentCodeLens initialParams (InL result) = (InL <$>) $ do

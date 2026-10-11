@@ -59,14 +59,14 @@ instance Transformer DirectiveToPragma where
       unflagLanguageOption = L.drop 2
 
   -- TODO: do better here
-  transformPosition :: Params DirectiveToPragma -> DirectiveToPragma -> Position -> Maybe Position
-  transformPosition (DTPParams {}) (DirectiveToPragma affectedLines) (Position l c)
+  transformPosition :: DirectiveToPragma -> Position -> Maybe Position
+  transformPosition (DirectiveToPragma affectedLines) (Position l c)
     | l `Set.member` affectedLines = Just $ Position l 0
     | otherwise = Just $ Position l c
 
   -- TODO: do better here
-  untransformPosition :: Params DirectiveToPragma -> DirectiveToPragma -> Position -> Maybe Position
-  untransformPosition (DTPParams {}) (DirectiveToPragma affectedLines) (Position l c)
+  untransformPosition :: DirectiveToPragma -> Position -> Maybe Position
+  untransformPosition (DirectiveToPragma affectedLines) (Position l c)
     | l `Set.member` affectedLines = Just $ Position l 0
     | otherwise = Just $ Position l c
 

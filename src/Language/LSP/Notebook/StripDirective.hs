@@ -48,12 +48,12 @@ instance Transformer StripDirective where
         | otherwise = l : go counter xs (group:remainingGroups)
 
 
-  transformPosition :: Params StripDirective -> StripDirective -> Position -> Maybe Position
-  transformPosition (SDParams {}) (StripDirective affectedLines) (Position l c)
+  transformPosition :: StripDirective -> Position -> Maybe Position
+  transformPosition (StripDirective affectedLines) (Position l c)
     | l `Set.member` affectedLines = Just $ Position l 0
     | otherwise = Just $ Position l c
 
-  untransformPosition :: Params StripDirective -> StripDirective -> Position -> Maybe Position
-  untransformPosition (SDParams {}) (StripDirective affectedLines) (Position l c)
+  untransformPosition :: StripDirective -> Position -> Maybe Position
+  untransformPosition (StripDirective affectedLines) (Position l c)
     | l `Set.member` affectedLines = Just $ Position l 0
     | otherwise = Just $ Position l c

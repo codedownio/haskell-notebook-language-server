@@ -27,16 +27,16 @@ spec = describe "DirectiveToPragma" $ do
     ls `shouldBe` (listToDoc ["foo = 42", "{-# LANGUAGE Foo #-}"])
     affectedLines `shouldBe` [1]
 
-    transformPosition (DTPParams flagsToUse) dp (Position 1 3) `shouldBe` (Just (Position 1 0))
-    untransformPosition (DTPParams flagsToUse) dp (Position 1 0) `shouldBe` (Just (Position 1 0))
+    transformPosition dp (Position 1 3) `shouldBe` (Just (Position 1 0))
+    untransformPosition dp (Position 1 0) `shouldBe` (Just (Position 1 0))
 
   it "Converts :set -XFoo -XBar directive to LANGUAGE pragmas" $ do
     (ls, dp@(DirectiveToPragma affectedLines)) <- project (DTPParams flagsToUse) (listToDoc ["foo = 42", ":set -XFoo -XBar"])
     ls `shouldBe` (listToDoc ["foo = 42", "{-# LANGUAGE Foo Bar #-}"])
     affectedLines `shouldBe` [1]
 
-    transformPosition (DTPParams flagsToUse) dp (Position 1 3) `shouldBe` (Just (Position 1 0))
-    untransformPosition (DTPParams flagsToUse) dp (Position 1 0) `shouldBe` (Just (Position 1 0))
+    transformPosition dp (Position 1 3) `shouldBe` (Just (Position 1 0))
+    untransformPosition dp (Position 1 0) `shouldBe` (Just (Position 1 0))
 
   it "Does a simple single line change" $ do
     let changes = [mkChange (4, 16) (4, 16) Nothing "2"]

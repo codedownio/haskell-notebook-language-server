@@ -52,9 +52,11 @@ class Transformer a where
   handleDiff :: MonadIO m => Params a -> Doc -> TextDocumentContentChangeEvent -> a -> m ([TextDocumentContentChangeEvent], a)
   handleDiff = defaultHandleDiff
 
-  transformPosition :: Params a -> a -> Position -> Maybe Position
+  -- No 'Params' here: no transformer has ever needed them to map a position, and threading
+  -- them meant every caller had to be able to build a 'Params'.
+  transformPosition :: a -> Position -> Maybe Position
 
-  untransformPosition :: Params a -> a -> Position -> Maybe Position
+  untransformPosition :: a -> Position -> Maybe Position
 
 data (a :: Type) :> (b :: Type) = a :> b
   deriving Show
@@ -73,8 +75,8 @@ instance (Transformer a, Transformer b) => Transformer (a :> b) where
     (change'', y') <- handleDiffMulti yParams (fst projected) change' y
     return (change'', x' :> y')
 
-  transformPosition (xParams :> yParams) (x :> y) p = transformPosition xParams x p >>= transformPosition yParams y
-  untransformPosition (xParams :> yParams) (x :> y) p = untransformPosition yParams y p >>= untransformPosition xParams x
+  transformPosition (x :> y) p = transformPosition x p >>= transformPosition y
+  untransformPosition (x :> y) p = untransformPosition y p >>= untransformPosition x
   -- untransformPosition (xParams :> yParams) (x :> y) p = untransformPosition yParams y p >>= untransformPosition xParams x
 
 -- Default implementation uses diff.

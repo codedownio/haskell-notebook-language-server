@@ -62,7 +62,8 @@ to supply it was to rebuild the params from `DynFlags`. See step 2.
 | --- | --- |
 | Code action fix | **parked** as drafts: rust#3, cpp#2, go#2, haskell#3. Same fix written four times, which is the duplication this plan removes. Reapply once after the class is reconciled. |
 | Drop `Params` from position mapping | done in all four: rust#4, cpp#3, go#3, haskell#4. Tests green (rust 19, cpp 21, go 40, haskell 20). |
-| Class split | **prototyped and green in rust** (rust#5, stacked on #4). Not yet ported to cpp, go, haskell. |
+| Class split | **done in all four**: rust#5, cpp#4, go#4, haskell#5 (each stacked on that repo's `drop-params` PR). The four `Transformer` classes are now character-identical. Tests green: rust 19, cpp 21, go 40, haskell 20. |
+| `getParams` | removed from the class — its only caller was `unproject`, which now reads what it needs off the transformer value. |
 | Releases | not cut, and not needed until the reconciliation lands. |
 | Integration test | codedown-languages branch `rust-code-action-test`, pushed, no PR — goes back with the code action fix. |
 
@@ -159,9 +160,31 @@ Two things the port to the others will hit. Each leaf instance splits in two, wi
 `DeclarationSifter`). And every pure `project` call site in the tests becomes
 `runIdentity $ project`, which is the ergonomics the split exists to preserve.
 
-## 4. Reconcile across all four, still in four repos
+## 4. Reconcile across all four, still in four repos — done
 
-Four PRs applying step 3. Tedious, and the last time you do this by hand.
+rust#5, cpp#4, go#4, haskell#5. The four classes are now identical:
+
+```haskell
+class Transformer a where
+  type Params a
+  unproject           :: a -> Doc -> Maybe Doc
+  unproject _ _ = Nothing
+  transformPosition   :: a -> Position -> Maybe Position
+  untransformPosition :: a -> Position -> Maybe Position
+
+class Transformer a => ProjectIn m a where
+  project         :: Params a -> Doc -> m (Doc, a, Either Text ())
+  handleDiffMulti :: Monad m => ...
+  handleDiff      :: Monad m => ...
+```
+
+`getParams` turned out to be deletable. Once `Params` left position mapping, its only caller
+was `unproject`, and `unproject` can read what it needs off the transformer value — rust's
+`HeadTailTransformer` already stores the lists its params held, and cpp/go's implementations
+were fabricating a constant (`getParams _ = DeclarationSifterParams "cling-parser" …`).
+
+Cost across all four: one extension, `MultiParamTypeClasses`. One gotcha to know: `project
+@Foo` becomes `project @_ @Foo`, since `m` is the first type argument now.
 
 Worth doing even if the rest of the plan is abandoned: `unproject` reaching cpp, go and
 haskell is what unblocks notebook formatting for them (see `notebook-formatting-in-proxies.md`

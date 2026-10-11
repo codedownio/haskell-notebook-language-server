@@ -24,7 +24,7 @@ import Text.Regex.Base (defaultExecOpt)
 import Text.Regex.PCRE.Text (compile, compBlank, execute)
 
 
-newtype ExpressionToDeclaration = ExpressionToDeclaration (Set UInt)
+data ExpressionToDeclaration = ExpressionToDeclaration Int (Set UInt)
   deriving Show
 
 data EDParams = EDParams {
@@ -58,8 +58,10 @@ instance Transformer ExpressionToDeclaration where
                       | locatedCodeBlock@(unloc -> Expression t) <- parsed
                       , not (looksLikeTemplateHaskell t)]
 
-    return (listToDoc $ go 0 (zip ls [0 ..]) exprIndices, ExpressionToDeclaration (Set.fromList $ fromIntegral <$> mconcat exprIndices))
+    return (listToDoc $ go 0 (zip ls [0 ..]) exprIndices, ExpressionToDeclaration prefixLen (Set.fromList $ fromIntegral <$> mconcat exprIndices))
     where
+      prefixLen = L.length ("expr" :: String) + numberPadding + L.length (" = " :: String)
+
       go :: Int -> [(Text, Int)] -> [[Int]] -> [Text]
       go _ [] _ = []
       go _ xs [] = fmap fst xs
@@ -69,7 +71,6 @@ instance Transformer ExpressionToDeclaration where
             prefix = "expr" <> paddedNumber <> " = "
             paddedNumber = T.replicate numZerosNeeded "0" <> T.pack (show counter)
             numZerosNeeded = numberPadding - L.length (show counter)
-            prefixLen = 4 + numberPadding + 3
 
             (extraLinesToProcess, remainingLines) = L.splitAt (L.length is) xs
             blankPadding = T.replicate prefixLen " "
@@ -79,14 +80,14 @@ instance Transformer ExpressionToDeclaration where
               (prefix <> l) : extraLines <> go (counter + 1) remainingLines remainingGroups
         | otherwise = l : go counter xs (group:remainingGroups)
 
-  transformPosition :: Params ExpressionToDeclaration -> ExpressionToDeclaration -> Position -> Maybe Position
-  transformPosition (EDParams {..}) (ExpressionToDeclaration affectedLines) (Position l c)
-    | l `Set.member` affectedLines = Just $ Position l (fromIntegral (fromIntegral c + numberPadding + 7))
+  transformPosition :: ExpressionToDeclaration -> Position -> Maybe Position
+  transformPosition (ExpressionToDeclaration prefixLen affectedLines) (Position l c)
+    | l `Set.member` affectedLines = Just $ Position l (fromIntegral (fromIntegral c + prefixLen))
     | otherwise = Just $ Position l c
 
-  untransformPosition :: Params ExpressionToDeclaration -> ExpressionToDeclaration -> Position -> Maybe Position
-  untransformPosition (EDParams {..}) (ExpressionToDeclaration affectedLines) (Position l c)
-    | l `Set.member` affectedLines = Just $ Position l (fromIntegral (fromIntegral c - numberPadding - 7))
+  untransformPosition :: ExpressionToDeclaration -> Position -> Maybe Position
+  untransformPosition (ExpressionToDeclaration prefixLen affectedLines) (Position l c)
+    | l `Set.member` affectedLines = Just $ Position l (fromIntegral (fromIntegral c - prefixLen))
     | otherwise = Just $ Position l c
 
 

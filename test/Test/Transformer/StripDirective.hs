@@ -22,8 +22,8 @@ spec = describe "StripDirective" $ do
     ls `shouldBe` (listToDoc ["foo = 42", ""])
     affectedLines `shouldBe` [1]
 
-    transformPosition (SDParams flagsToUse) ed (Position 1 3) `shouldBe` (Just (Position 1 0))
-    untransformPosition (SDParams flagsToUse) ed (Position 1 0) `shouldBe` (Just (Position 1 0))
+    transformPosition ed (Position 1 3) `shouldBe` (Just (Position 1 0))
+    untransformPosition ed (Position 1 0) `shouldBe` (Just (Position 1 0))
 
 
 main :: IO ()

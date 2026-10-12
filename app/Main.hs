@@ -34,18 +34,21 @@ import UnliftIO.Directory
 import UnliftIO.Exception
 import UnliftIO.Process
 
-import Transform.ClientNot
-import Transform.ClientReq
-import Transform.ClientRsp
-import Transform.ServerNot
-import Transform.ServerReq
-import Transform.ServerRsp
-import Transform.Util
+import Language.LSP.NotebookLanguageServer.Transform.ClientNot
+import Language.LSP.NotebookLanguageServer.Transform.ClientReq
+import Language.LSP.NotebookLanguageServer.Transform.ClientRsp
+import Language.LSP.NotebookLanguageServer.Transform.ServerNot
+import Language.LSP.NotebookLanguageServer.Transform.ServerReq
+import Language.LSP.NotebookLanguageServer.Transform.ServerRsp
+import Language.LSP.NotebookLanguageServer.Transform.Util
 
+import Language.LSP.Notebook
+import Language.LSP.NotebookLanguageServer.Config
+import Language.LSP.NotebookLanguageServer.Parsing
+import Language.LSP.NotebookLanguageServer.Process
+import Language.LSP.NotebookLanguageServer.RequestMap
 import Streams
-import RequestMap
-import Parsing
-import Process
+import Transform.Config
 import Control.Monad.Logger
 import Control.Monad.Reader
 import System.Exit
@@ -138,10 +141,8 @@ main = do
 
   flags <- runGhc (Just optGhcLibPath) getSessionDynFlags
 
-  transformerState <- newTransformerState $ AppConfig {
-    appConfigWriteFileOnChange = False
-    , appConfigDynFlags = flags
-    }
+  let config = haskellNotebookConfig flags
+  transformerState <- newTransformerState
 
   logLevel <- case optLogLevel of
     Nothing -> return LevelInfo
@@ -187,18 +188,18 @@ main = do
 
   flip runLoggingT logFn $ filterLogger logFilterFn $ flip runReaderT transformerState $
     flip withException (\(e :: SomeException) -> logErrorN [i|HNLS overall exception: #{e}|]) $
-      withAsync (ioLoop "from-hls" (BS.hGetSome hlsOut defaultChunkSize) (handleWrappedOut optDebugHlsReads clientReqMap serverReqMap sendToStdoutWithLogging)) $ \_hlsOutAsync ->
+      withAsync (ioLoop "from-hls" (BS.hGetSome hlsOut defaultChunkSize) (handleWrappedOut config optDebugHlsReads clientReqMap serverReqMap sendToStdoutWithLogging)) $ \_hlsOutAsync ->
         withAsync (readWrappedErr hlsErr) $ \_hlsErrAsync ->
-          withAsync (ioLoop "from-client" (BS.hGetSome stdin defaultChunkSize) (handleStdin optDebugHlsWrites optDebugClientReads hlsIn clientReqMap serverReqMap)) $ \_stdinAsync -> do
+          withAsync (ioLoop "from-client" (BS.hGetSome stdin defaultChunkSize) (handleStdin config optDebugHlsWrites optDebugClientReads hlsIn clientReqMap serverReqMap)) $ \_stdinAsync -> do
             waitForProcess p >>= \case
               ExitFailure n -> logErrorN [i|haskell-language-server subprocess exited with code #{n}|]
               ExitSuccess -> logInfoN [i|haskell-language-server subprocess exited successfully|]
 
 
 handleStdin :: forall m. (
-  MonadLoggerIO m, MonadReader TransformerState m, MonadUnliftIO m, MonadFail m
-  ) => Bool -> Bool -> Handle -> MVar ClientRequestMap -> MVar ServerRequestMap -> BL8.ByteString -> m ()
-handleStdin debugHlsWrites debugClientReads wrappedIn clientReqMap serverReqMap bytes = flip withException (\(e :: SomeException) -> logErrorN [i|HNLS stdin exception: #{e}|]) $ do
+  MonadLoggerIO m, MonadReader (TransformerState HaskellNotebookTransformer) m, MonadUnliftIO m, MonadFail m
+  ) => NotebookConfig HaskellNotebookTransformer -> Bool -> Bool -> Handle -> MVar ClientRequestMap -> MVar ServerRequestMap -> BL8.ByteString -> m ()
+handleStdin config debugHlsWrites debugClientReads wrappedIn clientReqMap serverReqMap bytes = flip withException (\(e :: SomeException) -> logErrorN [i|HNLS stdin exception: #{e}|]) $ do
   when debugClientReads $ logDebugN [i|Read from client: #{bytes}|]
 
   case A.eitherDecode bytes of
@@ -216,9 +217,9 @@ handleStdin debugHlsWrites debugClientReads wrappedIn clientReqMap serverReqMap 
           modifyMVar_ clientReqMap $ \m -> case updateClientRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of
             Just m' -> return m'
             Nothing -> return m
-          transformClientReq meth msg >>= writeToHlsHandle debugHlsWrites wrappedIn . A.encode
+          transformClientReq config meth msg >>= writeToHlsHandle debugHlsWrites wrappedIn . A.encode
         Right (ClientToServerNot meth msg) -> do
-          transformed <- transformClientNot sendExtraNotification meth msg
+          transformed <- transformClientNot config sendExtraNotification meth msg
           writeToHlsHandle debugHlsWrites wrappedIn $ A.encode transformed
   where
     sendExtraNotification :: SendExtraNotificationFn m
@@ -227,9 +228,9 @@ handleStdin debugHlsWrites debugClientReads wrappedIn clientReqMap serverReqMap 
       writeToHlsHandle debugHlsWrites wrappedIn $ A.encode msg
 
 handleWrappedOut :: (
-  MonadUnliftIO m, MonadLoggerIO m, MonadReader TransformerState m, MonadFail m
-  ) => Bool -> MVar ClientRequestMap -> MVar ServerRequestMap -> (forall a. ToJSON a => a -> m ()) -> BL8.ByteString -> m ()
-handleWrappedOut debugHlsReads clientReqMap serverReqMap sendToStdout bytes = do
+  MonadUnliftIO m, MonadLoggerIO m, MonadReader (TransformerState HaskellNotebookTransformer) m, MonadFail m
+  ) => NotebookConfig HaskellNotebookTransformer -> Bool -> MVar ClientRequestMap -> MVar ServerRequestMap -> (forall a. ToJSON a => a -> m ()) -> BL8.ByteString -> m ()
+handleWrappedOut config debugHlsReads clientReqMap serverReqMap sendToStdout bytes = do
   when debugHlsReads $ logDebugN [i|Read from HLS: #{bytes}|]
 
   case A.eitherDecode bytes of
@@ -249,7 +250,7 @@ handleWrappedOut debugHlsReads clientReqMap serverReqMap sendToStdout bytes = do
             Nothing -> return m
           sendToStdout (transformServerReq meth msg)
         Right (ServerToClientRsp meth initialParams msg) ->
-          transformServerRsp meth initialParams msg >>= sendToStdout
+          transformServerRsp config meth initialParams msg >>= sendToStdout
 
 readWrappedErr :: MonadLoggerIO m => Handle -> m ()
 readWrappedErr wrappedErr = forever $ do

@@ -62,7 +62,7 @@ testGroup flags doc tx =
     , bench "handleDiffMulti no changes" $ nfAppIO (fmap fst . handleDiffMulti (transformerParams flags) doc []) tx
     , bench "handleDiffMulti 1 change" $ nfAppIO (fmap fst . handleDiffMulti (transformerParams flags) doc [addU]) tx
 
-    , bench "project" $ nfIO (fst <$> project @HaskellNotebookTransformer (transformerParams flags) "foo = p")
+    , bench "project" $ nfIO ((\(d, _, _) -> d) <$> project @IO @HaskellNotebookTransformer (transformerParams flags) (Rope.fromText "foo = p"))
     , bench "projectChosenLines" $ nfIO (projectChosenLines flags isLanguagePragmaCodeBlock (Rope.fromText "foo = p"))
     , bench "after" $ nf (applyChanges [addU]) (Rope.fromText "foo = p")
 
@@ -74,7 +74,7 @@ main :: IO ()
 main = do
   flags <- runGhc (Just GHC.Paths.libdir) getSessionDynFlags
 
-  (doc, tx :: HaskellNotebookTransformer) <- project (transformerParams flags) (Rope.fromText "foo = p")
+  (doc, tx :: HaskellNotebookTransformer, _) <- project (transformerParams flags) (Rope.fromText "foo = p")
 
   defaultMain [
     testGroup flags doc tx

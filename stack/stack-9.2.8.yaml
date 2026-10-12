@@ -9,6 +9,9 @@ nix:
   pure: false
 
 extra-deps:
+- git: https://github.com/codedownio/notebook-language-server-core.git
+  commit: d8ca894fa723d805abaacb85f35503f72c3aec7f
+
 - git: https://github.com/codedownio/myers-diff.git
   commit: 3683ab4e052347bc47eb5546361f47bcd8c0fa58
 

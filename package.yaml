@@ -23,6 +23,7 @@ default-extensions:
 - FlexibleInstances
 - LambdaCase
 - ViewPatterns
+- MultiParamTypeClasses
 - MultiWayIf
 - TupleSections
 - NumericUnderscores

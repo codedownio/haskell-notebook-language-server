@@ -29,25 +29,6 @@ data SDParams = SDParams {
 instance Transformer StripDirective where
   type Params StripDirective = SDParams
 
-  project :: MonadIO m => Params StripDirective -> Doc -> m (Doc, StripDirective)
-  project (SDParams {..}) (docToList -> ls) = do
-    parsed <- parseCodeString flags (T.unpack (T.intercalate "\n" ls))
-
-    let directiveIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                           | locatedCodeBlock@(unloc -> Directive _ t) <- parsed]
-
-    return (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, StripDirective (Set.fromList $ fromIntegral <$> mconcat directiveIndices))
-    where
-      go :: Int -> [(Text, Int)] -> [[Int]] -> [Text]
-      go _ [] _ = []
-      go _ xs [] = fmap fst xs
-      go counter ((l, i):xs) (group@(i1:is):remainingGroups)
-        | i == i1 = let
-            (extraLinesToProcess, remainingLines) = L.splitAt (L.length is) xs
-            in "" : ["" | _ <- extraLinesToProcess] <> go (counter + 1) remainingLines remainingGroups
-        | otherwise = l : go counter xs (group:remainingGroups)
-
-
   transformPosition :: StripDirective -> Position -> Maybe Position
   transformPosition (StripDirective affectedLines) (Position l c)
     | l `Set.member` affectedLines = Just $ Position l 0
@@ -57,3 +38,22 @@ instance Transformer StripDirective where
   untransformPosition (StripDirective affectedLines) (Position l c)
     | l `Set.member` affectedLines = Just $ Position l 0
     | otherwise = Just $ Position l c
+
+instance MonadIO m => ProjectIn m StripDirective where
+  project :: Params StripDirective -> Doc -> m (Doc, StripDirective, Either Text ())
+  project (SDParams {..}) (docToList -> ls) = do
+    parsed <- parseCodeString flags (T.unpack (T.intercalate "\n" ls))
+
+    let directiveIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
+                           | locatedCodeBlock@(unloc -> Directive _ t) <- parsed]
+
+    return (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, StripDirective (Set.fromList $ fromIntegral <$> mconcat directiveIndices), Right ())
+    where
+      go :: Int -> [(Text, Int)] -> [[Int]] -> [Text]
+      go _ [] _ = []
+      go _ xs [] = fmap fst xs
+      go counter ((l, i):xs) (group@(i1:is):remainingGroups)
+        | i == i1 = let
+            (extraLinesToProcess, remainingLines) = L.splitAt (L.length is) xs
+            in "" : ["" | _ <- extraLinesToProcess] <> go (counter + 1) remainingLines remainingGroups
+        | otherwise = l : go counter xs (group:remainingGroups)

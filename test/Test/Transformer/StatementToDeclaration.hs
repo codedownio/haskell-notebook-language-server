@@ -20,7 +20,7 @@ flagsToUse = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) getSessionDynFlags
 spec :: TopSpec
 spec = describe "StatementToDeclaration" $ do
   it "projects and transforms a single expression" $ do
-    (ls, sd@(StatementToDeclaration affectedLines)) <- project (STDParams flagsToUse) (listToDoc ["foo <- readLn", "foo = 42"])
+    (ls, sd@(StatementToDeclaration affectedLines), _) <- project (STDParams flagsToUse) (listToDoc ["foo <- readLn", "foo = 42"])
     ls `shouldBe` (listToDoc ["foo = unsafePerformIO $  readLn", "foo = 42"])
     affectedLines `shouldBe` (M.fromList [(0, LineInfo 4)])
 

@@ -35,14 +35,34 @@ data STDParams = STDParams {
 instance Transformer StatementToDeclaration where
   type Params StatementToDeclaration = STDParams
 
-  project :: MonadIO m => Params StatementToDeclaration -> Doc -> m (Doc, StatementToDeclaration)
+  transformPosition :: StatementToDeclaration -> Position -> Maybe Position
+  transformPosition (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
+    Nothing -> Just $ Position l c
+    Just (LineInfo leftEnd)
+      | c <= leftEnd + 1 -> Just $ Position l c
+      | otherwise -> Just $ Position l (c + insertedLen)
+
+  untransformPosition :: StatementToDeclaration -> Position -> Maybe Position
+  untransformPosition (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
+    Nothing -> Just $ Position l c
+    Just (LineInfo leftEnd)
+      | c <= leftEnd + 1 -> Just $ Position l c
+      | c >= leftEnd + insertedLen -> Just $ Position l (c - insertedLen)
+      | otherwise -> Nothing
+
+insertedLen :: UInt
+insertedLen = 20 -- Length of "= unsafePerformIO $ "
+
+instance MonadIO m => ProjectIn m StatementToDeclaration where
+  project :: Params StatementToDeclaration -> Doc -> m (Doc, StatementToDeclaration, Either Text ())
   project (STDParams {..}) (docToList -> ls) = do
     parsed <- parseCodeString stdFlags (T.unpack (T.intercalate "\n" ls))
 
     let indices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
                   | locatedCodeBlock@(unloc -> Statement t) <- parsed]
 
-    return (first listToDoc $ go 0 (zip ls [0 ..]) indices)
+    let (doc', tx) = first listToDoc $ go 0 (zip ls [0 ..]) indices
+    return (doc', tx, Right ())
     where
       go :: Int -> [(Text, Int)] -> [[Int]] -> ([Text], StatementToDeclaration)
       go _ [] _ = ([], mempty)
@@ -68,21 +88,3 @@ instance Transformer StatementToDeclaration where
             (restLines, restParams) = go counter xs (group:remainingGroups)
             in
               (l : restLines, restParams)
-
-  transformPosition :: StatementToDeclaration -> Position -> Maybe Position
-  transformPosition (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
-    Nothing -> Just $ Position l c
-    Just (LineInfo leftEnd)
-      | c <= leftEnd + 1 -> Just $ Position l c
-      | otherwise -> Just $ Position l (c + insertedLen)
-
-  untransformPosition :: StatementToDeclaration -> Position -> Maybe Position
-  untransformPosition (StatementToDeclaration affectedLines) (Position l c) = case l `M.lookup` affectedLines of
-    Nothing -> Just $ Position l c
-    Just (LineInfo leftEnd)
-      | c <= leftEnd + 1 -> Just $ Position l c
-      | c >= leftEnd + insertedLen -> Just $ Position l (c - insertedLen)
-      | otherwise -> Nothing
-
-insertedLen :: UInt
-insertedLen = 20 -- Length of "= unsafePerformIO $ "

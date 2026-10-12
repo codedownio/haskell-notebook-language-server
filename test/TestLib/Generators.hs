@@ -38,19 +38,19 @@ arbitrarySingleLineChange (docToList -> docLines) = do
   pure $ TextDocumentContentChangeEvent $ InL $ TextDocumentContentChangePartial (Range (p lineNo pos1) (p lineNo pos2)) Nothing (T.pack toInsert)
 
 testChange :: forall a. (
-  Transformer a, Eq a, Show a
+  ProjectIn (PropertyM IO) a, Eq a, Show a
   ) => Params a -> Doc -> TextDocumentContentChangeEvent -> Property
 testChange = testChange' @a (const [])
 
 testChange' :: forall a. (
-  Transformer a, Eq a, Show a
+  ProjectIn (PropertyM IO) a, Eq a, Show a
   ) => ([TextDocumentContentChangeEvent] -> [Property]) -> Params a -> Doc -> TextDocumentContentChangeEvent -> Property
 testChange' extraProps params docLines change = monadicIO $ do
-  (projectedBefore, transformer :: a) <- project params docLines
+  (projectedBefore, transformer :: a, _) <- project params docLines
 
   -- Expected un-projected document after the change
   let docLines' = applyChanges [change] docLines
-  (projectedAfter, reprojectedTransformer :: a) <- project params docLines'
+  (projectedAfter, reprojectedTransformer :: a, _) <- project params docLines'
 
   (changes, transformer') <- handleDiff params docLines change transformer
 

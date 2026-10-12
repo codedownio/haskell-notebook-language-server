@@ -30,7 +30,6 @@ newtype ImportSifter = ImportSifter (Vector Int)
   deriving Show
 instance Transformer ImportSifter where
   type Params ImportSifter = DynFlags
-  project ghcLibDir = fmap (second ImportSifter) . projectChosenLines ghcLibDir isImportCodeBlock
   transformPosition (ImportSifter indices) = transformUsingIndices indices
   untransformPosition (ImportSifter indices) = Just . untransformUsingIndices indices
 
@@ -38,7 +37,6 @@ newtype PragmaSifter = PragmaSifter (Vector Int)
   deriving Show
 instance Transformer PragmaSifter where
   type Params PragmaSifter = DynFlags
-  project ghcLibDir = fmap (second PragmaSifter) . projectChosenLines ghcLibDir isLanguagePragmaCodeBlock
   transformPosition (PragmaSifter indices) = transformUsingIndices indices
   untransformPosition (PragmaSifter indices) = Just . untransformUsingIndices indices
 
@@ -116,3 +114,13 @@ binarySearchVec' vec desired = binarySearchVec' 0 (fromIntegral $ V.length vec)
       where
         mid = shift (lb + ub) (-1)
         midValue = vec ! fromIntegral mid
+
+instance MonadIO m => ProjectIn m ImportSifter where
+  project ghcLibDir doc = do
+    (doc', indices) <- projectChosenLines ghcLibDir isImportCodeBlock doc
+    return (doc', ImportSifter indices, Right ())
+
+instance MonadIO m => ProjectIn m PragmaSifter where
+  project ghcLibDir doc = do
+    (doc', indices) <- projectChosenLines ghcLibDir isLanguagePragmaCodeBlock doc
+    return (doc', PragmaSifter indices, Right ())

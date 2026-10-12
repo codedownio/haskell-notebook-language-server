@@ -24,8 +24,6 @@ import Text.Regex.Base (defaultExecOpt)
 import Text.Regex.PCRE.Text (compile, compBlank, execute)
 
 
--- | The width of the @exprNNN = @ prefix 'project' added, and the lines it added it to.
--- Carrying the width here is what lets the position functions work without 'Params'.
 data ExpressionToDeclaration = ExpressionToDeclaration Int (Set UInt)
   deriving Show
 
@@ -52,36 +50,6 @@ containsExpressionVariable (EDParams {..}) t = do
 instance Transformer ExpressionToDeclaration where
   type Params ExpressionToDeclaration = EDParams
 
-  project :: MonadIO m => Params ExpressionToDeclaration -> Doc -> m (Doc, ExpressionToDeclaration)
-  project (EDParams {..}) (docToList -> ls) = do
-    parsed <- parseCodeString flags (T.unpack (T.intercalate "\n" ls))
-
-    let exprIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
-                      | locatedCodeBlock@(unloc -> Expression t) <- parsed
-                      , not (looksLikeTemplateHaskell t)]
-
-    return (listToDoc $ go 0 (zip ls [0 ..]) exprIndices, ExpressionToDeclaration prefixLen (Set.fromList $ fromIntegral <$> mconcat exprIndices))
-    where
-      prefixLen = L.length ("expr" :: String) + numberPadding + L.length (" = " :: String)
-
-      go :: Int -> [(Text, Int)] -> [[Int]] -> [Text]
-      go _ [] _ = []
-      go _ xs [] = fmap fst xs
-      go _ _ ([]:_) = error "Empty group"
-      go counter ((l, i):xs) (group@(i1:is):remainingGroups)
-        | i == i1 = let
-            prefix = "expr" <> paddedNumber <> " = "
-            paddedNumber = T.replicate numZerosNeeded "0" <> T.pack (show counter)
-            numZerosNeeded = numberPadding - L.length (show counter)
-
-            (extraLinesToProcess, remainingLines) = L.splitAt (L.length is) xs
-            blankPadding = T.replicate prefixLen " "
-            extraLines = fmap ((blankPadding <>) . fst) extraLinesToProcess
-
-            in
-              (prefix <> l) : extraLines <> go (counter + 1) remainingLines remainingGroups
-        | otherwise = l : go counter xs (group:remainingGroups)
-
   transformPosition :: ExpressionToDeclaration -> Position -> Maybe Position
   transformPosition (ExpressionToDeclaration prefixLen affectedLines) (Position l c)
     | l `Set.member` affectedLines = Just $ Position l (fromIntegral (fromIntegral c + prefixLen))
@@ -105,3 +73,34 @@ instance Transformer ExpressionToDeclaration where
 looksLikeTemplateHaskell :: String -> Bool
 looksLikeTemplateHaskell ('$':'(':rest) = lastMay rest == Just ')'
 looksLikeTemplateHaskell _ = False
+
+instance MonadIO m => ProjectIn m ExpressionToDeclaration where
+  project :: Params ExpressionToDeclaration -> Doc -> m (Doc, ExpressionToDeclaration, Either Text ())
+  project (EDParams {..}) (docToList -> ls) = do
+    parsed <- parseCodeString flags (T.unpack (T.intercalate "\n" ls))
+
+    let exprIndices = [getLinesStartingAt t (GHC.line locatedCodeBlock - 1)
+                      | locatedCodeBlock@(unloc -> Expression t) <- parsed
+                      , not (looksLikeTemplateHaskell t)]
+
+    return (listToDoc $ go 0 (zip ls [0 ..]) exprIndices, ExpressionToDeclaration prefixLen (Set.fromList $ fromIntegral <$> mconcat exprIndices), Right ())
+    where
+      prefixLen = L.length ("expr" :: String) + numberPadding + L.length (" = " :: String)
+
+      go :: Int -> [(Text, Int)] -> [[Int]] -> [Text]
+      go _ [] _ = []
+      go _ xs [] = fmap fst xs
+      go _ _ ([]:_) = error "Empty group"
+      go counter ((l, i):xs) (group@(i1:is):remainingGroups)
+        | i == i1 = let
+            prefix = "expr" <> paddedNumber <> " = "
+            paddedNumber = T.replicate numZerosNeeded "0" <> T.pack (show counter)
+            numZerosNeeded = numberPadding - L.length (show counter)
+
+            (extraLinesToProcess, remainingLines) = L.splitAt (L.length is) xs
+            blankPadding = T.replicate prefixLen " "
+            extraLines = fmap ((blankPadding <>) . fst) extraLinesToProcess
+
+            in
+              (prefix <> l) : extraLines <> go (counter + 1) remainingLines remainingGroups
+        | otherwise = l : go counter xs (group:remainingGroups)

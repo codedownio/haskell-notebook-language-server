@@ -18,7 +18,7 @@ flagsToUse = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) getSessionDynFlags
 spec :: TopSpec
 spec = describe "StripDirective" $ do
   it "strips out GHCi directives" $ do
-    (ls, ed@(StripDirective affectedLines)) <- project (SDParams flagsToUse) (listToDoc ["foo = 42", ":t foo"])
+    (ls, ed@(StripDirective affectedLines), _) <- project (SDParams flagsToUse) (listToDoc ["foo = 42", ":t foo"])
     ls `shouldBe` (listToDoc ["foo = 42", ""])
     affectedLines `shouldBe` [1]
 

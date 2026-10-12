@@ -23,7 +23,7 @@ flagsToUse = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) getSessionDynFlags
 spec :: TopSpec
 spec = describe "DirectiveToPragma" $ do
   it "Converts :set -XFoo directive to LANGUAGE pragma" $ do
-    (ls, dp@(DirectiveToPragma affectedLines)) <- project (DTPParams flagsToUse) (listToDoc ["foo = 42", ":set -XFoo"])
+    (ls, dp@(DirectiveToPragma affectedLines), _) <- project (DTPParams flagsToUse) (listToDoc ["foo = 42", ":set -XFoo"])
     ls `shouldBe` (listToDoc ["foo = 42", "{-# LANGUAGE Foo #-}"])
     affectedLines `shouldBe` [1]
 
@@ -31,7 +31,7 @@ spec = describe "DirectiveToPragma" $ do
     untransformPosition dp (Position 1 0) `shouldBe` (Just (Position 1 0))
 
   it "Converts :set -XFoo -XBar directive to LANGUAGE pragmas" $ do
-    (ls, dp@(DirectiveToPragma affectedLines)) <- project (DTPParams flagsToUse) (listToDoc ["foo = 42", ":set -XFoo -XBar"])
+    (ls, dp@(DirectiveToPragma affectedLines), _) <- project (DTPParams flagsToUse) (listToDoc ["foo = 42", ":set -XFoo -XBar"])
     ls `shouldBe` (listToDoc ["foo = 42", "{-# LANGUAGE Foo Bar #-}"])
     affectedLines `shouldBe` [1]
 
@@ -40,7 +40,7 @@ spec = describe "DirectiveToPragma" $ do
 
   it "Does a simple single line change" $ do
     let changes = [mkChange (4, 16) (4, 16) Nothing "2"]
-    (_projectedBefore, dp) <- project @DirectiveToPragma (DTPParams flagsToUse) doc
+    (_projectedBefore, dp, _) <- project @_ @DirectiveToPragma (DTPParams flagsToUse) doc
     let before = doc
     (changes', _transformer') <- handleDiffMulti (DTPParams flagsToUse) before changes dp
     changes' `shouldBe` changes

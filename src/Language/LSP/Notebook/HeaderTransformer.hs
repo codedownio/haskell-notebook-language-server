@@ -18,8 +18,10 @@ newtype HeaderTransformer = HeaderTransformer UInt
 instance Transformer HeaderTransformer where
   type Params HeaderTransformer = [Text]
 
-  project [] ls = pure (ls, HeaderTransformer 0)
-  project initialLines ls = pure ((Rope.fromText $ T.intercalate "\n" initialLines) <> "\n" <> ls, HeaderTransformer (fromIntegral (L.length initialLines)))
 
   transformPosition (HeaderTransformer n) (Position l c) = Just $ Position (l + n) c
   untransformPosition (HeaderTransformer n) (Position l c) = Just $ Position (l - n) c
+
+instance Monad m => ProjectIn m HeaderTransformer where
+  project [] ls = pure (ls, HeaderTransformer 0, Right ())
+  project initialLines ls = pure ((Rope.fromText $ T.intercalate "\n" initialLines) <> "\n" <> ls, HeaderTransformer (fromIntegral (L.length initialLines)), Right ())

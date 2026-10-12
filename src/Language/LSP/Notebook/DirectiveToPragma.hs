@@ -31,7 +31,38 @@ data DTPParams = DTPParams {
 instance Transformer DirectiveToPragma where
   type Params DirectiveToPragma = DTPParams
 
-  project :: MonadIO m => Params DirectiveToPragma -> Doc -> m (Doc, DirectiveToPragma)
+  transformPosition :: DirectiveToPragma -> Position -> Maybe Position
+  transformPosition (DirectiveToPragma affectedLines) (Position l c)
+    | l `Set.member` affectedLines = Just $ Position l 0
+    | otherwise = Just $ Position l c
+
+  -- TODO: do better here
+  untransformPosition :: DirectiveToPragma -> Position -> Maybe Position
+  untransformPosition (DirectiveToPragma affectedLines) (Position l c)
+    | l `Set.member` affectedLines = Just $ Position l 0
+    | otherwise = Just $ Position l c
+
+  -- handleDiff :: Params DirectiveToPragma -> Doc -> TextDocumentContentChangeEvent -> DirectiveToPragma -> ([TextDocumentContentChangeEvent], DirectiveToPragma)
+  -- handleDiff params before (TextDocumentContentChangeEvent Nothing _ t) (DirectiveToPragma affectedLines) = ([TextDocumentContentChangeEvent Nothing Nothing (Rope.toText doc')], tx)
+  --   where (doc', tx) = project @_ @DirectiveToPragma params (Rope.fromText t)
+  -- handleDiff params before change@(TextDocumentContentChangeEvent (Just range@(Range (Position l1 c1) (Position l2 c2))) _ t) (DirectiveToPragma currentAffectedLines)
+  --   | l1 == l2 && numAddedLines == 1 = undefined
+  --       -- where
+  --       --   newLine = undefined
+  --       --   lineStatusChanged = undefined
+  --   | otherwise = undefined
+  --   where
+  --     after = applyChange change before
+
+  --     numAddedLines = (T.count "\n" t) + 1
+
+  --     affectedLineBoundsInclusive = (l1, l2 + fromIntegral numAddedLines - 1)
+
+  --     -- (beginningLines, rest) = Rope.splitAtLine (fromIntegral l1) before
+  --     -- (modifiedLines, endingLines) = Rope.splitAtLine (fromIntegral (l2 - l1)) rest
+
+instance MonadIO m => ProjectIn m DirectiveToPragma where
+  project :: Params DirectiveToPragma -> Doc -> m (Doc, DirectiveToPragma, Either Text ())
   project (DTPParams {..}) doc@(docToList -> ls) = do
     parsed <- parseCodeString flags (T.unpack (Rope.toText doc))
 
@@ -40,7 +71,7 @@ instance Transformer DirectiveToPragma where
                            | locatedCodeBlock@(unloc -> Directive SetDynFlag t) <- parsed
                            , all isLanguageOption (L.words t)]
 
-    return (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat (fmap fst directiveIndices)))
+    return (listToDoc $ go 0 (zip ls [0 ..]) directiveIndices, DirectiveToPragma (Set.fromList $ fromIntegral <$> mconcat (fmap fst directiveIndices)), Right ())
     where
       go :: Int -> [(Text, Int)] -> [([Int], [String])] -> [Text]
       go _ [] _ = []
@@ -59,32 +90,3 @@ instance Transformer DirectiveToPragma where
       unflagLanguageOption = L.drop 2
 
   -- TODO: do better here
-  transformPosition :: DirectiveToPragma -> Position -> Maybe Position
-  transformPosition (DirectiveToPragma affectedLines) (Position l c)
-    | l `Set.member` affectedLines = Just $ Position l 0
-    | otherwise = Just $ Position l c
-
-  -- TODO: do better here
-  untransformPosition :: DirectiveToPragma -> Position -> Maybe Position
-  untransformPosition (DirectiveToPragma affectedLines) (Position l c)
-    | l `Set.member` affectedLines = Just $ Position l 0
-    | otherwise = Just $ Position l c
-
-  -- handleDiff :: Params DirectiveToPragma -> Doc -> TextDocumentContentChangeEvent -> DirectiveToPragma -> ([TextDocumentContentChangeEvent], DirectiveToPragma)
-  -- handleDiff params before (TextDocumentContentChangeEvent Nothing _ t) (DirectiveToPragma affectedLines) = ([TextDocumentContentChangeEvent Nothing Nothing (Rope.toText doc')], tx)
-  --   where (doc', tx) = project @DirectiveToPragma params (Rope.fromText t)
-  -- handleDiff params before change@(TextDocumentContentChangeEvent (Just range@(Range (Position l1 c1) (Position l2 c2))) _ t) (DirectiveToPragma currentAffectedLines)
-  --   | l1 == l2 && numAddedLines == 1 = undefined
-  --       -- where
-  --       --   newLine = undefined
-  --       --   lineStatusChanged = undefined
-  --   | otherwise = undefined
-  --   where
-  --     after = applyChange change before
-
-  --     numAddedLines = (T.count "\n" t) + 1
-
-  --     affectedLineBoundsInclusive = (l1, l2 + fromIntegral numAddedLines - 1)
-
-  --     -- (beginningLines, rest) = Rope.splitAtLine (fromIntegral l1) before
-  --     -- (modifiedLines, endingLines) = Rope.splitAtLine (fromIntegral (l2 - l1)) rest

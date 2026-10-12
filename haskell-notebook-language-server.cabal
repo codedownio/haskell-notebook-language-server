@@ -49,6 +49,7 @@ library
       FlexibleInstances
       LambdaCase
       ViewPatterns
+      MultiParamTypeClasses
       MultiWayIf
       TupleSections
       NumericUnderscores
@@ -103,6 +104,7 @@ executable haskell-notebook-language-server
       FlexibleInstances
       LambdaCase
       ViewPatterns
+      MultiParamTypeClasses
       MultiWayIf
       TupleSections
       NumericUnderscores
@@ -146,6 +148,7 @@ test-suite test-build
       FlexibleInstances
       LambdaCase
       ViewPatterns
+      MultiParamTypeClasses
       MultiWayIf
       TupleSections
       NumericUnderscores
@@ -189,6 +192,7 @@ test-suite tests
       FlexibleInstances
       LambdaCase
       ViewPatterns
+      MultiParamTypeClasses
       MultiWayIf
       TupleSections
       NumericUnderscores
@@ -231,6 +235,7 @@ benchmark benchmarks
       FlexibleInstances
       LambdaCase
       ViewPatterns
+      MultiParamTypeClasses
       MultiWayIf
       TupleSections
       NumericUnderscores

@@ -19,7 +19,7 @@ flagsToUse = unsafePerformIO $ runGhc (Just GHC.Paths.libdir) getSessionDynFlags
 spec :: TopSpec
 spec = describe "ImportSifter" $ do
   it "projects and transforms a single import" $ do
-    (ls, sifter@(ImportSifter indices)) <- project flagsToUse (listToDoc ["putStrLn 42", "import Bar"])
+    (ls, sifter@(ImportSifter indices), _) <- project flagsToUse (listToDoc ["putStrLn 42", "import Bar"])
     ls `shouldBe` (listToDoc ["import Bar", "putStrLn 42"])
     indices `shouldBe` [1]
 
@@ -27,7 +27,7 @@ spec = describe "ImportSifter" $ do
     transformAndUntransform (Position 1 0) (Position 0 0) sifter
 
   it "projects and transforms two imports" $ do
-    (ls, sifter@(ImportSifter indices)) <- project flagsToUse (listToDoc ["putStrLn 42", "import Bar", "foo = 42", "import Foo", "bar = 24"])
+    (ls, sifter@(ImportSifter indices), _) <- project flagsToUse (listToDoc ["putStrLn 42", "import Bar", "foo = 42", "import Foo", "bar = 24"])
     ls `shouldBe` (listToDoc ["import Bar", "import Foo", "putStrLn 42", "foo = 42", "bar = 24"])
     indices `shouldBe` [1, 3]
 

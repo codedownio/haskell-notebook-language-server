@@ -59,7 +59,10 @@ transformClientNot' :: (
 transformClientNot' _ SMethod_TextDocumentDidOpen params = whenNotebook params $ \u -> do
   let ls = Rope.fromText (params ^. (textDocument . text))
   TransformerState {..} <- ask
-  (ls', transformer' :: HaskellNotebookTransformer) <- project (transformerParams (appConfigDynFlags transformerConfig)) ls
+  (ls', transformer' :: HaskellNotebookTransformer, eitherErr) <- project (transformerParams (appConfigDynFlags transformerConfig)) ls
+  case eitherErr of
+    Left err -> logWarnN [i|(#{u}) Project failed: #{err}|]
+    Right () -> return ()
   newUri <- addExtensionToUri ".hs" u
   referenceRegex <- case uriToFilePath newUri of
     Just s -> pure $ mkDocRegex (T.pack s)

@@ -24,17 +24,7 @@ library
       Language.LSP.Notebook.StripDirective
       Language.LSP.Notebook.Util
       Language.LSP.Parse
-      Language.LSP.Transformer
-      Transform.ClientNot
-      Transform.ClientReq
-      Transform.ClientRsp
-      Transform.ClientRsp.Hover
-      Transform.Common
-      Transform.ServerNot
-      Transform.ServerReq
-      Transform.ServerRsp
-      Transform.ServerRsp.Hover
-      Transform.Util
+      Transform.Config
   other-modules:
       Paths_haskell_notebook_language_server
   hs-source-dirs:
@@ -56,20 +46,14 @@ library
       TypeApplications
   ghc-options: -Wunused-packages -Wall -fno-warn-name-shadowing
   build-depends:
-      aeson
-    , base >=4.7 && <5
+      base >=4.7 && <5
     , containers
-    , filepath
     , ghc
     , ghc-parser
     , ihaskell
-    , lens
-    , lens-regex-pcre
     , lsp-types >=2.0.0.1
     , monad-logger
-    , mtl
-    , myers-diff
-    , network-uri
+    , notebook-language-server-core
     , pcre-light
     , regex-base
     , regex-pcre-builtin
@@ -77,19 +61,13 @@ library
     , string-interpolate
     , text
     , text-rope
-    , time
     , transformers
-    , unliftio
-    , unliftio-core
     , vector
   default-language: Haskell2010
 
 executable haskell-notebook-language-server
   main-is: Main.hs
   other-modules:
-      Parsing
-      Process
-      RequestMap
       Streams
       Paths_haskell_notebook_language_server
   hs-source-dirs:
@@ -121,9 +99,8 @@ executable haskell-notebook-language-server
     , lsp-types >=2.0.0.1
     , monad-logger
     , mtl
+    , notebook-language-server-core
     , optparse-applicative
-    , process
-    , retry
     , string-interpolate
     , text
     , unix
@@ -156,11 +133,8 @@ test-suite test-build
   ghc-options: -Wunused-packages -Wall -fno-warn-name-shadowing -threaded -rtsopts -with-rtsopts=-N -O2 -W
   build-depends:
       base >=4.7 && <5
-    , lsp-types >=2.0.0.1
-    , monad-logger
     , sandwich
     , string-interpolate
-    , text
     , unliftio
   default-language: Haskell2010
 
@@ -209,6 +183,7 @@ test-suite tests
     , ihaskell
     , lsp-types >=2.0.0.1
     , monad-logger
+    , notebook-language-server-core
     , sandwich
     , sandwich-quickcheck
     , string-interpolate
@@ -251,12 +226,10 @@ benchmark benchmarks
     , haskell-notebook-language-server
     , ihaskell
     , lsp-types >=2.0.0.1
-    , monad-logger
     , myers-diff
+    , notebook-language-server-core
     , row-types
     , string-interpolate
-    , text
     , text-rope
     , transformers
-    , unliftio
   default-language: Haskell2010

@@ -7,11 +7,6 @@ extra-source-files:
 
 dependencies:
 - base >= 4.7 && < 5
-- lsp-types >= 2.0.0.1
-- monad-logger
-- string-interpolate
-- text
-- unliftio
 
 default-extensions:
 - OverloadedStrings
@@ -37,25 +32,21 @@ ghc-options:
 library:
   source-dirs: src
   dependencies:
-  - aeson
   - containers
-  - filepath
   - ghc
   - ghc-parser
   - ihaskell
-  - lens
-  - lens-regex-pcre
+  - lsp-types >= 2.0.0.1
+  - monad-logger
+  - notebook-language-server-core
   - pcre-light
-  - mtl
-  - myers-diff
-  - network-uri
   - regex-base
   - regex-pcre-builtin
   - safe
+  - string-interpolate
+  - text
   - text-rope
-  - time
   - transformers
-  - unliftio-core
   - vector
 
 executables:
@@ -76,11 +67,15 @@ executables:
     - ghc
     - haskell-notebook-language-server
     - lens
+    - lsp-types >= 2.0.0.1
+    - monad-logger
     - mtl
+    - notebook-language-server-core
     - optparse-applicative
-    - process
-    - retry
+    - string-interpolate
+    - text
     - unix
+    - unliftio
     - unliftio-core
 
 tests:
@@ -101,11 +96,17 @@ tests:
     - ghc-paths
     - haskell-notebook-language-server
     - ihaskell
+    - lsp-types >= 2.0.0.1
+    - monad-logger
+    - notebook-language-server-core
     - QuickCheck
     - sandwich
     - sandwich-quickcheck
+    - string-interpolate
+    - text
     - text-rope
     - transformers
+    - unliftio
 
   test-build:
     main: Main.hs
@@ -119,6 +120,8 @@ tests:
     - -W
     dependencies:
     - sandwich
+    - string-interpolate
+    - unliftio
 
 benchmarks:
   benchmarks:
@@ -140,7 +143,9 @@ benchmarks:
     - ghc-paths
     - haskell-notebook-language-server
     - ihaskell
+    - lsp-types >= 2.0.0.1
     - myers-diff
+    - notebook-language-server-core
     - row-types
     - string-interpolate
     - text-rope

@@ -5,6 +5,17 @@
 
 packages:
 - completed:
+    commit: d8ca894fa723d805abaacb85f35503f72c3aec7f
+    git: https://github.com/codedownio/notebook-language-server-core.git
+    name: notebook-language-server-core
+    pantry-tree:
+      sha256: 1dbe24fb672a644b2664955e8a7d786688eea9c02c91af5a05b31490f7a7e29f
+      size: 1969
+    version: 0.1.0.0
+  original:
+    commit: d8ca894fa723d805abaacb85f35503f72c3aec7f
+    git: https://github.com/codedownio/notebook-language-server-core.git
+- completed:
     commit: f4ada7baa5b76b11bfb7ac991cfaa846339b3373
     git: https://github.com/codedownio/IHaskell.git
     name: ihaskell

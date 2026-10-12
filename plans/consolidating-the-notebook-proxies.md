@@ -60,12 +60,10 @@ to supply it was to rebuild the params from `DynFlags`. See step 2.
 
 | | |
 | --- | --- |
-| Code action fix | **parked** as drafts: rust#3, cpp#2, go#2, haskell#3. Same fix written four times, which is the duplication this plan removes. Reapply once after the class is reconciled. |
-| Drop `Params` from position mapping | done in all four: rust#4, cpp#3, go#3, haskell#4. Tests green (rust 19, cpp 21, go 40, haskell 20). |
-| Class split | **done in all four**: rust#5, cpp#4, go#4, haskell#5 (each stacked on that repo's `drop-params` PR). The four `Transformer` classes are now character-identical. Tests green: rust 19, cpp 21, go 40, haskell 20. |
-| `getParams` | removed from the class — its only caller was `unproject`, which now reads what it needs off the transformer value. |
-| Releases | not cut, and not needed until the reconciliation lands. |
-| Integration test | codedown-languages branch `rust-code-action-test`, pushed, no PR — goes back with the code action fix. |
+| Class reconciliation | **merged in all four.** The `Transformer`/`ProjectIn` split, `Params` dropped from position mapping, `getParams` deleted. The four classes are identical. |
+| Code action fix | **closed**, branches kept (`code-action-edits` in each repo, plus `rust-code-action-test` in codedown-languages). Needs rewriting against the new class, not rebasing: `getParams` is gone and `unproject` no longer takes `Params`. |
+| Core library | **exists locally** at `~/tools/notebook-language-server-core`, consumed by rust via a local-path `extra-deps`. Holds `Language.LSP.Transformer` and `App.{Parsing,Process,RequestMap}` — 299 lines, 312 removed from rust. rust builds and its 19 tests pass against it. |
+| Standardising rust/cpp/go on one GHC | **deferred**, see step 5. |
 
 # The plan
 
@@ -190,20 +188,21 @@ Worth doing even if the rest of the plan is abandoned: `unproject` reaching cpp,
 haskell is what unblocks notebook formatting for them (see `notebook-formatting-in-proxies.md`
 in codedown-languages).
 
-## 5. Standardise rust, cpp and go on one GHC
+## 5. Standardise rust, cpp and go on one GHC — deferred
 
-Today: rust and cpp build ghc9122, go builds ghc9124, on resolvers `nightly-2025-11-19`,
-`nightly-2025-11-19` and `nightly-2026-04-19`. Pick one — 9.12.4 is fine — and move all three
-onto it, with the same resolver.
+Tried both directions and backed out of each:
 
-This matters for step 6. Each distinct resolver among the consumers is a configuration core
-has to build against, and three servers needing one between them instead of three is a third
-of the matrix gone.
+* rust and cpp to go's GHC 9.12.4 — their nixpkgs is `release-25.11`, which has no `ghc9124`.
+* go down to rust/cpp's 9.12.2 — go's nixpkgs is `release-26.05`, which has no `ghc9122`.
 
-**Consider going further and using hnls's ghc912 resolver** (`nightly-2025-08-22`, GHC 9.12.2)
-for all three. Then the set of resolvers core must support is *exactly* hnls's, and core's CI
-matrix is hnls's matrix with nothing bolted on. Only do this if nothing in rust/cpp/go needs
-something newer.
+So standardising means aligning the nixpkgs inputs too, and rust/cpp pin haskell.nix to a
+commit while go follows master. Bumping nixpkgs under a pinned haskell.nix is a known source
+of breakage, and it would change the released static artifacts — not something to bundle into
+a refactor.
+
+The payoff is also smaller than it looked: rust and cpp already share a resolver, so this
+takes the distinct count from 2 to 1, and core's matrix from 8 to 7. Revisit once core exists
+and we know whether supporting two resolvers actually hurts.
 
 ## 6. Stand up the core repo with CI and a stub, before moving any code
 

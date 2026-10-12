@@ -1,7 +1,6 @@
 final: prev: {
   haskell-nix = let
     shouldPatch = name: compiler: builtins.elem name [
-      "ghc902"
       "ghc928"
       "ghc948"
       "ghc967"

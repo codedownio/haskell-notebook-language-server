@@ -1,4 +1,4 @@
-# Changelog for lib-parser-test
+# Changelog for haskell-notebook-language-server
 
 ## Unreleased changes
 

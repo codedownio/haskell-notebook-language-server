@@ -57,6 +57,8 @@ instance Transformer ExpressionToDeclaration where
 
   untransformPosition :: ExpressionToDeclaration -> Position -> Maybe Position
   untransformPosition (ExpressionToDeclaration prefixLen affectedLines) (Position l c)
+    -- Nothing in the notebook corresponds to the prefix we added, and subtracting would wrap
+    | l `Set.member` affectedLines, fromIntegral c < prefixLen = Nothing
     | l `Set.member` affectedLines = Just $ Position l (fromIntegral (fromIntegral c - prefixLen))
     | otherwise = Just $ Position l c
 

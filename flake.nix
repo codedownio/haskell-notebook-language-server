@@ -17,14 +17,15 @@
   outputs = { self, flake-utils, gitignore, linux-dynamic-bundler, haskellNix, nixpkgs, haskellNixOld, nixpkgsOld }:
     flake-utils.lib.eachSystem ["x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin"] (system:
       let
-        overlays = [
-          haskellNix.overlay
+        overlaysFor = haskellNixToUse: [
+          haskellNixToUse.overlay
           (import ./nix/enable-native-bignum-overlay.nix)
           (import ./nix/fix-ghc-pkgs-overlay.nix system)
         ];
 
-        pkgs = import nixpkgs { inherit system overlays; inherit (haskellNix) config; };
-        pkgsOld = import nixpkgsOld { inherit system overlays; inherit (haskellNixOld) config; };
+        pkgs = import nixpkgs { inherit system; overlays = overlaysFor haskellNix; inherit (haskellNix) config; };
+        # Current haskell.nix floors at GHC 9.6, so 9.2 and 9.4 build against the older pin.
+        pkgsOld = import nixpkgsOld { inherit system; overlays = overlaysFor haskellNixOld; inherit (haskellNixOld) config; };
 
         inherit (pkgs) lib;
         isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
@@ -42,22 +43,27 @@
         flakeStatic = compiler-nix-name: src: extraModules:
           (pkgs.pkgsCross.musl64.hixProject compiler-nix-name src ([baseModules] ++ extraModules ++ [(import ./nix/static-modules.nix { inherit pkgs; })])).flake {};
 
+        flakeStaticOld = compiler-nix-name: src: extraModules:
+          (pkgsOld.pkgsCross.musl64.hixProject compiler-nix-name src ([baseModules] ++ extraModules ++ [(import ./nix/static-modules.nix { pkgs = pkgsOld; })])).flake {};
+
         utils = import ./nix/utils.nix { inherit pkgs gitignore system linux-dynamic-bundler; };
 
         allVersions = lib.mapAttrs (_: v: v.packages."haskell-notebook-language-server:exe:haskell-notebook-language-server") {
-          ghc92 = (if isDarwin then flakeOld else flake) "ghc928" (utils.src "stack/stack-9.2.8.yaml") [];
-          ghc94 = (if isDarwin then flakeOld else flake) "ghc948" (utils.src "stack/stack-9.4.8.yaml") [];
+          ghc92 = flakeOld "ghc928" (utils.src "stack/stack-9.2.8.yaml") [];
+          ghc94 = flakeOld "ghc948" (utils.src "stack/stack-9.4.8.yaml") [];
           ghc96 = flake "ghc967" (utils.src "stack/stack-9.6.7.yaml") [];
           ghc98 = flake "ghc984" (utils.src "stack/stack-9.8.4.yaml") [];
           ghc910 = flake "ghc9102" (utils.src "stack/stack-9.10.2.yaml") [(import ./nix/os-string-module.nix)];
           ghc912 = flake "ghc9122" (utils.src "stack/stack-9.12.2.yaml") [(import ./nix/os-string-module.nix)];
+          ghc914 = flake "ghc9141" (utils.src "stack/stack-9.14.1.yaml") [(import ./nix/os-string-module.nix)];
 
-          ghc92-static = flakeStatic "ghc928" (utils.src "stack/stack-9.2.8.yaml") [];
-          ghc94-static = flakeStatic "ghc948" (utils.src "stack/stack-9.4.8.yaml") [];
+          ghc92-static = flakeStaticOld "ghc928" (utils.src "stack/stack-9.2.8.yaml") [];
+          ghc94-static = flakeStaticOld "ghc948" (utils.src "stack/stack-9.4.8.yaml") [];
           ghc96-static = flakeStatic "ghc967" (utils.src "stack/stack-9.6.7.yaml") [];
           ghc98-static = flakeStatic "ghc984" (utils.src "stack/stack-9.8.4.yaml") [];
           ghc910-static = flakeStatic "ghc9102" (utils.src "stack/stack-9.10.2.yaml") [(import ./nix/os-string-module.nix)];
           ghc912-static = flakeStatic "ghc9122" (utils.src "stack/stack-9.12.2.yaml") [(import ./nix/os-string-module.nix)];
+          ghc914-static = flakeStatic "ghc9141" (utils.src "stack/stack-9.14.1.yaml") [(import ./nix/os-string-module.nix)];
         };
 
         staticVersions = lib.mapAttrsToList (n: v: utils.packageForGitHub (lib.removeSuffix "-static" n) v)
@@ -82,7 +88,7 @@
                 zeromq
                 zlib
 
-                pkgs.haskell.compiler.ghc9122
+                pkgs.haskell.compiler.ghc9141
               ];
             };
           };

@@ -13,8 +13,8 @@ extra-deps:
   commit: ba64f8ef5067a8a6f57c67b6f116a6349da68af7
 
 - git: https://github.com/codedownio/IHaskell.git
-  # codedown-aug-20-2025 branch
-  commit: f4ada7baa5b76b11bfb7ac991cfaa846339b3373
+  # ghc-9.14 branch
+  commit: 41564ba46285ef693f2f1441b6d005925ff4ed93
   subdirs:
   - .
   - ./ghc-parser

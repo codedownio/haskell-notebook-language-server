@@ -7,6 +7,7 @@ final: prev: {
       "ghc984"
       "ghc9102"
       "ghc9122"
+      "ghc9141"
     ];
 
     overrideCompiler = name: compiler: (compiler.override {

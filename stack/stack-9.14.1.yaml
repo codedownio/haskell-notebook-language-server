@@ -1,0 +1,27 @@
+
+resolver: nightly-2026-07-31
+
+compiler: ghc-9.14.1
+
+allow-newer: true
+
+packages:
+- ../
+
+nix:
+  enable: true
+  pure: false
+
+extra-deps:
+- git: https://github.com/codedownio/notebook-language-server-core.git
+  commit: ba64f8ef5067a8a6f57c67b6f116a6349da68af7
+
+- git: https://github.com/codedownio/IHaskell.git
+  # ghc-9.14 branch
+  commit: 41564ba46285ef693f2f1441b6d005925ff4ed93
+  subdirs:
+  - .
+  - ./ghc-parser
+  - ./ipython-kernel
+
+- cryptonite-0.30@sha256:12c85dea7be63e5ad90bcb487eb3846bf3c413347f94336fa1dede7b28f9936a,18301

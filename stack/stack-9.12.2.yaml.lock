@@ -16,33 +16,33 @@ packages:
     commit: ba64f8ef5067a8a6f57c67b6f116a6349da68af7
     git: https://github.com/codedownio/notebook-language-server-core.git
 - completed:
-    commit: f4ada7baa5b76b11bfb7ac991cfaa846339b3373
+    commit: c78bcfaa9cdef942693b8ab504765e3ef7954b8b
     git: https://github.com/codedownio/IHaskell.git
     name: ihaskell
     pantry-tree:
-      sha256: e928c494be4f637f3339a080873766f1a72e8bf7e945278788e26c3d759dc679
+      sha256: e4fc9e5a14a00009735929cb75d0a52002429fe17d210e45be4711cb37879bd3
       size: 24122
     subdir: .
     version: 0.12.0.0
   original:
-    commit: f4ada7baa5b76b11bfb7ac991cfaa846339b3373
+    commit: c78bcfaa9cdef942693b8ab504765e3ef7954b8b
     git: https://github.com/codedownio/IHaskell.git
     subdir: .
 - completed:
-    commit: f4ada7baa5b76b11bfb7ac991cfaa846339b3373
+    commit: c78bcfaa9cdef942693b8ab504765e3ef7954b8b
     git: https://github.com/codedownio/IHaskell.git
     name: ghc-parser
     pantry-tree:
-      sha256: 653a0561e1ea3402208dbfebde9ee796d1157a692f5ea78554baad2d932403ab
+      sha256: 8470105a3f9c405fdb2c2b24a22055550476d680c546ab6b01c9d6f71d2550e8
       size: 820
     subdir: ./ghc-parser
     version: 0.2.7.0
   original:
-    commit: f4ada7baa5b76b11bfb7ac991cfaa846339b3373
+    commit: c78bcfaa9cdef942693b8ab504765e3ef7954b8b
     git: https://github.com/codedownio/IHaskell.git
     subdir: ./ghc-parser
 - completed:
-    commit: f4ada7baa5b76b11bfb7ac991cfaa846339b3373
+    commit: c78bcfaa9cdef942693b8ab504765e3ef7954b8b
     git: https://github.com/codedownio/IHaskell.git
     name: ipython-kernel
     pantry-tree:
@@ -51,7 +51,7 @@ packages:
     subdir: ./ipython-kernel
     version: 0.11.0.0
   original:
-    commit: f4ada7baa5b76b11bfb7ac991cfaa846339b3373
+    commit: c78bcfaa9cdef942693b8ab504765e3ef7954b8b
     git: https://github.com/codedownio/IHaskell.git
     subdir: ./ipython-kernel
 - completed:

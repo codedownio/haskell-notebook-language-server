@@ -27,6 +27,12 @@ spec = describe "ExpressionToDeclaration" $ do
     transformAndUntransform (Position 0 1) (Position 0 18) ed
     transformAndUntransform (Position 1 0) (Position 1 0) ed
 
+  it "has no notebook position for the prefix it added" $ do
+    (_, ed :: ExpressionToDeclaration, _) <- project (EDParams 10 flagsToUse) (listToDoc ["putStrLn 42"])
+    untransformPosition ed (Position 0 0) `shouldBe` Nothing
+    untransformPosition ed (Position 0 16) `shouldBe` Nothing
+    untransformPosition ed (Position 0 17) `shouldBe` Just (Position 0 0)
+
   it "projects and transforms a multiline expression" $ do
     (ls, ed@(ExpressionToDeclaration _ affectedLines), _) <- project (EDParams 10 flagsToUse) (listToDoc ["putStrLn [42", "  ]", "foo = 42"])
     ls `shouldBe` (listToDoc ["expr0000000000 = putStrLn [42"

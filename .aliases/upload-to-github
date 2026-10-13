@@ -26,7 +26,7 @@ fi
 echo "Built: $BUILT"
 ls "$BUILT"
 
-VERSION="$(nix eval .#ghc92-static.version --raw)"
+VERSION="$(nix eval .#ghc912-static.version --raw)"
 echo "Got version: $VERSION"
 
 IFS=$'\n'

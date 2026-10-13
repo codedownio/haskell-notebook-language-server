@@ -33,7 +33,9 @@
         pkgs = import nixpkgs { inherit system; overlays = overlaysFor haskellNix; inherit (haskellNix) config; };
         # haskell.nix floors at GHC 9.6, so 9.2 and 9.4 build against the older pin.
         pkgsOld = import nixpkgsOld { inherit system; overlays = overlaysFor haskellNixOld; inherit (haskellNixOld) config; };
-        pkgsNew = import nixpkgsNew { inherit system; overlays = overlaysFor haskellNixNew; inherit (haskellNixNew) config; };
+        # The newer haskell.nix is needed only for ghc9141; pairing it with the older nixpkgs keeps
+        # binutils at 2.44, whose gold links the static build (2.46's segfaults).
+        pkgsNew = import nixpkgs { inherit system; overlays = overlaysFor haskellNixNew; inherit (haskellNixNew) config; };
 
         inherit (pkgs) lib;
         isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
@@ -58,11 +60,7 @@
           (pkgsNew.hixProject compiler-nix-name src ([baseModules] ++ extraModules)).flake {};
 
         flakeStaticNew = compiler-nix-name: src: extraModules:
-          (pkgsNew.pkgsCross.musl64.hixProject compiler-nix-name src ([baseModules] ++ extraModules ++ [(import ./nix/static-modules.nix {
-            pkgs = pkgsNew;
-            cxx = "${pkgsNew.pkgsCross.musl64.stdenv.cc.targetPrefix}g++";
-            linker = "bfd";
-          })])).flake {};
+          (pkgsNew.pkgsCross.musl64.hixProject compiler-nix-name src ([baseModules] ++ extraModules ++ [(import ./nix/static-modules.nix { pkgs = pkgsNew; })])).flake {};
 
         utils = import ./nix/utils.nix { inherit pkgs gitignore system linux-dynamic-bundler; };
 
@@ -106,7 +104,7 @@
                 zeromq
                 zlib
 
-                pkgsNew.haskell.compiler.ghc9141
+                pkgsNew.haskell-nix.compiler.ghc9141
               ];
             };
           };

@@ -61,6 +61,7 @@
           (pkgsNew.pkgsCross.musl64.hixProject compiler-nix-name src ([baseModules] ++ extraModules ++ [(import ./nix/static-modules.nix {
             pkgs = pkgsNew;
             cxx = "${pkgsNew.pkgsCross.musl64.stdenv.cc.targetPrefix}g++";
+            linker = "bfd";
           })])).flake {};
 
         utils = import ./nix/utils.nix { inherit pkgs gitignore system linux-dynamic-bundler; };

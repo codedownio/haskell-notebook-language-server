@@ -103,7 +103,7 @@
                 zeromq
                 zlib
 
-                pkgsNew.haskell-nix.compiler.ghc9141
+                pkgs.haskell.compiler.ghc9122
               ];
             };
           };

@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 module Main where
 
 import Control.Monad
@@ -10,7 +11,7 @@ import UnliftIO.Process
 
 
 targets :: [String]
-targets = ["ghc92", "ghc94", "ghc96", "ghc98", "ghc910", "ghc912"]
+targets = ["ghc92", "ghc94", "ghc96", "ghc98", "ghc910", "ghc912", "ghc914"]
 
 allTargets :: [String]
 allTargets =
@@ -26,6 +27,7 @@ stackYamls = [
   , "stack/stack-9.8.4.yaml"
   , "stack/stack-9.10.2.yaml"
   , "stack/stack-9.12.2.yaml"
+  , "stack/stack-9.14.1.yaml"
   ]
 
 spec :: TopSpec
@@ -41,7 +43,7 @@ spec = parallel $ do
     info [i|nix: #{nix}|]
 
     p <- createProcessWithLogging (proc "nix" ["build", [i|.\##{target}|]])
-    waitForProcess p >>= (`shouldBe` ExitSuccess)
+    waitForProcess (handleOf p) >>= (`shouldBe` ExitSuccess)
 
   describe "stack" $ parallelN 5 $ forM_ stackYamls $ \stackYaml -> it stackYaml $ do
     dir <- getCurrentDirectory
@@ -54,8 +56,17 @@ spec = parallel $ do
     info [i|stack: #{stack}|]
 
     p <- createProcessWithLogging (proc "stack" ["build", "--stack-yaml", stackYaml])
-    waitForProcess p >>= (`shouldBe` ExitSuccess)
+    waitForProcess (handleOf p) >>= (`shouldBe` ExitSuccess)
 
 
 main :: IO ()
 main = runSandwichWithCommandLineArgs defaultOptions spec
+
+-- | sandwich 0.3.1.0 made createProcessWithLogging also return the Async reading the output.
+#if MIN_VERSION_sandwich(0,3,1)
+handleOf :: (ProcessHandle, a) -> ProcessHandle
+handleOf = fst
+#else
+handleOf :: ProcessHandle -> ProcessHandle
+handleOf = id
+#endif

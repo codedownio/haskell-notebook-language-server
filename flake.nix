@@ -58,7 +58,10 @@
           (pkgsNew.hixProject compiler-nix-name src ([baseModules] ++ extraModules)).flake {};
 
         flakeStaticNew = compiler-nix-name: src: extraModules:
-          (pkgsNew.pkgsCross.musl64.hixProject compiler-nix-name src ([baseModules] ++ extraModules ++ [(import ./nix/static-modules.nix { pkgs = pkgsNew; })])).flake {};
+          (pkgsNew.pkgsCross.musl64.hixProject compiler-nix-name src ([baseModules] ++ extraModules ++ [(import ./nix/static-modules.nix {
+            pkgs = pkgsNew;
+            cxx = "${pkgsNew.pkgsCross.musl64.stdenv.cc.targetPrefix}g++";
+          })])).flake {};
 
         utils = import ./nix/utils.nix { inherit pkgs gitignore system linux-dynamic-bundler; };
 

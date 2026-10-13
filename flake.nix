@@ -33,7 +33,10 @@
         pkgs = import nixpkgs { inherit system; overlays = overlaysFor haskellNix; inherit (haskellNix) config; };
         # haskell.nix floors at GHC 9.6, so 9.2 and 9.4 build against the older pin.
         pkgsOld = import nixpkgsOld { inherit system; overlays = overlaysFor haskellNixOld; inherit (haskellNixOld) config; };
-        pkgsNew = import nixpkgsNew { inherit system; overlays = overlaysFor haskellNixNew; inherit (haskellNixNew) config; };
+        # The newer haskell.nix is needed only for ghc9141; pairing it with the older nixpkgs keeps
+        # binutils at 2.44, whose gold links the static build (2.46's segfaults, and its musl
+        # wrapper is prefix-only so -pgml g++ can't resolve).
+        pkgsNew = import nixpkgs { inherit system; overlays = overlaysFor haskellNixNew; inherit (haskellNixNew) config; };
 
         inherit (pkgs) lib;
         isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
@@ -102,7 +105,7 @@
                 zeromq
                 zlib
 
-                pkgsNew.haskell.compiler.ghc9141
+                pkgsNew.haskell-nix.compiler.ghc9141
               ];
             };
           };

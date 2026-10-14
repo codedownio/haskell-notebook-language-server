@@ -5,10 +5,6 @@
 # items = []; document.querySelectorAll("td:first-child").forEach((x) => items.push(x.innerText)); items
 
 {
-  "ghc928" = [
-    "ghc" "Cabal" "Win32" "array" "base" "binary" "bytestring" "containers" "deepseq" "directory" "exceptions" "filepath" "ghc-boot-th" "ghc-boot" "ghc-compact" "ghc-heap" "ghc-prim" "ghci" "haskeline" "hpc" "integer-gmp" "libiserv" "mtl" "parsec" "pretty" "process" "stm" "template-haskell" "terminfo" "text" "time" "transformers" "unix" "xhtml"
-  ];
-
   "ghc948" = [
     "ghc" "Cabal-syntax" "Cabal" "Win32" "array" "base" "binary" "bytestring" "containers" "deepseq" "directory" "exceptions" "filepath" "ghc-boot-th" "ghc-boot" "ghc-compact" "ghc-heap" "ghc-prim" "ghci" "haskeline" "hpc" "integer-gmp" "libiserv" "mtl" "parsec" "pretty" "process" "stm" "template-haskell" "terminfo" "text" "time" "transformers" "unix" "xhtml"
   ];

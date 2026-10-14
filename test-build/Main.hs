@@ -11,7 +11,7 @@ import UnliftIO.Process
 
 
 targets :: [String]
-targets = ["ghc92", "ghc94", "ghc96", "ghc98", "ghc910", "ghc912", "ghc914"]
+targets = ["ghc94", "ghc96", "ghc98", "ghc910", "ghc912", "ghc914"]
 
 allTargets :: [String]
 allTargets =
@@ -21,8 +21,7 @@ allTargets =
 
 stackYamls :: [String]
 stackYamls = [
-  "stack/stack-9.2.8.yaml"
-  , "stack/stack-9.4.8.yaml"
+  "stack/stack-9.4.8.yaml"
   , "stack/stack-9.6.7.yaml"
   , "stack/stack-9.8.4.yaml"
   , "stack/stack-9.10.2.yaml"

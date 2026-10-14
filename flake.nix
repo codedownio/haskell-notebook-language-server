@@ -31,7 +31,7 @@
         ];
 
         pkgs = import nixpkgs { inherit system; overlays = overlaysFor haskellNix; inherit (haskellNix) config; };
-        # haskell.nix floors at GHC 9.6, so 9.2 and 9.4 build against the older pin.
+        # haskell.nix floors at GHC 9.6, so 9.4 builds against the older pin.
         pkgsOld = import nixpkgsOld { inherit system; overlays = overlaysFor haskellNixOld; inherit (haskellNixOld) config; };
         # The newer haskell.nix is needed only for ghc9141; pairing it with the older nixpkgs keeps
         # binutils at 2.44, whose gold links the static build (2.46's segfaults, and its musl
@@ -66,7 +66,6 @@
         utils = import ./nix/utils.nix { inherit pkgs gitignore system linux-dynamic-bundler; };
 
         allVersions = lib.mapAttrs (_: v: v.packages."haskell-notebook-language-server:exe:haskell-notebook-language-server") {
-          ghc92 = flakeOld "ghc928" (utils.src "stack/stack-9.2.8.yaml") [];
           ghc94 = flakeOld "ghc948" (utils.src "stack/stack-9.4.8.yaml") [];
           ghc96 = flake "ghc967" (utils.src "stack/stack-9.6.7.yaml") [];
           ghc98 = flake "ghc984" (utils.src "stack/stack-9.8.4.yaml") [];
@@ -74,7 +73,6 @@
           ghc912 = flake "ghc9122" (utils.src "stack/stack-9.12.2.yaml") [(import ./nix/os-string-module.nix)];
           ghc914 = flakeNew "ghc9141" (utils.src "stack/stack-9.14.1.yaml") [(import ./nix/os-string-module.nix)];
 
-          ghc92-static = flakeStaticOld "ghc928" (utils.src "stack/stack-9.2.8.yaml") [];
           ghc94-static = flakeStaticOld "ghc948" (utils.src "stack/stack-9.4.8.yaml") [];
           ghc96-static = flakeStatic "ghc967" (utils.src "stack/stack-9.6.7.yaml") [];
           ghc98-static = flakeStatic "ghc984" (utils.src "stack/stack-9.8.4.yaml") [];
@@ -138,12 +136,12 @@
               ${pkgs.symlinkJoin {
                 name = "my-project-deps";
                 paths =
-                  allVersions.ghc912.buildInputs ++ allVersions.ghc912.nativeBuildInputs
+                  allVersions.ghc914.buildInputs ++ allVersions.ghc914.nativeBuildInputs
+                  ++ allVersions.ghc912.buildInputs ++ allVersions.ghc912.nativeBuildInputs
                   ++ allVersions.ghc910.buildInputs ++ allVersions.ghc910.nativeBuildInputs
                   ++ allVersions.ghc98.buildInputs ++ allVersions.ghc98.nativeBuildInputs
                   ++ allVersions.ghc96.buildInputs ++ allVersions.ghc96.nativeBuildInputs
                   ++ allVersions.ghc94.buildInputs ++ allVersions.ghc94.nativeBuildInputs
-                  ++ allVersions.ghc92.buildInputs ++ allVersions.ghc92.nativeBuildInputs
                 ;
               }}
             '';

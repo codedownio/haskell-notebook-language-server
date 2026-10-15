@@ -19,6 +19,7 @@ haskellNotebookConfig :: DynFlags -> NotebookConfig HaskellNotebookTransformer
 haskellNotebookConfig flags = NotebookConfig {
   notebookConfigHandles = isNotebook
   , notebookConfigDidSaveDebounceMs = Nothing
+  , notebookConfigHandlesFormatting = False
   , notebookConfigTransformerParamsFor = const (transformerParams flags)
   , notebookConfigMakeShadowDocument = makeShadowDocument
   , notebookConfigUnopenedUri = addExtensionToUri ".hs"

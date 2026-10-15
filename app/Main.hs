@@ -248,7 +248,7 @@ handleWrappedOut config debugHlsReads clientReqMap serverReqMap sendToStdout byt
           modifyMVar_ serverReqMap $ \m -> case updateServerRequestMap m msgId (SMethodAndParams meth (msg ^. Lens.params)) of
             Just m' -> return m'
             Nothing -> return m
-          sendToStdout (transformServerReq meth msg)
+          transformServerReq meth msg >>= sendToStdout
         Right (ServerToClientRsp meth initialParams msg) ->
           transformServerRsp config meth initialParams msg >>= sendToStdout
 

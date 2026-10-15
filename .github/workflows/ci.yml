@@ -70,7 +70,6 @@ jobs:
         - output: "ghc98-static"
         - output: "ghc910-static"
         - output: "ghc912-static"
-        - output: "ghc914-static"
     steps:
     - uses: actions/checkout@v4
 

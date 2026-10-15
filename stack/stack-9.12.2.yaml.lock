@@ -5,31 +5,31 @@
 
 packages:
 - completed:
-    commit: ba64f8ef5067a8a6f57c67b6f116a6349da68af7
+    commit: 244731900dee065cbf794ba74294f3a0f55c74fd
     git: https://github.com/codedownio/notebook-language-server-core.git
     name: notebook-language-server-core
     pantry-tree:
-      sha256: 1f0de5253b8400fd54842ba4bca858d71d6f949f7510d871ee8a42c6280f553b
-      size: 2089
+      sha256: 53abc5c9405647f56c1bd03ca3f1f29d0b9c5c7745ed39a89c7946aaced27f00
+      size: 2399
     version: 0.1.0.0
   original:
-    commit: ba64f8ef5067a8a6f57c67b6f116a6349da68af7
+    commit: 244731900dee065cbf794ba74294f3a0f55c74fd
     git: https://github.com/codedownio/notebook-language-server-core.git
 - completed:
-    commit: c78bcfaa9cdef942693b8ab504765e3ef7954b8b
+    commit: 41564ba46285ef693f2f1441b6d005925ff4ed93
     git: https://github.com/codedownio/IHaskell.git
     name: ihaskell
     pantry-tree:
-      sha256: e4fc9e5a14a00009735929cb75d0a52002429fe17d210e45be4711cb37879bd3
+      sha256: 6649709935c354e46e965df754f142b5806a798665a9291988879cb5e4254efb
       size: 24122
     subdir: .
     version: 0.12.0.0
   original:
-    commit: c78bcfaa9cdef942693b8ab504765e3ef7954b8b
+    commit: 41564ba46285ef693f2f1441b6d005925ff4ed93
     git: https://github.com/codedownio/IHaskell.git
     subdir: .
 - completed:
-    commit: c78bcfaa9cdef942693b8ab504765e3ef7954b8b
+    commit: 41564ba46285ef693f2f1441b6d005925ff4ed93
     git: https://github.com/codedownio/IHaskell.git
     name: ghc-parser
     pantry-tree:
@@ -38,11 +38,11 @@ packages:
     subdir: ./ghc-parser
     version: 0.2.7.0
   original:
-    commit: c78bcfaa9cdef942693b8ab504765e3ef7954b8b
+    commit: 41564ba46285ef693f2f1441b6d005925ff4ed93
     git: https://github.com/codedownio/IHaskell.git
     subdir: ./ghc-parser
 - completed:
-    commit: c78bcfaa9cdef942693b8ab504765e3ef7954b8b
+    commit: 41564ba46285ef693f2f1441b6d005925ff4ed93
     git: https://github.com/codedownio/IHaskell.git
     name: ipython-kernel
     pantry-tree:
@@ -51,7 +51,7 @@ packages:
     subdir: ./ipython-kernel
     version: 0.11.0.0
   original:
-    commit: c78bcfaa9cdef942693b8ab504765e3ef7954b8b
+    commit: 41564ba46285ef693f2f1441b6d005925ff4ed93
     git: https://github.com/codedownio/IHaskell.git
     subdir: ./ipython-kernel
 - completed:

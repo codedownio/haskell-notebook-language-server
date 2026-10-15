@@ -1,5 +1,9 @@
 # Changelog for haskell-notebook-language-server
 
+## 0.5.4.1
+
+* Untransform workspace/applyEdit, which named the shadow document and so was refused by the client
+
 ## 0.5.4.0
 
 * Support textDocument/inlayHint

@@ -5,7 +5,7 @@
 
 packages:
 - completed:
-    commit: f737bddb1981666a7d22f0f60a7289bbb967a696
+    commit: 244731900dee065cbf794ba74294f3a0f55c74fd
     git: https://github.com/codedownio/notebook-language-server-core.git
     name: notebook-language-server-core
     pantry-tree:
@@ -13,7 +13,7 @@ packages:
       size: 2399
     version: 0.1.0.0
   original:
-    commit: f737bddb1981666a7d22f0f60a7289bbb967a696
+    commit: 244731900dee065cbf794ba74294f3a0f55c74fd
     git: https://github.com/codedownio/notebook-language-server-core.git
 - completed:
     commit: 3683ab4e052347bc47eb5546361f47bcd8c0fa58

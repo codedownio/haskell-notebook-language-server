@@ -5,15 +5,15 @@
 
 packages:
 - completed:
-    commit: cb55077c20b22919956d0fcfa4287c5cb82c8fa2
+    commit: f737bddb1981666a7d22f0f60a7289bbb967a696
     git: https://github.com/codedownio/notebook-language-server-core.git
     name: notebook-language-server-core
     pantry-tree:
-      sha256: 9ba9d7a2e117c3fe1d0767d4b5992007bb69d7bdfbb306c133b762e73a79c082
-      size: 2202
+      sha256: 53abc5c9405647f56c1bd03ca3f1f29d0b9c5c7745ed39a89c7946aaced27f00
+      size: 2399
     version: 0.1.0.0
   original:
-    commit: cb55077c20b22919956d0fcfa4287c5cb82c8fa2
+    commit: f737bddb1981666a7d22f0f60a7289bbb967a696
     git: https://github.com/codedownio/notebook-language-server-core.git
 - completed:
     commit: 41564ba46285ef693f2f1441b6d005925ff4ed93

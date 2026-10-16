@@ -135,13 +135,7 @@
               ${githubArtifacts}
               ${pkgs.symlinkJoin {
                 name = "my-project-deps";
-                paths =
-                  allVersions.ghc912.buildInputs ++ allVersions.ghc912.nativeBuildInputs
-                  ++ allVersions.ghc910.buildInputs ++ allVersions.ghc910.nativeBuildInputs
-                  ++ allVersions.ghc98.buildInputs ++ allVersions.ghc98.nativeBuildInputs
-                  ++ allVersions.ghc96.buildInputs ++ allVersions.ghc96.nativeBuildInputs
-                  ++ allVersions.ghc94.buildInputs ++ allVersions.ghc94.nativeBuildInputs
-                ;
+                paths = lib.concatMap (v: v.buildInputs ++ v.nativeBuildInputs) (lib.attrValues allVersions);
               }}
             '';
 

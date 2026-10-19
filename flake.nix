@@ -36,7 +36,7 @@
         # The newer haskell.nix is needed only for ghc9141; pairing it with the older nixpkgs keeps
         # binutils at 2.44, whose gold links the static build (2.46's segfaults, and its musl
         # wrapper is prefix-only so -pgml g++ can't resolve).
-        pkgsNew = import nixpkgs { inherit system; overlays = overlaysFor haskellNixNew; inherit (haskellNixNew) config; };
+        pkgsNew = import nixpkgs { inherit system; overlays = overlaysFor haskellNixNew ++ [(import ./nix/serial-bindist-overlay.nix system)]; inherit (haskellNixNew) config; };
 
         inherit (pkgs) lib;
         isDarwin = pkgs.stdenv.hostPlatform.isDarwin;
@@ -71,14 +71,14 @@
           ghc98 = flake "ghc984" (utils.src "stack/stack-9.8.4.yaml") [];
           ghc910 = flake "ghc9102" (utils.src "stack/stack-9.10.2.yaml") [(import ./nix/os-string-module.nix)];
           ghc912 = flake "ghc9122" (utils.src "stack/stack-9.12.2.yaml") [(import ./nix/os-string-module.nix)];
-          # ghc914 = flakeNew "ghc9141" (utils.src "stack/stack-9.14.1.yaml") [(import ./nix/os-string-module.nix)];
+          ghc914 = flakeNew "ghc9141" (utils.src "stack/stack-9.14.1.yaml") [(import ./nix/os-string-module.nix)];
 
           ghc94-static = flakeStaticOld "ghc948" (utils.src "stack/stack-9.4.8.yaml") [];
           ghc96-static = flakeStatic "ghc967" (utils.src "stack/stack-9.6.7.yaml") [];
           ghc98-static = flakeStatic "ghc984" (utils.src "stack/stack-9.8.4.yaml") [];
           ghc910-static = flakeStatic "ghc9102" (utils.src "stack/stack-9.10.2.yaml") [(import ./nix/os-string-module.nix)];
           ghc912-static = flakeStatic "ghc9122" (utils.src "stack/stack-9.12.2.yaml") [(import ./nix/os-string-module.nix)];
-          # ghc914-static = flakeStaticNew "ghc9141" (utils.src "stack/stack-9.14.1.yaml") [(import ./nix/os-string-module.nix)];
+          ghc914-static = flakeStaticNew "ghc9141" (utils.src "stack/stack-9.14.1.yaml") [(import ./nix/os-string-module.nix)];
         };
 
         staticVersions = lib.mapAttrsToList (n: v: utils.packageForGitHub (lib.removeSuffix "-static" n) v)

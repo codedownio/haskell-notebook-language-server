@@ -111,6 +111,10 @@
           packages = allVersions // rec {
             inherit (pkgs) cabal2nix;
 
+            # The other proxies all name their static build "default"; match them so the
+            # shared aliases can read the version the same way.
+            default = allVersions.ghc912-static;
+
             all = pkgs.linkFarm "haskell-notebook-language-server-all" allVersions;
 
             githubArtifacts = with pkgs; symlinkJoin {

@@ -1,5 +1,9 @@
 # Changelog for haskell-notebook-language-server
 
+## 0.5.6.0
+
+* Transform workspace/symbol answers, which named the shadow document instead of the notebook
+
 ## 0.5.5.0
 
 * Transform textDocument/selectionRange, textDocument/semanticTokens and the goto family, which reached the client in shadow coordinates

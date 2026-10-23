@@ -10,7 +10,7 @@ nix:
 
 extra-deps:
 - git: https://github.com/codedownio/notebook-language-server-core.git
-  commit: 3b788966fa66e4628cf7170768fd9324e2866b98
+  commit: 2b91f2b252c4d618ad3f65c10b0cf398955f6404
 
 - git: https://github.com/codedownio/IHaskell.git
   # ghc-9.14 branch

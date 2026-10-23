@@ -22,12 +22,17 @@ let
 
     in self;
 
+  # 9.4.8/9.6.7/9.8.4/9.10.2 did get through at -j, but only while four of them shared the
+  # machine; both compilers that built alone wedged. Serialize those too when they rebuild.
+  serialize = name: attrs:
+    prev.lib.optionalAttrs (attrs ? ${name}) { ${name} = serialBindist attrs.${name}; };
+
 in
 
 prev.lib.optionalAttrs (system == "aarch64-linux") {
   haskell-nix = prev.haskell-nix // {
-    compiler = prev.haskell-nix.compiler // {
-      ghc9141 = serialBindist prev.haskell-nix.compiler.ghc9141;
-    };
+    compiler = prev.haskell-nix.compiler
+               // serialize "ghc9122" prev.haskell-nix.compiler
+               // serialize "ghc9141" prev.haskell-nix.compiler;
   };
 }

@@ -30,7 +30,7 @@
           (import ./nix/fix-ghc-pkgs-overlay.nix system)
         ];
 
-        pkgs = import nixpkgs { inherit system; overlays = overlaysFor haskellNix; inherit (haskellNix) config; };
+        pkgs = import nixpkgs { inherit system; overlays = overlaysFor haskellNix ++ [(import ./nix/serial-bindist-overlay.nix system)]; inherit (haskellNix) config; };
         # haskell.nix floors at GHC 9.6, so 9.4 builds against the older pin.
         pkgsOld = import nixpkgsOld { inherit system; overlays = overlaysFor haskellNixOld; inherit (haskellNixOld) config; };
         # The newer haskell.nix is needed only for ghc9141; pairing it with the older nixpkgs keeps

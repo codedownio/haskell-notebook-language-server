@@ -10,6 +10,12 @@ cd "$SCRIPTDIR"
 
 cd ..
 
+for arg do
+    shift
+
+    [ "$arg" = "--yes" ] && YES="t" && continue
+done
+
 BUILT=$(nix build .#grandCombinedGithubArtifacts --builders-use-substitutes --no-link --json | jq -r '.[0].outputs.out')
 
 echo "Built: $BUILT"
@@ -28,7 +34,10 @@ TAG=v"$VERSION"
 echo ""
 echo "This will tag the current commit as $TAG and upload the above aliases to Git."
 echo ""
-confirm_execution
+
+if [[ -z "$YES" ]]; then
+  confirm_execution
+fi
 
 echo "Tagging at $TAG"
 git tag "$TAG" -f

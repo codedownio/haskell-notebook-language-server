@@ -1,0 +1,16 @@
+#! /usr/bin/env nix-shell
+#! nix-shell -i bash -p nix
+
+set -eo pipefail
+
+SCRIPTDIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+cd "$SCRIPTDIR"
+
+cd ..
+
+nix build .#gcroots --out-link gcroots --builders-use-substitutes
+
+ROOT=$(readlink gcroots)
+echo ""
+echo "Rooted $ROOT"
+echo "Keeping $(nix path-info -r "$ROOT" | wc -l) paths alive"

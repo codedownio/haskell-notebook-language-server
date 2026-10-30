@@ -136,15 +136,17 @@
             };
 
             gcroots = let
-              # The musl static builds can't be made from darwin, where githubArtifacts is the dynamic set.
+              # Our own components rebuild on any source change, so only the deps are worth rooting.
+              inputsOf = d: lib.filter (p: !(lib.hasInfix "haskell-notebook-language-server" (p.name or "")))
+                              (d.buildInputs ++ d.nativeBuildInputs);
+              # The musl static builds can't be made from darwin.
               rootedVersions = if pkgs.stdenv.isDarwin
                                then lib.filterAttrs (n: _: !(lib.hasSuffix "-static" n)) allVersions
                                else allVersions;
             in pkgs.writeText "haskell-notebook-language-server-gc-roots" ''
-              ${githubArtifacts}
               ${pkgs.symlinkJoin {
                 name = "my-project-deps";
-                paths = lib.unique (lib.concatMap (v: v.buildInputs ++ v.nativeBuildInputs) (lib.attrValues rootedVersions));
+                paths = lib.unique (lib.concatMap inputsOf (lib.attrValues rootedVersions));
               }}
             '';
 

@@ -8,9 +8,20 @@ cd "$SCRIPTDIR"
 
 cd ..
 
-nix build .#gcroots --out-link gcroots --builders-use-substitutes
+report() {
+  ROOT=$(readlink "$1")
+  echo ""
+  echo "Rooted $ROOT"
+  echo "Keeping $(nix path-info -r "$ROOT" | wc -l) paths alive"
+}
 
-ROOT=$(readlink gcroots)
-echo ""
-echo "Rooted $ROOT"
-echo "Keeping $(nix path-info -r "$ROOT" | wc -l) paths alive"
+nix build .#gcroots --out-link gcroots --builders-use-substitutes
+report gcroots
+
+# The mac builder builds both darwin variants, and each system's gcroots covers only its own.
+if [[ "$(uname)" == "Darwin" ]]; then
+  if [[ "$(uname -m)" == "arm64" ]]; then OTHER=x86_64-darwin; else OTHER=aarch64-darwin; fi
+
+  nix build ".#packages.$OTHER.gcroots" --out-link "gcroots-$OTHER" --builders-use-substitutes
+  report "gcroots-$OTHER"
+fi

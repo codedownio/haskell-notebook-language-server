@@ -135,11 +135,16 @@
               ];
             };
 
-            gcroots = pkgs.writeText "haskell-notebook-language-server-gc-roots" ''
+            gcroots = let
+              # The musl static builds can't be made from darwin, where githubArtifacts is the dynamic set.
+              rootedVersions = if pkgs.stdenv.isDarwin
+                               then lib.filterAttrs (n: _: !(lib.hasSuffix "-static" n)) allVersions
+                               else allVersions;
+            in pkgs.writeText "haskell-notebook-language-server-gc-roots" ''
               ${githubArtifacts}
               ${pkgs.symlinkJoin {
                 name = "my-project-deps";
-                paths = lib.concatMap (v: v.buildInputs ++ v.nativeBuildInputs) (lib.attrValues allVersions);
+                paths = lib.unique (lib.concatMap (v: v.buildInputs ++ v.nativeBuildInputs) (lib.attrValues rootedVersions));
               }}
             '';
 

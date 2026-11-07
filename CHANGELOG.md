@@ -1,5 +1,10 @@
 # Changelog for haskell-notebook-language-server
 
+## 0.5.9.0
+
+* Transform textDocument/diagnostic (pull diagnostic requests)
+* Transform textDocument/documentLink, so a link in a cell points at the notebook rather than the shadow document
+
 ## 0.5.8.0
 
 * Transform the call and type hierarchies, whose answers named the shadow document and so couldn't be followed

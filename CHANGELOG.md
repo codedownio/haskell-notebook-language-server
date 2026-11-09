@@ -1,5 +1,9 @@
 # Changelog for haskell-notebook-language-server
 
+## 0.5.10.0
+
+* Transform textDocument/foldingRange, so a cell's folds land on the notebook's lines
+
 ## 0.5.9.0
 
 * Transform textDocument/diagnostic (pull diagnostic requests)
